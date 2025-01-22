@@ -8,14 +8,16 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(AuthManager.self) var authManager
+        
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        if let _ = authManager.user {
+            // User is logged in – show main features
+            MainTabView()
+        } else {
+            // User is not logged in – show the login screen
+            LoginView()
         }
-        .padding()
     }
 }
 
