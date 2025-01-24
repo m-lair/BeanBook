@@ -14,8 +14,8 @@ struct UserProfileEditView: View {
     /// Closure to call when the user finishes
     let onFinish: () -> Void
     
-    @Environment(UserManager.self) var userManager
-    @Environment(\.dismiss) var dismiss
+    @Environment(UserManager.self) private var userManager
+    @Environment(\.dismiss) private var dismiss
     
     // MARK: - Local States for Profile Fields
     @State private var displayName: String = ""
@@ -30,132 +30,41 @@ struct UserProfileEditView: View {
     @State private var stockImages: [URL] = []
     @State private var selectedStockURL: URL? = nil
     
+    // MARK: - Body
     var body: some View {
         NavigationStack {
             ZStack {
                 // A subtle coffee-inspired background
-                LinearGradient(colors: [.brown.opacity(0.25), .black],
-                               startPoint: .topLeading,
-                               endPoint: .bottomTrailing)
+                LinearGradient(
+                    colors: [.brown.opacity(0.25), .black],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
                 .ignoresSafeArea()
                 
                 VStack(spacing: 20) {
                     
-                    // MARK: - Profile Details Form
-                    Form {
-                        Section("Profile Details") {
-                            TextField("Display Name", text: $displayName)
-                            
-                            TextField("Bio", text: $bio, axis: .vertical)
-                                .lineLimit(3)
-                                .textInputAutocapitalization(.none)
-                                .autocorrectionDisabled(true)
-                        }
-                    }
-                    .formStyle(.grouped)
+                    // 1) Profile Details Form
+                    ProfileDetailsForm(
+                        displayName: $displayName,
+                        bio: $bio
+                    )
                     .frame(maxHeight: 150)
-                    .cornerRadius(20)
                     
-                    // MARK: - Stock Images Section
-                    Text("Choose Avatar")
-                        .font(.headline)
-
-
-                    // A TabView for full-width swiping. We bind `selection` to selectedStockURL
-                    // so tapping an image will also update the selection automatically.
-                    TabView(selection: $selectedStockURL) {
-                        ForEach(stockImages, id: \.self) { url in
-                            ZStack {
-                                if let selected = selectedStockURL, selected == url {
-                                    // If this is the currently selected image, add a highlight border
-                                    AsyncImage(url: url) { image in
-                                        image
-                                            .resizable()
-                                            .scaledToFill()
-                                    } placeholder: {
-                                        Circle()
-                                            .fill(Color.gray.opacity(0.3))
-                                    }
-                                    .frame(width: 150, height: 150)
-                                    .clipShape(Circle())
-                                    .overlay(
-                                        Circle()
-                                            .stroke(Color.brown, lineWidth: 4)
-                                    )
-                                } else {
-                                    // Not selected => no brown border
-                                    AsyncImage(url: url) { image in
-                                        image
-                                            .resizable()
-                                            .scaledToFill()
-                                    } placeholder: {
-                                        Circle()
-                                            .fill(Color.gray.opacity(0.3))
-                                    }
-                                    .frame(width: 150, height: 150)
-                                    .clipShape(Circle())
-                                }
-                            }
-                            // Tag this page with the url
-                            .tag(url)
-                            // If you also want to allow direct taps to select
-                            .onTapGesture {
-                                selectedStockURL = url
-                            }
-                        }
-                    }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))  // or .always if you want dots
-                    .frame(height: 200) // Sufficient to show the 150px circle plus spacing
-
+                    // 2) Stock Avatar Picker
+                    StockAvatarPicker(
+                        stockImages: stockImages,
+                        selectedStockURL: $selectedStockURL
+                    )
                     
                     Spacer()
                     
-                    // MARK: - Buttons
-                    HStack(spacing: 16) {
-                        // Cancel Button (if not first-time setup)
-                        if !isFirstTimeSetup {
-                            Button(role: .cancel) {
-                                dismiss()
-                            } label: {
-                                Text("Cancel")
-                            }
-                            .padding(.bottom)
-                            .buttonStyle(.bordered)
-                        }
-                        
-                        // Save Button
-                        Button("Save") {
-                            Task {
-                                if var updatedProfile = userManager.currentUserProfile {
-                                    
-                                    // Only update displayName/bio if changed
-                                    if hasProfileChanged() {
-                                        updatedProfile.displayName = displayName
-                                        updatedProfile.bio = bio
-                                    }
-                                    
-                                    // If user selected a new stock avatar
-                                    if let chosenURL = selectedStockURL,
-                                       chosenURL.absoluteString != originalPhotoURL {
-                                        updatedProfile.photoURL = chosenURL.absoluteString
-                                    }
-                                    
-                                    // Write changes to Firestore
-                                    await userManager.createOrUpdateUser(profile: updatedProfile)
-                                }
-                                
-                                // After saving, either finish setup or dismiss
-                                if isFirstTimeSetup {
-                                    onFinish()
-                                } else {
-                                    dismiss()
-                                }
-                            }
-                        }
-                        .padding(.bottom)
-                        .buttonStyle(.borderedProminent)
-                        .tint(.brown)
-                    }
+                    // 3) Action Buttons
+                    ActionButtons(
+                        isFirstTimeSetup: isFirstTimeSetup,
+                        onCancel: { dismiss() },
+                        onSave: { saveProfileChanges() }
+                    )
                 }
                 .padding(.top, 40)
                 .padding(.horizontal, 16)
@@ -164,8 +73,9 @@ struct UserProfileEditView: View {
             .navigationBarTitleDisplayMode(.inline)
             // Load existing profile data and stock images
             .task {
+                // 1) Load user profile info
                 await loadExistingProfile()
-                // Fetch stock avatar URLs from Firebase Storage
+                // 2) Fetch stock avatar URLs from Firebase Storage
                 stockImages = await userManager.fetchStockProfilePictureURLs()
                 
                 // If current photoURL is one of the stock images, highlight it
@@ -199,5 +109,149 @@ struct UserProfileEditView: View {
     /// Checks if user changed displayName or bio
     private func hasProfileChanged() -> Bool {
         return (displayName != originalDisplayName || bio != originalBio)
+    }
+    
+    /// Saves the user’s changes to Firestore
+    private func saveProfileChanges() {
+        Task {
+            guard var updatedProfile = userManager.currentUserProfile else { return }
+            
+            // Only update displayName/bio if changed
+            if hasProfileChanged() {
+                updatedProfile.displayName = displayName
+                updatedProfile.bio = bio
+            }
+            
+            // If user selected a new stock avatar
+            if let chosenURL = selectedStockURL,
+               chosenURL.absoluteString != originalPhotoURL {
+                updatedProfile.photoURL = chosenURL.absoluteString
+            }
+            
+            // Write changes to Firestore
+            await userManager.createOrUpdateUser(profile: updatedProfile)
+            
+            // After saving, either finish setup or dismiss
+            if isFirstTimeSetup {
+                onFinish()
+            } else {
+                dismiss()
+            }
+        }
+    }
+}
+
+// MARK: - Subview #1: Profile Details Form
+/// A small form for editing displayName and bio.
+fileprivate struct ProfileDetailsForm: View {
+    @Binding var displayName: String
+    @Binding var bio: String
+    
+    var body: some View {
+        Form {
+            Section("Profile Details") {
+                TextField("Display Name", text: $displayName)
+                
+                TextField("Bio", text: $bio, axis: .vertical)
+                    .lineLimit(3)
+                    .textInputAutocapitalization(.none)
+                    .autocorrectionDisabled(true)
+            }
+        }
+        .formStyle(.grouped)
+        .cornerRadius(20)
+    }
+}
+
+// MARK: - Subview #2: Stock Avatar Picker
+/// A full-width TabView with page style, letting the user swipe horizontally
+/// between large circular avatar options. Highlights the selected image.
+fileprivate struct StockAvatarPicker: View {
+    let stockImages: [URL]
+    @Binding var selectedStockURL: URL?
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("Choose Avatar")
+                .font(.headline)
+            
+            TabView(selection: $selectedStockURL) {
+                ForEach(stockImages, id: \.self) { url in
+                    ZStack {
+                        // Circular image
+                        ZStack {
+                            // Replace with your own CachedAsyncImage or keep AsyncImage
+                            AsyncImage(url: url) { image in
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                            } placeholder: {
+                                Circle().fill(Color.gray.opacity(0.3))
+                            }
+                            .frame(width: 150, height: 150)
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(
+                                        (selectedStockURL == url) ? Color.brown : Color.clear,
+                                        lineWidth: 5
+                                    )
+                            )
+                        }
+                        .onTapGesture {
+                            selectedStockURL = url
+                        }
+                        
+                        // Checkmark overlay if selected
+                        if selectedStockURL == url {
+                            VStack {
+                                HStack {
+                                    Spacer()
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.system(size: 32))
+                                        .foregroundColor(.green)
+                                        .padding([.top, .trailing], 6)
+                                }
+                                Spacer()
+                            }
+                        }
+                    }
+                    .tag(url)
+                }
+            }
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always)) // or .never
+            .frame(height: 250)
+        }
+    }
+}
+
+// MARK: - Subview #3: Action Buttons
+/// Display "Save" and optional "Cancel" (if not first-time setup).
+fileprivate struct ActionButtons: View {
+    let isFirstTimeSetup: Bool
+    let onCancel: () -> Void
+    let onSave: () -> Void
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Cancel Button (if not first-time setup)
+            if !isFirstTimeSetup {
+                Button(role: .cancel) {
+                    onCancel()
+                } label: {
+                    Text("Cancel")
+                }
+                .padding(.bottom)
+                .buttonStyle(.bordered)
+            }
+            
+            // Save Button
+            Button("Save") {
+                onSave()
+            }
+            .padding(.bottom)
+            .buttonStyle(.borderedProminent)
+            .tint(.brown)
+        }
     }
 }
