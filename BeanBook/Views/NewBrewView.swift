@@ -19,7 +19,7 @@ struct NewBrewView: View {
     
     // For coffee & water amounts, we’ll store numeric doubles so we can use steppers
     @State private var coffeeAmount = 18.0
-    @State private var waterAmount = 36.0
+    @State private var waterAmount = 30.0
     
     // For brew time in seconds, we’ll do a wheel-style Picker from 10...240, stepping by 5
     @State private var brewTimeSeconds = 30
@@ -46,17 +46,17 @@ struct NewBrewView: View {
                 
                 Section("Amounts") {
                     // Coffee
-                    Stepper(value: $coffeeAmount, in: 5...50, step: 1) {
+                    Stepper(value: $coffeeAmount, in: 5.0...50.0, step: 0.1) {
                         HStack {
                             Text("Coffee")
                             Spacer()
-                            Text("\(Int(coffeeAmount)) g")
+                            Text("\(String(format: "%.1f", coffeeAmount)) g")
                                 .foregroundStyle(.secondary)
                         }
                     }
                     
                     // Water
-                    Stepper(value: $waterAmount, in: 10...500, step: 5) {
+                    Stepper(value: $waterAmount, in: 10...500, step: 1) {
                         HStack {
                             Text("Water")
                             Spacer()

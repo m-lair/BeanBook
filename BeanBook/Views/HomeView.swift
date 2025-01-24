@@ -9,9 +9,10 @@ import SwiftUI
 struct HomeView: View {
     @Environment(CoffeeBrewManager.self) var brewManager
     @State private var showNewBrew = false
+    @State private var path = NavigationPath()
     
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ZStack {
                 // Background gradient
                 LinearGradient(
@@ -22,21 +23,22 @@ struct HomeView: View {
                 .ignoresSafeArea()
                 
                 // Main content: A List of Brews
-                List {
-                    ForEach(brewManager.coffeeBrews) { brew in
-                        // NavigationLink for detail
-                        NavigationLink(destination: BrewDetailView(brew: brew)) {
-                            brewRow(brew)
-                                .padding(.vertical, 8) // Vertical spacing around each card
-                        }
-                        // Clear row background so our ZStack & card can show
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)  // Hides default separators
+                List(brewManager.coffeeBrews) { brew in
+                    // NavigationLink for detail
+                    Button {
+                        path.append(brew)
+                    } label: {
+                        brewRow(brew)
+                            .padding(.vertical, 8) // Vertical spacing around each card
                     }
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)  // Hides default separators
                 }
-                // Make the list’s background transparent
+                .navigationDestination(for: CoffeeBrew.self) { brew in  BrewDetailView(brew: brew)
+                }
                 .scrollContentBackground(.hidden)
                 .listStyle(.plain)
+                
                 
                 .navigationTitle("Community")
                 .toolbar {

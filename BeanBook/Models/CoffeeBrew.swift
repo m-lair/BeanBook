@@ -8,7 +8,7 @@
 import Foundation
 import FirebaseFirestore
 
-struct CoffeeBrew: Identifiable, Codable {
+struct CoffeeBrew: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
     var title: String
     var method: String      // e.g. "Pour Over", "Espresso"
