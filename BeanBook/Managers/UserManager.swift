@@ -63,7 +63,7 @@ class UserManager {
         return currentUserProfile?.favorites.contains(brewID) == true
     }
     
-    /// Toggle the brew’s ID in the current user’s favorites list
+    // MARK: - Toggle the brew’s ID in the current user’s favorites list
     func toggleFavorite(brew: CoffeeBrew) async {
         guard let uid = currentUID,
               let brewID = brew.id else { return }
