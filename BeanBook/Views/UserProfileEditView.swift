@@ -40,13 +40,14 @@ struct UserProfileEditView: View {
                             TextField("Display Name", text: $displayName)
                             
                             TextField("Bio", text: $bio, axis: .vertical)
-                                .lineLimit(3, reservesSpace: true)
+                                .lineLimit(3)
                                 .textInputAutocapitalization(.none)
                                 .autocorrectionDisabled(true)
                         }
                     }
                     .formStyle(.grouped)
-                    .frame(maxHeight: 240)
+                    .frame(maxHeight: 150)
+                    .cornerRadius(20)
                     
                     Spacer()
                     
@@ -86,6 +87,7 @@ struct UserProfileEditView: View {
                                 }
                             }
                         }
+                        .padding(.bottom)
                         .buttonStyle(.borderedProminent)
                         .tint(.brown)
                     }
@@ -93,7 +95,7 @@ struct UserProfileEditView: View {
                 .padding(.top, 40)
                 .padding(.horizontal, 16)
             }
-            .navigationTitle("Edit Profile")
+            .navigationTitle(isFirstTimeSetup ? "Set Up Profile" : "Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
             // Load existing profile data into our local states
             .task {

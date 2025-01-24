@@ -17,6 +17,9 @@ struct ProfileView: View {
     // We'll keep a local copy of the user's favorite brews
     @State private var favoriteBrews: [CoffeeBrew] = []
     
+    // Segmented Picker selection
+    @State private var selectedSegment: ProfileSegment = .myBrews
+    
     var profile: UserProfile? {
         userManager.currentUserProfile
     }
@@ -33,34 +36,34 @@ struct ProfileView: View {
                 .ignoresSafeArea()
                 
                 VStack(spacing: 16) {
+                    
                     // MARK: - Top User Info Section
                     if let profile {
-                        // Show user avatar & name
                         userHeaderView(profile: profile)
                     } else {
-                        // Fallback if no profile data
                         Text("No profile data")
                             .foregroundStyle(.secondary)
                     }
                     
-                    // MARK: - My Brews
-                    Text("My Brews")
-                        .font(.title2)
-                        .bold()
-                        .padding(.top, 8)
+                    // MARK: - Segmented Picker
+                    Picker("", selection: $selectedSegment) {
+                        ForEach(ProfileSegment.allCases, id: \.self) { segment in
+                            Text(segment.title).tag(segment)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, 16)
                     
-                    listContainer(brews: brewManager.userBrews)
+                    // MARK: - Display the Selected List
+                    if selectedSegment == .myBrews {
+                        listContainer(brews: brewManager.userBrews)
+                    } else {
+                        listContainer(brews: favoriteBrews)
+                    }
                     
-                    // MARK: - Favorites
-                    Text("My Favorites")
-                        .font(.title2)
-                        .bold()
-                        .padding(.top, 16)
-                    
-                    listContainer(brews: favoriteBrews)
+                    Spacer(minLength: 0)
                 }
                 .padding(.top, 16)
-                .padding(.horizontal, 16)
             }
             .navigationTitle("Profile")
             .toolbar {
@@ -139,6 +142,12 @@ struct ProfileView: View {
                 .font(.title3)
                 .bold()
             
+            if let bio = profile.bio, !bio.isEmpty, bio != "nil" {
+                Text(bio)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+            
             Button("Edit Profile") {
                 showEditProfile = true
             }
@@ -171,6 +180,20 @@ struct ProfileView: View {
             .scrollContentBackground(.hidden)
             .listStyle(.plain)
         }
+        .padding(.horizontal, 16)
         .frame(maxHeight: .infinity)
+    }
+}
+
+// MARK: - Segmented Picker Enum
+enum ProfileSegment: CaseIterable {
+    case myBrews
+    case favorites
+    
+    var title: String {
+        switch self {
+        case .myBrews: return "My Brews"
+        case .favorites: return "Favorites"
+        }
     }
 }

@@ -17,12 +17,12 @@ struct UserProfile: Codable {
     var favorites: [String] = []
     
     init(
-        displayName: String? = "nil",
+        displayName: String? = "",
         email: String,
-        photoURL: String? = "nil",
+        photoURL: String? = "",
         createdAt: Date? = Date(),
         updatedAt: Date? = nil,
-        bio: String? = "nil",
+        bio: String? = "",
         favorites: [String] = []
     ) {
         self.displayName = displayName
