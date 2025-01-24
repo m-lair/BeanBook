@@ -120,6 +120,7 @@ struct NewBrewView: View {
                                 waterAmount: waterStr,
                                 brewTime: brewTimeStr,
                                 grindSize: selectedGrindSize.rawValue.capitalized,
+                                creatorName: user.displayName ?? "",
                                 creatorId: user.uid,
                                 notes: notes
                             )

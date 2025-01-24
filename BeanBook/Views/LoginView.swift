@@ -4,11 +4,12 @@
 //
 //  Created by Marcus Lair on 1/22/25.
 //
-
 import SwiftUI
+import FirebaseAuth
 
 struct LoginView: View {
     @Environment(AuthManager.self) var authManager
+    @Environment(UserManager.self) var userManager
     
     @State private var email = ""
     @State private var password = ""
@@ -38,6 +39,7 @@ struct LoginView: View {
                 Text(errorMessage)
                     .foregroundColor(.red)
                     .multilineTextAlignment(.center)
+                    .padding(.horizontal)
             }
             
             // Loading indicator
@@ -46,11 +48,33 @@ struct LoginView: View {
             } else {
                 Button(isSignUp ? "Create Account" : "Login") {
                     Task {
-                        if isSignUp {
-                            await authManager.signUp(email: email, password: password)
-                        } else {
-                            await authManager.signIn(email: email, password: password)
+                        // Start loading
+                        authManager.isLoading = true
+                        authManager.errorMessage = nil
+                        
+                        do {
+                            if isSignUp {
+                                // 1) Sign up a brand new user
+                                await authManager.signUp(email: email, password: password)
+                                
+                                let profile = UserProfile(email: email)
+                                await userManager.createOrUpdateUser(profile: profile)
+    
+                            } else {
+                                // 1) Sign in an existing user
+                                await authManager.signIn(email: email, password: password)
+                                
+                                // 2) Fetch the user’s existing profile from Firestore
+                                //    (If there's no doc, you could create a minimal one here instead)
+                                await userManager.fetchUserProfile()
+                            }
+                        } catch {
+                            // Show error in UI
+                            authManager.errorMessage = error.localizedDescription
                         }
+                        
+                        // Stop loading
+                        authManager.isLoading = false
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -67,10 +91,4 @@ struct LoginView: View {
         }
         .padding()
     }
-}
-
-#Preview {
-    // For previews, create a local manager
-    LoginView()
-        .environment(AuthManager())
 }

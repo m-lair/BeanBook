@@ -16,6 +16,7 @@ struct CoffeeBrew: Identifiable, Codable {
     var waterAmount: String
     var brewTime: String
     var grindSize: String
+    var creatorName: String?
     var creatorId: String
     var createdAt: Date
     var notes: String?
@@ -29,6 +30,7 @@ struct CoffeeBrew: Identifiable, Codable {
          waterAmount: String,
          brewTime: String,
          grindSize: String,
+         creatorName: String,
          creatorId: String,
          createdAt: Date = Date(),
          notes: String? = nil,
@@ -42,6 +44,7 @@ struct CoffeeBrew: Identifiable, Codable {
         self.waterAmount = waterAmount
         self.brewTime = brewTime
         self.grindSize = grindSize
+        self.creatorName = creatorName
         self.creatorId = creatorId
         self.createdAt = createdAt
         self.notes = notes
