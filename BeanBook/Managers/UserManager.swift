@@ -55,7 +55,7 @@ class UserManager {
             print("Error creating/updating user doc: \(error)")
         }
     }
-
+    
     // MARK: - Favorites Handling
     /// Check if a brew is favorited by the current user
     func isFavorite(brew: CoffeeBrew) -> Bool {
@@ -90,7 +90,22 @@ class UserManager {
         }
     }
     
-   
+    // MARK: - Store FCM Token
+    func storeFCMTokenIfAuthenticated(token: String) async {
+        guard let uid = currentUID else {
+            print("No current user, cannot store FCM token yet.")
+            return
+        }
+        do {
+            try await db.collection("users")
+                .document(uid)
+                .setData(["fcmToken": token], merge: true)
+            print("Successfully saved FCM token for user \(uid).")
+        } catch {
+            print("Error saving FCM token: \(error)")
+        }
+    }
+
 
     // MARK: - Fetch Stock Profile Pictures
     func fetchStockProfilePictureURLs() async -> [URL] {

@@ -75,7 +75,6 @@ struct HomeView: View {
                 .shadow(color: .brown.opacity(0.4), radius: 3, x: 0, y: 3)
             
             HStack(spacing: 12) {
-                // Optional icon or image placeholder
                 Image(systemName: "cup.and.saucer.fill")
                     .resizable()
                     .scaledToFit()
@@ -85,16 +84,19 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(brew.title)
                         .font(.headline)
-                        .foregroundColor(.primary)
                     
                     Text(brew.method)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     
-                    // Show the brew’s creator
                     Text("Created by \(brew.creatorName ?? "Unknown")")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+                    
+                    // New line: show saveCount
+                    Text("Saved \(brew.saveCount) times")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
                 }
                 .padding(.vertical, 8)
             }

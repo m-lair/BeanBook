@@ -1,9 +1,4 @@
-//
-//  CoffeeBrew.swift
-//  BeanBook
-//
-//  Created by Marcus Lair on 1/22/25.
-//
+// CoffeeBrew.swift
 
 import Foundation
 import FirebaseFirestore
@@ -11,7 +6,7 @@ import FirebaseFirestore
 struct CoffeeBrew: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
     var title: String
-    var method: String      // e.g. "Pour Over", "Espresso"
+    var method: String
     var coffeeAmount: String
     var waterAmount: String
     var brewTime: String
@@ -21,6 +16,7 @@ struct CoffeeBrew: Identifiable, Codable, Hashable {
     var createdAt: Date
     var notes: String?
     var imageURL: String?
+    var saveCount: Int = 0
     
     // For Swift or SwiftUI previews
     init(id: String? = nil,
@@ -34,7 +30,8 @@ struct CoffeeBrew: Identifiable, Codable, Hashable {
          creatorId: String,
          createdAt: Date = Date(),
          notes: String? = nil,
-         imageURL: String? = nil
+         imageURL: String? = nil,
+         saveCount: Int = 0
     )
     {
         self.id = id
@@ -49,5 +46,6 @@ struct CoffeeBrew: Identifiable, Codable, Hashable {
         self.createdAt = createdAt
         self.notes = notes
         self.imageURL = imageURL
+        self.saveCount = saveCount
     }
 }

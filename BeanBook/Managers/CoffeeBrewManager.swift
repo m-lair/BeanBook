@@ -102,6 +102,34 @@ class CoffeeBrewManager {
     }
     
     // ---------------------------------------
+    // MARK: - incr save count
+    // ---------------------------------------
+    func updateSaveCount(for brew: CoffeeBrew, incrementValue: Int) async {
+        guard let brewID = brew.id else { return }
+        let brewRef = db.collection("coffeeBrews").document(brewID)
+        
+        do {
+            // Update Firestore: increment the saveCount field
+            try await brewRef.updateData([
+                "saveCount": FieldValue.increment(Int64(incrementValue))
+            ])
+            
+            // Also update our local arrays for real-time UI reflection
+            // 1) Update coffeeBrews
+            if let index = coffeeBrews.firstIndex(where: { $0.id == brewID }) {
+                coffeeBrews[index].saveCount += incrementValue
+            }
+            
+            // 2) Update userBrews
+            if let index = userBrews.firstIndex(where: { $0.id == brewID }) {
+                userBrews[index].saveCount += incrementValue
+            }
+        } catch {
+            print("Error updating saveCount for brew \(brewID): \(error)")
+        }
+    }
+    
+    // ---------------------------------------
     // MARK: - Add Brew
     // ---------------------------------------
     func addBrew(_ brew: CoffeeBrew) async {
