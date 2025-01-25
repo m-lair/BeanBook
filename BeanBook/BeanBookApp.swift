@@ -12,8 +12,6 @@ import UserNotifications
 import FirebaseAuth
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
-    @Environment(UserManager.self) private var userManager
-    
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil
@@ -68,7 +66,7 @@ extension AppDelegate: MessagingDelegate {
         if Auth.auth().currentUser?.uid != nil {
             Task {
                 print("calling storeFCMTokenIfAuthenticated")
-                await userManager.storeFCMTokenIfAuthenticated(token: fcmToken)
+                await UserManager().storeFCMTokenIfAuthenticated(token: fcmToken)
             }
         } else {
             // 2) If no user is logged in yet, store it for later in UserDefaults (optional).
