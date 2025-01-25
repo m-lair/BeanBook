@@ -12,6 +12,9 @@
 		2CF7AFAA2D416330006A8EBD /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 2CF7AFA92D416330006A8EBD /* FirebaseAuth */; };
 		2CF7AFAC2D416330006A8EBD /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 2CF7AFAB2D416330006A8EBD /* FirebaseFirestore */; };
 		2CF7AFAE2D416330006A8EBD /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 2CF7AFAD2D416330006A8EBD /* FirebaseFunctions */; };
+		2CF7B00A2D43D9E6006A8EBD /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 2CF7B0092D43D9E6006A8EBD /* FirebaseStorage */; };
+		2CF7B0142D441C36006A8EBD /* FirebaseInAppMessaging-Beta in Frameworks */ = {isa = PBXBuildFile; productRef = 2CF7B0132D441C36006A8EBD /* FirebaseInAppMessaging-Beta */; };
+		2CF7B0162D441C36006A8EBD /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 2CF7B0152D441C36006A8EBD /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,9 +41,22 @@
 		2CF7AFA42D4162AA006A8EBD /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2CF7B01A2D443B22006A8EBD /* Exceptions for "BeanBook" folder in "BeanBook" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2CF7AF742D416215006A8EBD /* BeanBook */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2CF7AF772D416215006A8EBD /* BeanBook */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2CF7B01A2D443B22006A8EBD /* Exceptions for "BeanBook" folder in "BeanBook" target */,
+			);
 			path = BeanBook;
 			sourceTree = "<group>";
 		};
@@ -63,8 +79,11 @@
 			files = (
 				2CF7AFA82D416330006A8EBD /* FirebaseAnalytics in Frameworks */,
 				2CF7AFAA2D416330006A8EBD /* FirebaseAuth in Frameworks */,
+				2CF7B0162D441C36006A8EBD /* FirebaseMessaging in Frameworks */,
 				2CF7AFAC2D416330006A8EBD /* FirebaseFirestore in Frameworks */,
+				2CF7B00A2D43D9E6006A8EBD /* FirebaseStorage in Frameworks */,
 				2CF7AFAE2D416330006A8EBD /* FirebaseFunctions in Frameworks */,
+				2CF7B0142D441C36006A8EBD /* FirebaseInAppMessaging-Beta in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,6 +149,9 @@
 				2CF7AFA92D416330006A8EBD /* FirebaseAuth */,
 				2CF7AFAB2D416330006A8EBD /* FirebaseFirestore */,
 				2CF7AFAD2D416330006A8EBD /* FirebaseFunctions */,
+				2CF7B0092D43D9E6006A8EBD /* FirebaseStorage */,
+				2CF7B0132D441C36006A8EBD /* FirebaseInAppMessaging-Beta */,
+				2CF7B0152D441C36006A8EBD /* FirebaseMessaging */,
 			);
 			productName = BeanBook;
 			productReference = 2CF7AF752D416215006A8EBD /* BeanBook.app */;
@@ -415,12 +437,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BeanBook/BeanBook.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"BeanBook/Preview Content\"";
 				DEVELOPMENT_TEAM = 5Z6AC3LV9L;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BeanBook/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -444,12 +468,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BeanBook/BeanBook.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"BeanBook/Preview Content\"";
 				DEVELOPMENT_TEAM = 5Z6AC3LV9L;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BeanBook/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -612,6 +638,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2CF7AFA62D416330006A8EBD /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFunctions;
+		};
+		2CF7B0092D43D9E6006A8EBD /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2CF7AFA62D416330006A8EBD /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+		2CF7B0132D441C36006A8EBD /* FirebaseInAppMessaging-Beta */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2CF7AFA62D416330006A8EBD /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseInAppMessaging-Beta";
+		};
+		2CF7B0152D441C36006A8EBD /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2CF7AFA62D416330006A8EBD /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

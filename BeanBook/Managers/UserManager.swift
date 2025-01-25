@@ -9,6 +9,7 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 import FirebaseFirestore
+import FirebaseStorage
 
 @Observable
 class UserManager {
@@ -16,6 +17,7 @@ class UserManager {
     var currentUserProfile: UserProfile?
     
     private let db = Firestore.firestore()
+    private let storage = Storage.storage()
     
     // For convenience, store the current user’s UID (if logged in)
     var currentUID: String? {
@@ -53,7 +55,7 @@ class UserManager {
             print("Error creating/updating user doc: \(error)")
         }
     }
-
+    
     // MARK: - Favorites Handling
     /// Check if a brew is favorited by the current user
     func isFavorite(brew: CoffeeBrew) -> Bool {
@@ -87,6 +89,46 @@ class UserManager {
             print("Failed to update favorites: \(error)")
         }
     }
+    
+    // MARK: - Store FCM Token
+    func storeFCMTokenIfAuthenticated(token: String) async {
+        guard let uid = currentUID else {
+            print("No current user, cannot store FCM token yet.")
+            return
+        }
+        do {
+            try await db.collection("users")
+                .document(uid)
+                .setData(["fcmToken": token], merge: true)
+            print("Successfully saved FCM token for user \(uid).")
+        } catch {
+            print("Error saving FCM token: \(error)")
+        }
+    }
+
+
+    // MARK: - Fetch Stock Profile Pictures
+    func fetchStockProfilePictureURLs() async -> [URL] {
+        let storageRef = storage.reference()
+        
+        do {
+            let listResult = try await storageRef.listAll()
+            let items = listResult.items
+            
+            var urls: [URL] = []
+            for itemRef in items {
+                // Get a download URL for each item
+                let downloadURL = try await itemRef.downloadURL()
+                urls.append(downloadURL)
+            }
+            
+            return urls
+        } catch {
+            print("Error listing stock profile pictures: \(error.localizedDescription)")
+            return []
+        }
+    }
+
 
     // MARK: - Realtime Listener
     private var listener: ListenerRegistration?

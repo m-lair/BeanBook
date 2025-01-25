@@ -11,8 +11,11 @@ struct BrewDetailView: View {
     
     // For toggling favorites
     @Environment(UserManager.self) private var userManager
+    // For updating saveCount
+    @Environment(CoffeeBrewManager.self) private var brewManager
     
     @State private var favorited: Bool = false
+    @State private var localSaveCount: Int = 0  // Track # times saved
     
     var body: some View {
         ZStack {
@@ -76,12 +79,16 @@ struct BrewDetailView: View {
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
+                        
+                        // Show how many times it's saved
+                        Text("Saved \(localSaveCount) times")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                     }
                     .padding(.horizontal)
                     
                     // Card with brew details
                     VStack(alignment: .leading, spacing: 12) {
-                        // Basic info
                         Group {
                             infoRow(label: "Method", value: brew.method)
                             infoRow(label: "Coffee Amount", value: brew.coffeeAmount)
@@ -106,13 +113,23 @@ struct BrewDetailView: View {
                 }
                 .padding(.bottom, 20)
             }
-            // Add the favorite button in the top bar
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        let wasFavorited = favorited
+                        
                         Task {
+                            // 1) Toggle in userManager
                             await userManager.toggleFavorite(brew: brew)
+                            // Flip local 'favorited'
                             favorited.toggle()
+                            
+                            // 2) Update saveCount in Firestore
+                            let incrementVal = wasFavorited ? -1 : +1
+                            await brewManager.updateSaveCount(for: brew, incrementValue: incrementVal)
+                            
+                            // 3) Update local count for immediate UI feedback
+                            localSaveCount += incrementVal
                         }
                     } label: {
                         Image(systemName: favorited ? "star.fill" : "star")
@@ -122,9 +139,10 @@ struct BrewDetailView: View {
         }
         .navigationTitle(brew.title)
         .navigationBarTitleDisplayMode(.inline)
-        // Load initial favorite state
+        // Load initial favorite state and saveCount on appear
         .onAppear {
             favorited = userManager.isFavorite(brew: brew)
+            localSaveCount = brew.saveCount
         }
     }
     

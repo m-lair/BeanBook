@@ -136,6 +136,12 @@ struct LoginView: View {
                                     // 2) Fetch the user’s existing profile from Firestore
                                     await userManager.fetchUserProfile()
                                 }
+                                
+                                let userDefaults = UserDefaults.standard
+                                if let pendingToken = userDefaults.string(forKey: "pendingFCMToken") {
+                                    await userManager.storeFCMTokenIfAuthenticated(token: pendingToken)
+                                    userDefaults.removeObject(forKey: "pendingFCMToken")
+                                }
                             } catch {
                                 // Show error in UI
                                 authManager.errorMessage = error.localizedDescription
