@@ -73,6 +73,7 @@ export const notifyBrewOwnerOnFavorite = onDocumentUpdated(
 
     // 3) Build the notification message
     const payload = {
+      token: userData.fcmToken,
       notification: {
         title: "Someone favorited your brew!",
         body: `Your brew "${afterData.title}" got a new favorite.`,
@@ -81,11 +82,12 @@ export const notifyBrewOwnerOnFavorite = onDocumentUpdated(
 
     // 4) Send to the user's fcmToken
     try {
-      await admin.messaging().sendToDevice(userData.fcmToken, payload);
-      console.log("Notification sent to user:", creatorId);
-    } catch (err) {
-      console.error("Error sending FCM:", err);
+      await admin.messaging().send(payload)
+        // Response is a message ID string.
+        console.log('Successfully sent message:');
+        return {success: true};
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      return null;
     }
-
-    return null;
   });
