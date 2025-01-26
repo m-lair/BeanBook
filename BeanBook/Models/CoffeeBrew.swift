@@ -16,6 +16,7 @@ struct CoffeeBrew: Identifiable, Codable, Hashable {
     var createdAt: Date
     var notes: String?
     var imageURL: String?
+    var bagId: String?
     var saveCount: Int = 0
     
     // For Swift or SwiftUI previews

@@ -4,7 +4,6 @@
 //
 //  Created by Marcus Lair on 1/22/25.
 //
-
 import SwiftUI
 import FirebaseCore
 import FirebaseMessaging
@@ -82,6 +81,7 @@ struct BeanBookApp: App {
     @State private var userManager: UserManager? = nil
     @State private var brewManager: CoffeeBrewManager? = nil
     @State private var authManager: AuthManager? = nil
+    @State private var bagManager: CoffeeBagManager? = nil
     
     var body: some Scene {
         WindowGroup {
@@ -90,6 +90,7 @@ struct BeanBookApp: App {
                     .environment(authManager)
                     .environment(brewManager)
                     .environment(userManager)
+                    .environment(bagManager)
     
             } else {
                 Text("Loading…")
@@ -97,6 +98,7 @@ struct BeanBookApp: App {
                         authManager = AuthManager()
                         brewManager = CoffeeBrewManager()
                         userManager = UserManager()
+                        bagManager = CoffeeBagManager()
                     }
             }
         }

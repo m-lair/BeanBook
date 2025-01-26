@@ -110,7 +110,7 @@ struct NewBrewView: View {
                             
                             // Convert numeric values to strings
                             let brewTimeStr = "\(brewTimeSeconds)s"
-                            let coffeeStr   = "\(Int(coffeeAmount))g"
+                            let coffeeStr   = "\(Double(coffeeAmount))g"
                             let waterStr    = "\(Int(waterAmount))g"
                             
                             let brew = CoffeeBrew(

@@ -140,6 +140,20 @@ class CoffeeBrewManager {
         }
     }
     
+    
+    // ---------------------------------------
+    // MARK: - Update Brew
+    // ---------------------------------------
+    func updateBrew(_ brew: CoffeeBrew) async {
+        guard let brewId = brew.id else { return }
+        do {
+            try db.collection("coffeeBrews").document(brewId).setData(from: brew, merge: true)
+        } catch {
+            print("Error updating brew: \(error)")
+        }
+    }
+
+    
     // ---------------------------------------
     // MARK: - Get Creator Name
     // ---------------------------------------

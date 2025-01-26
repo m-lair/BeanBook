@@ -110,6 +110,13 @@ struct BrewDetailView: View {
                     .background(.thinMaterial)
                     .cornerRadius(12)
                     .padding(.horizontal)
+                    
+                    if brew.creatorId == userManager.currentUID {
+                        NavigationLink(destination: EditBrewView(brew: brew)) {
+                            Text("Edit Brew")
+                                .background(Color.brown.opacity(0.3))
+                        }
+                    }
                 }
                 .padding(.bottom, 20)
             }
