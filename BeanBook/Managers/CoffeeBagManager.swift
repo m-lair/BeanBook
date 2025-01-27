@@ -5,8 +5,9 @@
 //  Created by Marcus Lair on 1/25/25.
 //
 
-
-import FirebaseFirestore
+import Foundation
+import Observation
+import FirebaseAuth
 import FirebaseFirestore
 
 @Observable
@@ -15,34 +16,25 @@ class CoffeeBagManager {
     private let db = Firestore.firestore()
     private var listener: ListenerRegistration?
 
-    func startListening() {
-        stopListening() // Remove any previous listener
-
-        listener = db.collection("coffeeBags")
-            .order(by: "dateAdded", descending: true)
-            .addSnapshotListener { [weak self] snapshot, error in
-                guard let self = self else { return }
-                if let error = error {
-                    print("Error listening to coffeeBags: \(error)")
-                    return
-                }
-                self.bags = snapshot?.documents.compactMap {
-                    try? $0.data(as: CoffeeBag.self)
-                } ?? []
-            }
-    }
-
-    func stopListening() {
-        listener?.remove()
-        listener = nil
-    }
-
-    func addBag(_ bag: CoffeeBag) {
+    func fetchCoffeeBags() async {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
         do {
-            _ = try db.collection("coffeeBags").addDocument(from: bag)
+            let snapshot = try await db.collection("coffeeBags")
+                .whereField("userId", isEqualTo: userId)
+                .order(by: "createdAt", descending: true)
+                .getDocuments()
+            self.bags = snapshot.documents.compactMap {
+                try? $0.data(as: CoffeeBag.self)
+            }
         } catch {
-            print("Error adding bag: \(error)")
+            print("error fetching coffee bags: \(error)")
         }
+    }
+
+    func addBag(_ bag: CoffeeBag) async throws -> String {
+        let docRef = try db.collection("coffeeBags").addDocument(from: bag)
+        return docRef.documentID
     }
 
     func updateBag(_ bag: CoffeeBag) {

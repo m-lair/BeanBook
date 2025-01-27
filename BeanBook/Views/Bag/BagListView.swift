@@ -17,11 +17,8 @@ struct BagListView: View {
                     .font(.subheadline)
             }
         }
-        .onAppear {
-            bagManager.startListening()
-        }
-        .onDisappear {
-            bagManager.stopListening()
+        .task {
+            await bagManager.fetchCoffeeBags()
         }
     }
 }

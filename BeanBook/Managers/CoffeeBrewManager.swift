@@ -152,6 +152,14 @@ class CoffeeBrewManager {
             print("Error updating brew: \(error)")
         }
     }
+    
+    func deleteBrew(withId id: String) async {
+        do {
+            try await db.collection("coffeeBrews").document(id).delete()
+        } catch {
+            print("Error deleting brew: \(error)")
+        }
+    }
 
     
     // ---------------------------------------

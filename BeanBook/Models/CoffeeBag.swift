@@ -14,17 +14,23 @@ struct CoffeeBag: Identifiable, Codable {
     var brandName: String
     var roastLevel: String
     var origin: String
+    var userName: String // user that added the bag
+    var userId: String
     var createdAt: Date = Date()
 
     init(
         id: String? = nil,
         brandName: String,
         roastLevel: String,
+        userName: String,
+        userId: String,
         origin: String
     ) {
         self.id = id
         self.brandName = brandName
         self.roastLevel = roastLevel
+        self.userName = userName
+        self.userId = userId
         self.origin = origin
     }
 }

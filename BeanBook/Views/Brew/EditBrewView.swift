@@ -114,17 +114,12 @@ struct EditBrewView: View {
         }
         .navigationTitle("Edit Brew")
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button("Cancel") {
-                    dismiss()
-                }
-            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Save") {
                     Task {
                         // Convert numeric values back to strings
                         let brewTimeStr = "\(brewTimeSeconds)s"
-                        let coffeeStr   = "\(Double(coffeeAmount))g"
+                        let coffeeStr   = String(format: "%.1f", coffeeAmount) + "g"
                         let waterStr    = "\(Int(waterAmount))g"
                         
                         // Create an updated copy of the brew

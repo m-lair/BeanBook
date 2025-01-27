@@ -1,35 +1,30 @@
-//
-//  NewBrewView.swift
-//  BeanBook
-//
-//  Created by Marcus Lair on 1/22/25.
-//
 import SwiftUI
 
 struct NewBrewView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AuthManager.self) var authManager
     @Environment(CoffeeBrewManager.self) var brewManager
-    
+    @Environment(CoffeeBagManager.self) var bagManager  // so we can save bag
+
     // Basic text fields
     @State private var title = ""
     
-    // Let’s do an enum for the method with a segmented picker
+    // Brew method, amounts, etc.
     @State private var selectedMethod: BrewMethod = .espresso
-    
-    // For coffee & water amounts, we’ll store numeric doubles so we can use steppers
     @State private var coffeeAmount = 18.0
     @State private var waterAmount = 30.0
-    
-    // For brew time in seconds, we’ll do a wheel-style Picker from 10...240, stepping by 5
     @State private var brewTimeSeconds = 30
-    
-    // Another enum for grind size, also shown in a segmented picker
     @State private var selectedGrindSize: GrindSize = .fine
-    
-    // Multiline text for additional notes
     @State private var notes = ""
     
+    // Toggle for including a new bag
+    @State private var bagToggle: Bool = false
+    
+    // Bag fields (only used if bagToggle is on)
+    @State private var brandName: String = ""
+    @State private var bagOrigin: String = ""
+    @State private var selectedRoast: RoastLevel = .medium
+
     var body: some View {
         NavigationStack {
             Form {
@@ -44,8 +39,20 @@ struct NewBrewView: View {
                     .pickerStyle(.segmented)
                 }
                 
+                // Coffee Bag Info
+                Toggle("Add Coffee Bag Info", isOn: $bagToggle)
+                    
+                    // If toggle is on, show the BagDetailsForm
+                if bagToggle {
+                    BagDetailsForm(
+                        brandName: $brandName,
+                        origin: $bagOrigin,
+                        selectedRoast: $selectedRoast
+                    )
+                }
+                
+                // Brew amounts
                 Section("Amounts") {
-                    // Coffee
                     Stepper(value: $coffeeAmount, in: 5.0...50.0, step: 0.1) {
                         HStack {
                             Text("Coffee")
@@ -55,7 +62,6 @@ struct NewBrewView: View {
                         }
                     }
                     
-                    // Water
                     Stepper(value: $waterAmount, in: 10...500, step: 1) {
                         HStack {
                             Text("Water")
@@ -66,20 +72,19 @@ struct NewBrewView: View {
                     }
                 }
                 
+                // Brew time & grind
                 Section("Brew Time & Grind") {
-                    // We'll use a wheel-style picker for brew time
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Brew Time (seconds)")
                             .font(.headline)
                         
                         Picker("Brew Time", selection: $brewTimeSeconds) {
-                            // Generate a list of times in 5-second increments
-                            ForEach(stride(from: 10, through: 240, by: 5).map({ Int($0) }), id: \.self) { sec in
+                            ForEach(Array(stride(from: 10, through: 240, by: 5)), id: \.self) { sec in
                                 Text("\(sec) s").tag(sec)
                             }
                         }
                         .pickerStyle(.wheel)
-                        .frame(height: 120) // Enough room for the wheel
+                        .frame(height: 120)
                     }
                     
                     Picker("Grind Size", selection: $selectedGrindSize) {
@@ -90,12 +95,13 @@ struct NewBrewView: View {
                     .pickerStyle(.segmented)
                 }
                 
+                // Notes
                 Section("Notes") {
                     TextField("Additional Notes", text: $notes, axis: .vertical)
                         .lineLimit(4, reservesSpace: true)
                 }
             }
-            .formStyle(.grouped)  // iOS 17+ modern grouping style (should look nice in iOS 18)
+            .formStyle(.grouped)
             .navigationTitle("Add Brew")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -108,12 +114,28 @@ struct NewBrewView: View {
                         Task {
                             guard let user = authManager.user else { return }
                             
-                            // Convert numeric values to strings
+                            // 1) Convert numeric values to strings
                             let brewTimeStr = "\(brewTimeSeconds)s"
-                            let coffeeStr   = "\(Double(coffeeAmount))g"
+                            let coffeeStr   = String(format: "%.1f", coffeeAmount) + "g"
                             let waterStr    = "\(Int(waterAmount))g"
                             
-                            let brew = CoffeeBrew(
+                            // 2) If bagToggle is on, create a bag first
+                            var bagId: String? = nil
+                            if bagToggle {
+                                let newBag = CoffeeBag(
+                                    brandName: brandName,
+                                    roastLevel: selectedRoast.rawValue.capitalized,
+                                    userName: user.displayName ?? "Anonymous",
+                                    userId: user.uid,
+                                    origin: bagOrigin
+                                )
+                                
+                                // The addBag(...) function can return the new doc ID
+                                bagId = try? await bagManager.addBag(newBag)
+                            }
+                            
+                            // 3) Build the brew object. If bagId is not nil, attach it
+                            var brew = CoffeeBrew(
                                 title: title,
                                 method: selectedMethod.rawValue.capitalized,
                                 coffeeAmount: coffeeStr,
@@ -125,9 +147,14 @@ struct NewBrewView: View {
                                 notes: notes
                             )
                             
+                            brew.bagId = bagId
+                            
+                            // 4) Save brew
                             await brewManager.addBrew(brew)
+                            
+                            // 5) Dismiss
+                            dismiss()
                         }
-                        dismiss()
                     }
                 }
             }
@@ -135,12 +162,42 @@ struct NewBrewView: View {
     }
 }
 
-// MARK: - Supporting Enums
-
+// MARK: - BrewMethod & GrindSize
 enum BrewMethod: String, CaseIterable {
     case espresso, pourOver, frenchPress, coldBrew
 }
 
 enum GrindSize: String, CaseIterable {
     case fine, medium, coarse
+}
+
+
+/// A sub-form to capture coffee bag info, with no separate toolbar or navigation.
+struct BagDetailsForm: View {
+    @Binding var brandName: String
+    @Binding var origin: String
+    @Binding var selectedRoast: RoastLevel
+    
+    var body: some View {
+        // We'll replicate the two sections from your NewBagView style:
+        Section("Basic Info") {
+            TextField("Brand Name (e.g. 'Intelligentsia')", text: $brandName)
+            
+            Picker("Roast Level", selection: $selectedRoast) {
+                ForEach(RoastLevel.allCases, id: \.self) { roast in
+                    Text(roast.rawValue.capitalized).tag(roast)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+        
+        Section("Origin") {
+            TextField("Origin (e.g. 'Ethiopia')", text: $origin)
+        }
+    }
+}
+
+// You can keep the same roast enum in here or in a shared file
+enum RoastLevel: String, CaseIterable {
+    case light, medium, dark
 }

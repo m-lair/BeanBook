@@ -13,9 +13,10 @@ struct BrewDetailView: View {
     @Environment(UserManager.self) private var userManager
     // For updating saveCount
     @Environment(CoffeeBrewManager.self) private var brewManager
-    
+    @Environment(\.dismiss) private var dismiss
     @State private var favorited: Bool = false
-    @State private var localSaveCount: Int = 0  // Track # times saved
+    @State private var localSaveCount: Int = 0
+    @State private var showEditView: Bool = false
     
     var body: some View {
         ZStack {
@@ -111,14 +112,41 @@ struct BrewDetailView: View {
                     .cornerRadius(12)
                     .padding(.horizontal)
                     
-                    if brew.creatorId == userManager.currentUID {
-                        NavigationLink(destination: EditBrewView(brew: brew)) {
-                            Text("Edit Brew")
-                                .background(Color.brown.opacity(0.3))
+                    Spacer()
+                    
+                    VStack(alignment: .center) {
+                        if brew.creatorId == userManager.currentUID {
+                            PressAndHoldActionButton(
+                                label: "Edit Brew",
+                                baseColor: Color.brown.opacity(0.3),
+                                fillColor: Color.brown.opacity(0.8),
+                                holdDuration: 1.0  // maybe just 1 second to edit
+                            ) {
+                                showEditView = true
+                            }
+                            
+                            PressAndHoldActionButton(
+                                label: "Delete Brew",
+                                baseColor: Color.red.opacity(0.3),
+                                fillColor: Color.red,
+                                holdDuration: 2.0
+                            ) {
+                                Task {
+                                    // 1) Perform the delete
+                                    await brewManager.deleteBrew(withId: brew.id ?? "")
+                                    
+                                    // 2) Dismiss the detail view
+                                    dismiss()
+                                }
+                            }
                         }
                     }
+                    .padding(.horizontal)
                 }
                 .padding(.bottom, 20)
+            }
+            .sheet(isPresented: $showEditView) {
+                EditBrewView(brew: brew)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
