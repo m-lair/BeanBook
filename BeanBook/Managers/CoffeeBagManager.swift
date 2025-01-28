@@ -31,6 +31,15 @@ class CoffeeBagManager {
             print("error fetching coffee bags: \(error)")
         }
     }
+    
+    func fetchById(_ id: String) async throws -> CoffeeBag {
+        let docRef = db.collection("coffeeBags").document(id)
+        let documentSnapshot = try await docRef.getDocument()
+        guard let bagData = try? documentSnapshot.data(as: CoffeeBag.self)
+        
+        else { throw NSError(domain: "", code: 0, userInfo: nil) }
+        return bagData
+    }
 
     func addBag(_ bag: CoffeeBag) async throws -> String {
         let docRef = try db.collection("coffeeBags").addDocument(from: bag)
@@ -47,13 +56,9 @@ class CoffeeBagManager {
         }
     }
 
-    func deleteBag(_ bag: CoffeeBag) {
+    func deleteBag(_ bag: CoffeeBag) async throws {
         guard let bagId = bag.id else { return }
-        db.collection("coffeeBags").document(bagId)
-            .delete { error in
-                if let error = error {
-                    print("Error deleting bag: \(error)")
-                }
-            }
+        try await db.collection("coffeeBags").document(bagId)
+            .delete()
     }
 }

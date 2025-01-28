@@ -18,6 +18,7 @@ struct NewBagView: View {
     // Basic TextFields
     @State private var brandName = ""
     @State private var origin = ""
+    @State private var location = ""
     
     // Segmented picker for roast levels
     @State private var selectedRoast: RoastLevel = .medium
@@ -26,7 +27,7 @@ struct NewBagView: View {
         // MARK: - Basic Info
         Section("Basic Info") {
             TextField("Brand Name (e.g. 'Intelligentsia')", text: $brandName)
-            
+            TextField("Location (e.ge 'Chicago')", text: $location)
             Picker("Roast Level", selection: $selectedRoast) {
                 ForEach(RoastLevel.allCases, id: \.self) { roast in
                     Text(roast.rawValue.capitalized).tag(roast)
@@ -61,6 +62,7 @@ struct NewBagView: View {
                             roastLevel: selectedRoast.rawValue.capitalized,
                             userName: authManager.user!.displayName ?? "Anonymous",
                             userId: userManager.currentUID ?? "Anonymous",
+                            location: location,
                             origin: origin
                         )
                         

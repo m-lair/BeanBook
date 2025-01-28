@@ -1,10 +1,13 @@
+
+import FirebaseStorage
 import SwiftUI
 
 struct NewBrewView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AuthManager.self) var authManager
     @Environment(CoffeeBrewManager.self) var brewManager
-    @Environment(CoffeeBagManager.self) var bagManager  // so we can save bag
+    @Environment(UserManager.self) var userManager
+    @Environment(CoffeeBagManager.self) var bagManager
 
     // Basic text fields
     @State private var title = ""
@@ -24,6 +27,11 @@ struct NewBrewView: View {
     @State private var brandName: String = ""
     @State private var bagOrigin: String = ""
     @State private var selectedRoast: RoastLevel = .medium
+    @State private var location: String = ""
+    
+    // Image vars
+    @State private var coffeeImage: UIImage?
+    @State private var showCamera = false
 
     var body: some View {
         NavigationStack {
@@ -47,6 +55,7 @@ struct NewBrewView: View {
                     BagDetailsForm(
                         brandName: $brandName,
                         origin: $bagOrigin,
+                        location: $location,
                         selectedRoast: $selectedRoast
                     )
                 }
@@ -95,6 +104,19 @@ struct NewBrewView: View {
                     .pickerStyle(.segmented)
                 }
                 
+                Section("Coffee Photo") {
+                    Button{ showCamera = true } label: {
+                        if let coffeeImage {
+                            Image(uiImage: coffeeImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 200)
+                        } else {
+                            Label("Take Coffee Photo", systemImage: "camera")
+                        }
+                    }
+                }
+                
                 // Notes
                 Section("Notes") {
                     TextField("Additional Notes", text: $notes, axis: .vertical)
@@ -125,8 +147,9 @@ struct NewBrewView: View {
                                 let newBag = CoffeeBag(
                                     brandName: brandName,
                                     roastLevel: selectedRoast.rawValue.capitalized,
-                                    userName: user.displayName ?? "Anonymous",
+                                    userName: userManager.currentUserProfile?.displayName ?? "Anonymous",
                                     userId: user.uid,
+                                    location: location,
                                     origin: bagOrigin
                                 )
                                 
@@ -148,6 +171,9 @@ struct NewBrewView: View {
                             )
                             
                             brew.bagId = bagId
+                            if let coffeeImage {
+                                brew.imageURL = try await uploadCoffeeImage(coffeeImage, userId: user.uid)
+                            }
                             
                             // 4) Save brew
                             await brewManager.addBrew(brew)
@@ -157,6 +183,36 @@ struct NewBrewView: View {
                         }
                     }
                 }
+            }
+        }
+    }
+    
+    // Enhanced upload function with error handling
+    private func uploadCoffeeImage(_ image: UIImage, userId: String) async throws -> String {
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            throw UploadError.invalidImageData
+        }
+        
+        let storageRef = Storage.storage().reference()
+        let imageName = "\(UUID().uuidString).jpg"
+        let userFolderRef = storageRef.child("users/\(userId)/brews/\(imageName)")
+        
+        do {
+            _ = try await userFolderRef.putDataAsync(imageData)
+            return try await userFolderRef.downloadURL().absoluteString
+        } catch {
+            throw UploadError.firebaseError(error)
+        }
+    }
+
+    enum UploadError: Error, LocalizedError {
+        case invalidImageData
+        case firebaseError(Error)
+        
+        var errorDescription: String? {
+            switch self {
+            case .invalidImageData: "Failed to process image"
+            case .firebaseError(let error): "Upload failed: \(error.localizedDescription)"
             }
         }
     }
@@ -176,13 +232,14 @@ enum GrindSize: String, CaseIterable {
 struct BagDetailsForm: View {
     @Binding var brandName: String
     @Binding var origin: String
+    @Binding var location: String
     @Binding var selectedRoast: RoastLevel
     
     var body: some View {
         // We'll replicate the two sections from your NewBagView style:
         Section("Basic Info") {
             TextField("Brand Name (e.g. 'Intelligentsia')", text: $brandName)
-            
+            TextField("Location (e.ge 'Chicago')", text: $location)
             Picker("Roast Level", selection: $selectedRoast) {
                 ForEach(RoastLevel.allCases, id: \.self) { roast in
                     Text(roast.rawValue.capitalized).tag(roast)

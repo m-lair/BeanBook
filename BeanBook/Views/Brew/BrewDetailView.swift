@@ -13,10 +13,12 @@ struct BrewDetailView: View {
     @Environment(UserManager.self) private var userManager
     // For updating saveCount
     @Environment(CoffeeBrewManager.self) private var brewManager
+    @Environment(CoffeeBagManager.self) private var bagManager
     @Environment(\.dismiss) private var dismiss
     @State private var favorited: Bool = false
     @State private var localSaveCount: Int = 0
     @State private var showEditView: Bool = false
+    @State private var coffeeBag: CoffeeBag? = nil
     
     var body: some View {
         ZStack {
@@ -97,6 +99,24 @@ struct BrewDetailView: View {
                             infoRow(label: "Brew Time", value: brew.brewTime)
                             infoRow(label: "Grind Size", value: brew.grindSize)
                         }
+                        if let coffeeBag {
+                        Text("Coffee Bag Info")
+                            .font(.headline)
+            
+                        
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("**Brand:** \(coffeeBag.brandName)")
+                                Text("**Roast:** \(coffeeBag.roastLevel)")
+                                Text("**Origin:** \(coffeeBag.origin)")
+                                Text("**Added by:** \(coffeeBag.userName)")
+                            }
+                            .padding()
+                            .background(.thinMaterial)
+                            .cornerRadius(12)
+                            .padding(.horizontal)
+                            
+                        }
+                    
                         
                         // Notes
                         if let notes = brew.notes, !notes.isEmpty {
@@ -134,7 +154,9 @@ struct BrewDetailView: View {
                                 Task {
                                     // 1) Perform the delete
                                     await brewManager.deleteBrew(withId: brew.id ?? "")
-                                    
+                                    if let coffeeBag {
+                                        try await bagManager.deleteBag(coffeeBag)
+                                    }
                                     // 2) Dismiss the detail view
                                     dismiss()
                                 }
@@ -178,6 +200,14 @@ struct BrewDetailView: View {
         .onAppear {
             favorited = userManager.isFavorite(brew: brew)
             localSaveCount = brew.saveCount
+            
+        }
+        .task {
+            if let bagId = brew.bagId {
+                Task {
+                    self.coffeeBag = try await bagManager.fetchById(bagId)
+                }
+            }
         }
     }
     
