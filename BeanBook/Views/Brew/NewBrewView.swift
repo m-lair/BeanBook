@@ -34,7 +34,8 @@ struct NewBrewView: View {
     // Image vars
     @State private var coffeeImage: UIImage?
     @State private var showCamera = false
-
+    @State private var isUploading = false
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -51,8 +52,8 @@ struct NewBrewView: View {
                 
                 // Coffee Bag Info
                 Toggle("Add Coffee Bag Info", isOn: $bagToggle)
-                    
-                    // If toggle is on, show the BagDetailsForm
+                
+                // If toggle is on, show the BagDetailsForm
                 if bagToggle {
                     BagDetailsForm(
                         brandName: $brandName,
@@ -107,17 +108,28 @@ struct NewBrewView: View {
                 }
                 
                 Section("Coffee Photo") {
-                    Button{ showCamera = true } label: {
-                        if let coffeeImage {
-                            Image(uiImage: coffeeImage)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 200)
-                        } else {
-                            Label("Take Coffee Photo", systemImage: "camera")
+                    Button(action: checkCameraAvailability) {
+                        HStack {
+                            if let coffeeImage {
+                                Image(uiImage: coffeeImage)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 200)
+                            } else {
+                                Label("Take Coffee Photo", systemImage: "camera")
+                            }
+                        }
+                    }
+                    .overlay {
+                        if isUploading {
+                            ProgressView()
+                                .tint(.white)
+                                .padding(8)
+                                .background(Circle().fill(.brown.opacity(0.8)))
                         }
                     }
                 }
+                .disabled(isUploading)
                 
                 // Notes
                 Section("Notes") {
@@ -145,8 +157,12 @@ struct NewBrewView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         Task {
-                            guard let user = authManager.user else { return }
+                            isUploading = true
+                            defer { isUploading = false }
+                            
+                            
                             do {
+                                guard let user = authManager.user else { return }
                                 // 1) Convert numeric values to strings
                                 let brewTimeStr = "\(brewTimeSeconds)s"
                                 let coffeeStr   = String(format: "%.1f", coffeeAmount) + "g"
@@ -188,46 +204,85 @@ struct NewBrewView: View {
                                 
                                 // 4) Save brew
                                 await brewManager.addBrew(brew)
+                                dismiss()
                             } catch {
                                 print(error.localizedDescription)
                                 errorMessage = error.localizedDescription
                                 showAlert = true
                             }
-                            // 5) Dismiss
-                            dismiss()
+                            
                         }
                     }
+                    .disabled(isUploading)
                 }
             }
         }
     }
     
-    // Enhanced upload function with error handling
+    private func checkCameraAvailability() {
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            showAlert = true
+            return
+        }
+        showCamera = true
+    }
+    
+    // MARK: - Image Processing & Upload
+    private func resizedImage(_ image: UIImage, maxDimension: CGFloat) -> UIImage? {
+        let aspectRatio = image.size.width / image.size.height
+        var newSize = CGSize(width: maxDimension, height: maxDimension)
+        
+        if aspectRatio > 1 { // Landscape
+            newSize.height = maxDimension / aspectRatio
+        } else { // Portrait
+            newSize.width = maxDimension * aspectRatio
+        }
+        
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+    }
+    
     private func uploadCoffeeImage(_ image: UIImage, userId: String) async throws -> String {
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+        // Resize and compress
+        guard let resizedImage = resizedImage(image, maxDimension: 1200) else {
+            throw UploadError.imageProcessingFailed
+        }
+        
+        guard let imageData = resizedImage.jpegData(compressionQuality: 0.75) else {
             throw UploadError.invalidImageData
         }
         
         let storageRef = Storage.storage().reference()
-        let imageName = "\(UUID().uuidString).jpg"
+        let imageName = "\(Int(Date().timeIntervalSince1970))_\(UUID().uuidString).jpg"
         let userFolderRef = storageRef.child("users/\(userId)/brews/\(imageName)")
         
         do {
-            _ = try await userFolderRef.putDataAsync(imageData)
+            let metadata = StorageMetadata()
+            metadata.contentType = "image/jpeg"
+            
+            _ = try await userFolderRef.putDataAsync(imageData, metadata: metadata)
             return try await userFolderRef.downloadURL().absoluteString
         } catch {
             throw UploadError.firebaseError(error)
         }
     }
-
+    
+    // Updated error handling
     enum UploadError: Error, LocalizedError {
         case invalidImageData
+        case imageProcessingFailed
         case firebaseError(Error)
         
         var errorDescription: String? {
             switch self {
-            case .invalidImageData: "Failed to process image"
-            case .firebaseError(let error): "Upload failed: \(error.localizedDescription)"
+            case .invalidImageData:
+                return "Failed to process image data"
+            case .imageProcessingFailed:
+                return "Could not resize image"
+            case .firebaseError(let error):
+                return "Upload failed: \(error.localizedDescription)"
             }
         }
     }
