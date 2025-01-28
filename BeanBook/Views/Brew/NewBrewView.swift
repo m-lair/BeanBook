@@ -8,7 +8,9 @@ struct NewBrewView: View {
     @Environment(CoffeeBrewManager.self) var brewManager
     @Environment(UserManager.self) var userManager
     @Environment(CoffeeBagManager.self) var bagManager
-
+    
+    @State private var showAlert: Bool = false
+    @State private var errorMessage: String? = nil
     // Basic text fields
     @State private var title = ""
     
@@ -127,6 +129,12 @@ struct NewBrewView: View {
             .fullScreenCover(isPresented: $showCamera) {
                 CameraView(image: $coffeeImage)
             }
+            .alert("errorMessage", isPresented: $showAlert) {
+                Button("OK") {
+                    errorMessage = nil
+                    showAlert = false
+                }
+            }
             .navigationTitle("Add Brew")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -138,49 +146,53 @@ struct NewBrewView: View {
                     Button("Save") {
                         Task {
                             guard let user = authManager.user else { return }
-                            
-                            // 1) Convert numeric values to strings
-                            let brewTimeStr = "\(brewTimeSeconds)s"
-                            let coffeeStr   = String(format: "%.1f", coffeeAmount) + "g"
-                            let waterStr    = "\(Int(waterAmount))g"
-                            
-                            // 2) If bagToggle is on, create a bag first
-                            var bagId: String? = nil
-                            if bagToggle {
-                                let newBag = CoffeeBag(
-                                    brandName: brandName,
-                                    roastLevel: selectedRoast.rawValue.capitalized,
-                                    userName: userManager.currentUserProfile?.displayName ?? "Anonymous",
-                                    userId: user.uid,
-                                    location: location,
-                                    origin: bagOrigin
+                            do {
+                                // 1) Convert numeric values to strings
+                                let brewTimeStr = "\(brewTimeSeconds)s"
+                                let coffeeStr   = String(format: "%.1f", coffeeAmount) + "g"
+                                let waterStr    = "\(Int(waterAmount))g"
+                                
+                                // 2) If bagToggle is on, create a bag first
+                                var bagId: String? = nil
+                                if bagToggle {
+                                    let newBag = CoffeeBag(
+                                        brandName: brandName,
+                                        roastLevel: selectedRoast.rawValue.capitalized,
+                                        userName: userManager.currentUserProfile?.displayName ?? "Anonymous",
+                                        userId: user.uid,
+                                        location: location,
+                                        origin: bagOrigin
+                                    )
+                                    
+                                    // The addBag(...) function can return the new doc ID
+                                    bagId = try? await bagManager.addBag(newBag)
+                                }
+                                
+                                // 3) Build the brew object. If bagId is not nil, attach it
+                                var brew = CoffeeBrew(
+                                    title: title,
+                                    method: selectedMethod.rawValue.capitalized,
+                                    coffeeAmount: coffeeStr,
+                                    waterAmount: waterStr,
+                                    brewTime: brewTimeStr,
+                                    grindSize: selectedGrindSize.rawValue.capitalized,
+                                    creatorName: user.displayName ?? "",
+                                    creatorId: user.uid,
+                                    notes: notes
                                 )
                                 
-                                // The addBag(...) function can return the new doc ID
-                                bagId = try? await bagManager.addBag(newBag)
+                                brew.bagId = bagId
+                                if let coffeeImage {
+                                    brew.imageURL = try await uploadCoffeeImage(coffeeImage, userId: user.uid)
+                                }
+                                
+                                // 4) Save brew
+                                await brewManager.addBrew(brew)
+                            } catch {
+                                print(error.localizedDescription)
+                                errorMessage = error.localizedDescription
+                                showAlert = true
                             }
-                            
-                            // 3) Build the brew object. If bagId is not nil, attach it
-                            var brew = CoffeeBrew(
-                                title: title,
-                                method: selectedMethod.rawValue.capitalized,
-                                coffeeAmount: coffeeStr,
-                                waterAmount: waterStr,
-                                brewTime: brewTimeStr,
-                                grindSize: selectedGrindSize.rawValue.capitalized,
-                                creatorName: user.displayName ?? "",
-                                creatorId: user.uid,
-                                notes: notes
-                            )
-                            
-                            brew.bagId = bagId
-                            if let coffeeImage {
-                                brew.imageURL = try await uploadCoffeeImage(coffeeImage, userId: user.uid)
-                            }
-                            
-                            // 4) Save brew
-                            await brewManager.addBrew(brew)
-                            
                             // 5) Dismiss
                             dismiss()
                         }
