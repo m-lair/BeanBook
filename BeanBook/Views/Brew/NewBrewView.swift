@@ -124,6 +124,9 @@ struct NewBrewView: View {
                 }
             }
             .formStyle(.grouped)
+            .fullScreenCover(isPresented: $showCamera) {
+                CameraView(image: $coffeeImage)
+            }
             .navigationTitle("Add Brew")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
