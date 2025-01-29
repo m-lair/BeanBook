@@ -9,6 +9,7 @@ import SwiftUI
 struct ProfileView: View {
     @Environment(AuthManager.self) var authManager
     @Environment(CoffeeBrewManager.self) var brewManager
+    @Environment(CoffeeBagManager.self) var bagManager
     @Environment(UserManager.self) var userManager
     
     @State private var showNewBrew = false
@@ -57,9 +58,12 @@ struct ProfileView: View {
                     // MARK: - Display the Selected List
                     if selectedSegment == .myBrews {
                         listContainer(brews: brewManager.userBrews)
-                    } else {
+                    } else if selectedSegment == .favorites {
                         listContainer(brews: favoriteBrews)
+                    } else {
+                        BagListView()
                     }
+                    
                     
                     Spacer(minLength: 0)
                 }
@@ -90,6 +94,7 @@ struct ProfileView: View {
                 // Fetch the user profile
                 await userManager.fetchUserProfile()
                 
+                await bagManager.fetchCoffeeBags()
                 // After we know the user's favorites, fetch the brew objects
                 if let favorites = userManager.currentUserProfile?.favorites {
                     favoriteBrews = await brewManager.fetchFavoriteBrews(for: favorites)
@@ -183,16 +188,20 @@ struct ProfileView: View {
         .padding(.horizontal, 16)
         .frame(maxHeight: .infinity)
     }
+    
 }
 
 // MARK: - Segmented Picker Enum
 enum ProfileSegment: CaseIterable {
     case myBrews
+    case myBags
     case favorites
+    
     
     var title: String {
         switch self {
         case .myBrews: return "My Brews"
+        case .myBags: return "My Bags"
         case .favorites: return "Favorites"
         }
     }

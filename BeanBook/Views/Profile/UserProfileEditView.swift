@@ -66,6 +66,7 @@ struct UserProfileEditView: View {
                         onSave: { saveProfileChanges() }
                     )
                 }
+                .ignoresSafeArea(.keyboard)
                 .padding(.top, 40)
                 .padding(.horizontal, 16)
             }

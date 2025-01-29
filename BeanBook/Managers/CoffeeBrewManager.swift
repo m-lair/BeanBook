@@ -140,6 +140,28 @@ class CoffeeBrewManager {
         }
     }
     
+    
+    // ---------------------------------------
+    // MARK: - Update Brew
+    // ---------------------------------------
+    func updateBrew(_ brew: CoffeeBrew) async {
+        guard let brewId = brew.id else { return }
+        do {
+            try db.collection("coffeeBrews").document(brewId).setData(from: brew, merge: true)
+        } catch {
+            print("Error updating brew: \(error)")
+        }
+    }
+    
+    func deleteBrew(withId id: String) async {
+        do {
+            try await db.collection("coffeeBrews").document(id).delete()
+        } catch {
+            print("Error deleting brew: \(error)")
+        }
+    }
+
+    
     // ---------------------------------------
     // MARK: - Get Creator Name
     // ---------------------------------------

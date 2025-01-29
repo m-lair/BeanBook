@@ -13,9 +13,12 @@ struct BrewDetailView: View {
     @Environment(UserManager.self) private var userManager
     // For updating saveCount
     @Environment(CoffeeBrewManager.self) private var brewManager
-    
+    @Environment(CoffeeBagManager.self) private var bagManager
+    @Environment(\.dismiss) private var dismiss
     @State private var favorited: Bool = false
-    @State private var localSaveCount: Int = 0  // Track # times saved
+    @State private var localSaveCount: Int = 0
+    @State private var showEditView: Bool = false
+    @State private var coffeeBag: CoffeeBag? = nil
     
     var body: some View {
         ZStack {
@@ -96,6 +99,24 @@ struct BrewDetailView: View {
                             infoRow(label: "Brew Time", value: brew.brewTime)
                             infoRow(label: "Grind Size", value: brew.grindSize)
                         }
+                        if let coffeeBag {
+                        Text("Coffee Bag Info")
+                            .font(.headline)
+            
+                        
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("**Brand:** \(coffeeBag.brandName)")
+                                Text("**Roast:** \(coffeeBag.roastLevel)")
+                                Text("**Origin:** \(coffeeBag.origin)")
+                                Text("**Added by:** \(coffeeBag.userName)")
+                            }
+                            .padding()
+                            .background(.thinMaterial)
+                            .cornerRadius(12)
+                            .padding(.horizontal)
+                            
+                        }
+                    
                         
                         // Notes
                         if let notes = brew.notes, !notes.isEmpty {
@@ -110,8 +131,44 @@ struct BrewDetailView: View {
                     .background(.thinMaterial)
                     .cornerRadius(12)
                     .padding(.horizontal)
+                    
+                    Spacer()
+                    
+                    VStack(alignment: .center) {
+                        if brew.creatorId == userManager.currentUID {
+                            PressAndHoldActionButton(
+                                label: "Edit Brew",
+                                baseColor: Color.brown.opacity(0.3),
+                                fillColor: Color.brown.opacity(0.8),
+                                holdDuration: 1.0  // maybe just 1 second to edit
+                            ) {
+                                showEditView = true
+                            }
+                            
+                            PressAndHoldActionButton(
+                                label: "Delete Brew",
+                                baseColor: Color.red.opacity(0.3),
+                                fillColor: Color.red,
+                                holdDuration: 2.0
+                            ) {
+                                Task {
+                                    // 1) Perform the delete
+                                    await brewManager.deleteBrew(withId: brew.id ?? "")
+                                    if let coffeeBag {
+                                        try await bagManager.deleteBag(coffeeBag)
+                                    }
+                                    // 2) Dismiss the detail view
+                                    dismiss()
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
                 }
                 .padding(.bottom, 20)
+            }
+            .sheet(isPresented: $showEditView) {
+                EditBrewView(brew: brew)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -143,6 +200,14 @@ struct BrewDetailView: View {
         .onAppear {
             favorited = userManager.isFavorite(brew: brew)
             localSaveCount = brew.saveCount
+            
+        }
+        .task {
+            if let bagId = brew.bagId {
+                Task {
+                    self.coffeeBag = try await bagManager.fetchById(bagId)
+                }
+            }
         }
     }
     
