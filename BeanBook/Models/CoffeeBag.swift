@@ -16,6 +16,7 @@ struct CoffeeBag: Identifiable, Codable {
     var origin: String
     var userName: String // user that added the bag
     var userId: String
+    var imageURL: String?
     var location: String?
     var createdAt: Date = Date()
 
@@ -25,6 +26,7 @@ struct CoffeeBag: Identifiable, Codable {
         roastLevel: String,
         userName: String,
         userId: String,
+        imageURL: String? = nil,
         location: String,
         origin: String
     ) {
@@ -33,6 +35,7 @@ struct CoffeeBag: Identifiable, Codable {
         self.roastLevel = roastLevel
         self.userName = userName
         self.userId = userId
+        self.imageURL = imageURL
         self.location = location
         self.origin = origin
     }

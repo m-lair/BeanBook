@@ -31,6 +31,7 @@ class UserManager {
             let snapshot = try await db.collection("users").document(uid).getDocument()
             let profile = try snapshot.data(as: UserProfile.self)
             currentUserProfile = profile
+            print("currentUserProfile: \(profile.displayName)")
         } catch {
             print("error fetching User Profile: \(error.localizedDescription)")
         }

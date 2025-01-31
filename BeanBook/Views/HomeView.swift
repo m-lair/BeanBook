@@ -75,11 +75,43 @@ struct HomeView: View {
                 .shadow(color: .brown.opacity(0.4), radius: 3, x: 0, y: 3)
             
             HStack(spacing: 12) {
-                Image(systemName: "cup.and.saucer.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 40, height: 40)
-                    .foregroundColor(.brown)
+                if let imageURL = brew.imageURL,
+                   let url = URL(string: imageURL) {
+                    AsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 50, height: 50)
+                            .foregroundColor(.brown)
+                            .overlay(
+                                LinearGradient(
+                                    gradient: Gradient(
+                                        colors: [.black.opacity(0.0), .black.opacity(0.4)]
+                                    ),
+                                    startPoint: .center,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .clipped()
+                            .clipShape(Circle())
+                    } placeholder: {
+                        ZStack {
+                            Circle()
+                                .fill(Color.brown.opacity(0.2))
+                                .frame(width: 50, height: 50)
+                            ProgressView()
+                        }
+                    }
+                } else {
+                    // If there's no image, use a placeholder
+                    Image(systemName: "cup.and.heat.waves.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(.brown.opacity(0.75), .gray)
+                        .frame(width: 50, height: 50)
+                    
+                }
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(brew.title)
