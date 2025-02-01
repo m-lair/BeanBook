@@ -24,6 +24,12 @@ class UserManager {
         Auth.auth().currentUser?.uid
     }
     
+    init(currentUserProfile: UserProfile? = nil) {
+        Task {
+            await fetchUserProfile()
+        }
+    }
+    
     // MARK: - Fetch the user document
     func fetchUserProfile() async {
         guard let uid = currentUID else { return }

@@ -40,8 +40,8 @@ struct NewBrewView: View {
     // Image handling
     @State private var bagImage: UIImage?
     @State private var coffeeImage: UIImage?
-    @State private var imageType: String?
-    @State private var showCamera = false
+    @State private var showBagCamera = false
+    @State private var showBrewCamera = false
     @State private var isUploading = false
     
     // MARK: - Body
@@ -61,17 +61,14 @@ struct NewBrewView: View {
                         selectedRoast: $selectedRoast
                     )
                     
-                    PhotoSection(
-                        title: "Bag Photo",
-                        image: $bagImage,
-                        buttonLabel: "Coffee Bag",
-                        isUploading: $isUploading
+                    PhotoSection(title: "Bag Photo",
+                                 image: $bagImage,
+                                 buttonLabel: "Coffee Bag Photo",
+                                 isUploading: $isUploading
                     ) {
-                        checkCameraAvailability()
-                        imageType = "bag"
+                        checkCameraAvailability(for: .bag)
                     }
                 }
-                
                 // 3) Brew Parameters
                 BrewParametersSection(
                     selectedMethod: $selectedMethod,
@@ -82,15 +79,13 @@ struct NewBrewView: View {
                     selectedGrindSize: $selectedGrindSize
                 )
                 
-                // 4) Coffee Photo (Brew photo)
-                PhotoSection(
-                    title: "Coffee Photo",
-                    image: $coffeeImage,
-                    buttonLabel: "Take Coffee Photo",
-                    isUploading: $isUploading
+                // Brew Photo Section
+                PhotoSection(title: "Coffee Photo",
+                             image: $coffeeImage,
+                             buttonLabel: "Coffee Photo",
+                             isUploading: $isUploading
                 ) {
-                    checkCameraAvailability()
-                    imageType = "brew"
+                    checkCameraAvailability(for: .brew)
                 }
                 
                 // 5) Notes
@@ -101,16 +96,14 @@ struct NewBrewView: View {
             }
             .formStyle(.grouped)
             .onChange(of: selectedMethod) { updateParameters(for: selectedMethod) }
-            .fullScreenCover(isPresented: $showCamera) {
-                // Present your custom camera
-                // Provide the correct binding to store the captured photo
-                if imageType == "bag" {
-                    CameraView(image: $bagImage)
-                        .ignoresSafeArea()
-                } else {
-                    CameraView(image: $coffeeImage)
-                        .ignoresSafeArea()
-                }
+            // Add separate camera presentations
+            .fullScreenCover(isPresented: $showBagCamera) {
+                CameraView(image: $bagImage)
+                    .ignoresSafeArea()
+            }
+            .fullScreenCover(isPresented: $showBrewCamera) {
+                CameraView(image: $coffeeImage)
+                    .ignoresSafeArea()
             }
             .alert(errorMessage ?? "", isPresented: $showAlert) {
                 Button("OK", role: .cancel) {
@@ -138,19 +131,30 @@ struct NewBrewView: View {
     
     private func handleSave() async {
         isUploading = true
-        defer { isUploading = false }
+        defer {
+            isUploading = false
+            print("Finished handleSave")
+        }
         
         do {
-            guard let user = userManager.currentUserProfile, let uid = userManager.currentUID else { return }
+            guard let user = userManager.currentUserProfile, let uid = userManager.currentUID else {
+                print("User not found – aborting save process")
+                print("user: \(userManager.currentUserProfile)")
+                print("uid : \(userManager.currentUID)")
+                return
+            }
+            print("Starting save process for user: \(uid)")
             
             // 1) Convert numeric values
             let brewTimeStr = "\(brewTimeSeconds)s"
             let coffeeStr   = String(format: "%.1f", coffeeAmount) + "g"
             let waterStr    = "\(Int(waterAmount))g"
+            print("Converted values: brewTimeStr: \(brewTimeStr), coffeeStr: \(coffeeStr), waterStr: \(waterStr)")
             
             // 2) If bagToggle is on, create a bag first
             var bagId: String? = nil
             if bagToggle {
+                print("Bag toggle is ON – creating CoffeeBag")
                 var newBag = CoffeeBag(
                     brandName: brandName,
                     roastLevel: selectedRoast.rawValue.capitalized,
@@ -162,13 +166,21 @@ struct NewBrewView: View {
                 
                 // Upload coffee bag image to "bag" folder
                 if let bagImage {
+                    print("Uploading bag image...")
                     newBag.imageURL = try await uploadImage(bagImage, userId: uid, folder: "bag")
+                    print("Bag image uploaded successfully – URL: \(newBag.imageURL ?? "none")")
+                } else {
+                    print("No bag image provided")
                 }
                 
                 bagId = try? await bagManager.addBag(newBag)
+                print("CoffeeBag added with id: \(bagId ?? "nil")")
+            } else {
+                print("Bag toggle is OFF – skipping CoffeeBag creation")
             }
             
             // 3) Build the brew object
+            print("Building CoffeeBrew object")
             var brew = CoffeeBrew(
                 title: title,
                 method: selectedMethod.rawValue.capitalized,
@@ -184,47 +196,67 @@ struct NewBrewView: View {
             
             // Upload brew image to "brew" folder
             if let coffeeImage {
+                print("Uploading brew image...")
                 brew.imageURL = try await uploadImage(coffeeImage, userId: uid, folder: "brew")
+                print("Brew image uploaded successfully – URL: \(brew.imageURL ?? "none")")
+            } else {
+                print("No brew image provided")
             }
             
             // 4) Save brew
+            print("Saving CoffeeBrew")
             await brewManager.addBrew(brew)
+            print("CoffeeBrew saved successfully")
             dismiss()
             
         } catch {
+            print("Error occurred: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
             showAlert = true
         }
     }
+
     
-    /// Check camera availability & permissions
-    private func checkCameraAvailability() {
+    // Updated camera handling
+    private func checkCameraAvailability(for imageType: ImageType) {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         
         switch status {
         case .authorized:
-            showCamera = true
+            switch imageType {
+            case .bag: showBagCamera = true
+            case .brew: showBrewCamera = true
+            }
         case .notDetermined:
-            requestCameraAccess()
+            requestCameraAccess(for: imageType)
         case .denied, .restricted:
+            // Handle denied state
             cameraPermissionStatus = status
             showCameraSettingsAlert = true
         @unknown default:
             showCameraUnavailableAlert = true
         }
     }
-    
-    private func requestCameraAccess() {
+        
+    private func requestCameraAccess(for imageType: ImageType) {
         AVCaptureDevice.requestAccess(for: .video) { granted in
             Task { @MainActor in
                 if granted {
-                    showCamera = true
+                    switch imageType {
+                    case .bag: showBagCamera = true
+                    case .brew: showBrewCamera = true
+                    }
                 } else {
                     cameraPermissionStatus = .denied
                     showCameraSettingsAlert = true
                 }
             }
         }
+    }
+
+    // Add this enum for type safety
+    enum ImageType {
+        case bag, brew
     }
     
     /// Upload image to Firestore Storage
