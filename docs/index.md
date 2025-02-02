@@ -26,8 +26,8 @@ Bean Book helps you track, rate, and explore coffee beans from around the world.
 
 ## Feedback & Support
 
-- **Raise an Issue**: Found a bug? [Open an issue](https://github.com/yourusername/beanbook/issues) in this repo.
-- **Email Support**: Prefer to chat? Shoot us an email at [support@beanbookapp.com](mailto:support@beanbookapp.com).
+- **Raise an Issue**: Found a bug? [Open an issue](https://github.com/m-lair/BeanBook/issues) in this repo.
+- **Email Support**: Prefer to chat? Shoot us an email at [support@beanbookapp.com](mailto:beanbookapp@gmail.com).
 - **Roadmap**: Check out our [project board](https://github.com/yourusername/beanbook/projects) for what's next.
 
 ## Privacy & Data Handling
@@ -47,10 +47,8 @@ All data is used exclusively for improving Bean Book. Once the beta ends, your p
 ## Contact Us
 
 For any issues not listed above or if you just want to say hi:
-- **Twitter**: [@beanbookapp](https://twitter.com/beanbookapp) (example link)
+- **BlueSky**: [@beanbookapp](https://twitter.com/beanbookapp) (example link)
 - **Instagram**: [@beanbookapp](https://instagram.com/beanbookapp)
-- **Website**: [www.beanbookapp.com](https://www.beanbookapp.com)
-
 ---
 
 _Cheers and happy brewing!_  
