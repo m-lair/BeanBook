@@ -139,8 +139,6 @@ struct NewBrewView: View {
         do {
             guard let user = userManager.currentUserProfile, let uid = userManager.currentUID else {
                 print("User not found – aborting save process")
-                print("user: \(userManager.currentUserProfile)")
-                print("uid : \(userManager.currentUID)")
                 return
             }
             print("Starting save process for user: \(uid)")

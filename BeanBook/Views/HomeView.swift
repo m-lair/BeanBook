@@ -80,7 +80,7 @@ struct HomeView: View {
                     AsyncImage(url: url) { image in
                         image
                             .resizable()
-                            .scaledToFit()
+                            .scaledToFill()
                             .frame(width: 50, height: 50)
                             .foregroundColor(.brown)
                             .overlay(
