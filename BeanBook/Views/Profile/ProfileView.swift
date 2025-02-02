@@ -13,7 +13,6 @@ struct ProfileView: View {
     @Environment(UserManager.self) var userManager
     
     @State private var showNewBrew = false
-    @State private var showEditProfile = false
     
     // We'll keep a local copy of the user's favorite brews
     @State private var favoriteBrews: [CoffeeBrew] = []
@@ -81,12 +80,6 @@ struct ProfileView: View {
             .sheet(isPresented: $showNewBrew) {
                 NewBrewView()
             }
-            // 2) Sheet for editing the profile
-            .sheet(isPresented: $showEditProfile) {
-                UserProfileEditView(isFirstTimeSetup: false) {
-                    showEditProfile = false
-                }
-            }
             .task {
                 guard let user = authManager.user else { return }
                 // Fetch the user's brews
@@ -152,12 +145,6 @@ struct ProfileView: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
-            
-            Button("Edit Profile") {
-                showEditProfile = true
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.brown)
         }
         .padding(.bottom, 8)
     }

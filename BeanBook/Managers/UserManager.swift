@@ -24,6 +24,12 @@ class UserManager {
         Auth.auth().currentUser?.uid
     }
     
+    init(currentUserProfile: UserProfile? = nil) {
+        Task {
+            await fetchUserProfile()
+        }
+    }
+    
     // MARK: - Fetch the user document
     func fetchUserProfile() async {
         guard let uid = currentUID else { return }
@@ -31,6 +37,7 @@ class UserManager {
             let snapshot = try await db.collection("users").document(uid).getDocument()
             let profile = try snapshot.data(as: UserProfile.self)
             currentUserProfile = profile
+            print("currentUserProfile: \(profile.displayName)")
         } catch {
             print("error fetching User Profile: \(error.localizedDescription)")
         }

@@ -100,24 +100,43 @@ struct BrewDetailView: View {
                             infoRow(label: "Grind Size", value: brew.grindSize)
                         }
                         if let coffeeBag {
-                        Text("Coffee Bag Info")
+                        Text("Coffee Bag Info:")
                             .font(.headline)
-            
-                        
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("**Brand:** \(coffeeBag.brandName)")
-                                Text("**Roast:** \(coffeeBag.roastLevel)")
-                                Text("**Origin:** \(coffeeBag.origin)")
-                                Text("**Added by:** \(coffeeBag.userName)")
+                            HStack {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("**Brand:** \(coffeeBag.brandName)")
+                                    Text("**Roast:** \(coffeeBag.roastLevel)")
+                                    Text("**Origin:** \(coffeeBag.origin)")
+                                    Text("**Added by:** \(coffeeBag.userName)")
+                                }
+                                .padding()
+                                .background(.thinMaterial)
+                                .cornerRadius(12)
+                                .padding(.horizontal)
+                                
+                                Spacer()
+                                
+                                if let bagImageURL = coffeeBag.imageURL,
+                                   let url = URL(string: bagImageURL) {
+                                    AsyncImage(url: url) { image in
+                                        image
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(height: 150)
+                                            .padding(.horizontal)
+                                
+                                    } placeholder: {
+                                        ZStack {
+                                            Rectangle()
+                                                .fill(Color.brown.opacity(0.2))
+                                                .frame(height: 150)
+                                            ProgressView()
+                                        }
+                                    }
+                                }
                             }
-                            .padding()
-                            .background(.thinMaterial)
-                            .cornerRadius(12)
-                            .padding(.horizontal)
-                            
                         }
                     
-                        
                         // Notes
                         if let notes = brew.notes, !notes.isEmpty {
                             Divider()
