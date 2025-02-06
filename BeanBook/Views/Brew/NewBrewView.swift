@@ -26,7 +26,6 @@ struct NewBrewView: View {
     @State private var coffeeAmount = 18.0
     @State private var waterAmount = 30.0
     @State private var brewTimeSeconds = 30
-    @State private var yield = 38.0
     @State private var selectedGrindSize: GrindSize = .fine
     @State private var notes = ""
     
@@ -60,6 +59,9 @@ struct NewBrewView: View {
                         location: $location,
                         selectedRoast: $selectedRoast
                     )
+                    .task {
+                        await bagManager.fetchCoffeeBags()
+                    }
                     
                     PhotoSection(title: "Bag Photo",
                                  image: $bagImage,
@@ -75,7 +77,6 @@ struct NewBrewView: View {
                     coffeeAmount: $coffeeAmount,
                     waterAmount: $waterAmount,
                     brewTimeSeconds: $brewTimeSeconds,
-                    yield: $yield,
                     selectedGrindSize: $selectedGrindSize
                 )
                 
@@ -96,15 +97,6 @@ struct NewBrewView: View {
             }
             .formStyle(.grouped)
             .onChange(of: selectedMethod) { updateParameters(for: selectedMethod) }
-            // Add separate camera presentations
-            .fullScreenCover(isPresented: $showBagCamera) {
-                CameraView(image: $bagImage)
-                    .ignoresSafeArea()
-            }
-            .fullScreenCover(isPresented: $showBrewCamera) {
-                CameraView(image: $coffeeImage)
-                    .ignoresSafeArea()
-            }
             .alert(errorMessage ?? "", isPresented: $showAlert) {
                 Button("OK", role: .cancel) {
                     errorMessage = nil
@@ -124,6 +116,14 @@ struct NewBrewView: View {
                     .disabled(isUploading)
                 }
             }
+        }
+        .fullScreenCover(isPresented: $showBagCamera) {
+            CameraView(isPresented: $showBagCamera, image: $bagImage)
+                .ignoresSafeArea()
+        }
+        .fullScreenCover(isPresented: $showBrewCamera) {
+            CameraView(isPresented: $showBrewCamera, image: $coffeeImage)
+                .ignoresSafeArea()
         }
     }
     
@@ -303,7 +303,6 @@ struct NewBrewView: View {
             coffeeAmount = 18.0
             waterAmount = 36.0
             brewTimeSeconds = 30
-            yield = 38.0
             selectedGrindSize = .fine
         case .pourOver:
             coffeeAmount = 20.0
@@ -371,14 +370,6 @@ private struct PhotoSection: View {
                 }
             }
         }
-        .overlay {
-            if isUploading {
-                ProgressView()
-                    .tint(.white)
-                    .background(Circle().fill(.brown.opacity(0.8)))
-            }
-        }
-        .disabled(isUploading)
     }
 }
 
@@ -388,13 +379,7 @@ private struct BrewParametersSection: View {
     @Binding var coffeeAmount: Double
     @Binding var waterAmount: Double
     @Binding var brewTimeSeconds: Int
-    @Binding var yield: Double
     @Binding var selectedGrindSize: GrindSize
-    
-    // Computed
-    private var shouldShowWater: Bool {
-        !(selectedMethod == .espresso)
-    }
     
     private var coffeeAmountRange: ClosedRange<Double> {
         switch selectedMethod {
@@ -411,10 +396,10 @@ private struct BrewParametersSection: View {
     
     private var waterAmountRange: ClosedRange<Double> {
         switch selectedMethod {
+        case .espresso: return 10...100
         case .pourOver: return 100...500
         case .frenchPress: return 200...1000
         case .coldBrew: return 500...2000
-        default: return 0...0
         }
     }
     
@@ -457,16 +442,15 @@ private struct BrewParametersSection: View {
             }
             
             // Water Amount
-            if shouldShowWater {
-                Stepper(value: $waterAmount, in: waterAmountRange, step: waterStep) {
-                    HStack {
-                        Text(selectedMethod == .espresso ? "Yield" : "Water")
-                        Spacer()
-                        Text("\(Int(waterAmount)) g")
-                            .foregroundStyle(.secondary)
-                    }
+            Stepper(value: $waterAmount, in: waterAmountRange, step: waterStep) {
+                HStack {
+                    Text(selectedMethod == .espresso ? "Yield" : "Water")
+                    Spacer()
+                    Text("\(Int(waterAmount)) g")
+                        .foregroundStyle(.secondary)
                 }
             }
+            
             
             // Brew Time
             VStack(alignment: .leading) {
@@ -510,15 +494,60 @@ private struct BrewParametersSection: View {
 
 /// A sub-form to capture coffee bag info
 struct BagDetailsForm: View {
+    @Environment(CoffeeBagManager.self) var bagManager
     @Binding var brandName: String
     @Binding var origin: String
     @Binding var location: String
     @Binding var selectedRoast: RoastLevel
     
+    var existingBags: [CoffeeBag] { bagManager.bags }
     var body: some View {
+        if !existingBags.isEmpty {
+            Section {
+                Menu {
+                    ForEach(bagManager.bags) { bag in
+                        Button {
+                            // Populate fields when user taps an existing bag
+                            brandName = bag.brandName
+                            origin = bag.origin
+                            location = bag.location ?? ""
+                            
+                            // If bag.roastLevel is stored as a capitalized string,
+                            // parse it back into the enum (light, medium, dark)
+                            if let roast = RoastLevel(rawValue: bag.roastLevel.lowercased()) {
+                                selectedRoast = roast
+                            }
+                        } label: {
+                            HStack {
+                                VStack {
+                                    Text(bag.brandName)
+                                    Text(bag.roastLevel)
+                                }
+                                Spacer()
+                                if let url = bag.imageURL {
+                                    AsyncImage(url: URL(string: url)) { image in
+                                        image
+                                            .resizable()
+                                            .frame(width: 44, height: 44)
+                                            .clipShape(Circle())
+                                    } placeholder: {
+                                        Circle()
+                                            .frame(width: 44, height: 44)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Label("Use Existing Bag", systemImage: "magnifyingglass.circle")
+                }
+            }
+        }
         Section("Basic Info") {
             TextField("Brand Name (e.g. 'Intelligentsia')", text: $brandName)
+                .textContentType(.countryName)
             TextField("Location (e.g. 'Chicago')", text: $location)
+                .textContentType(.countryName)
             Picker("Roast Level", selection: $selectedRoast) {
                 ForEach(RoastLevel.allCases, id: \.self) { roast in
                     Text(roast.rawValue.capitalized).tag(roast)
@@ -529,6 +558,7 @@ struct BagDetailsForm: View {
         
         Section("Origin") {
             TextField("Origin (e.g. 'Ethiopia')", text: $origin)
+                .textContentType(.countryName)
         }
     }
 }

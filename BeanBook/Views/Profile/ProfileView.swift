@@ -11,7 +11,6 @@ struct ProfileView: View {
     @Environment(CoffeeBrewManager.self) var brewManager
     @Environment(CoffeeBagManager.self) var bagManager
     @Environment(UserManager.self) var userManager
-    
     @State private var showNewBrew = false
     
     // We'll keep a local copy of the user's favorite brews

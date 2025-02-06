@@ -153,6 +153,9 @@ class CoffeeBrewManager {
         }
     }
     
+    // ---------------------------------------
+    // MARK: - Delete Brew
+    // ---------------------------------------
     func deleteBrew(withId id: String) async {
         do {
             try await db.collection("coffeeBrews").document(id).delete()
@@ -160,6 +163,21 @@ class CoffeeBrewManager {
             print("Error deleting brew: \(error)")
         }
     }
+    
+    // ---------------------------------------
+    // MARK: - fetch Brews for bagId
+    // ---------------------------------------
+    func fetchBrewsForBag(bagId: String, userId: String) async throws -> [CoffeeBrew] {
+            let snapshot = try await db.collection("coffeeBrews")
+                .whereField("bagId", isEqualTo: bagId)
+                .whereField("creatorId", isEqualTo: userId)
+                .order(by: "createdAt", descending: true)
+                .getDocuments()
+            
+            return snapshot.documents.compactMap {
+                try? $0.data(as: CoffeeBrew.self)
+            }
+        }
 
     
     // ---------------------------------------

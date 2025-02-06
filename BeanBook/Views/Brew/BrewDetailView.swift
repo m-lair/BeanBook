@@ -112,7 +112,6 @@ struct BrewDetailView: View {
                                 .padding()
                                 .background(.thinMaterial)
                                 .cornerRadius(12)
-                                .padding(.horizontal)
                                 
                                 Spacer()
                                 
@@ -149,7 +148,6 @@ struct BrewDetailView: View {
                     .padding()
                     .background(.thinMaterial)
                     .cornerRadius(12)
-                    .padding(.horizontal)
                     
                     Spacer()
                     

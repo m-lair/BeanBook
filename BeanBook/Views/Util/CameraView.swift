@@ -9,29 +9,38 @@ import SwiftUI
 import AVFoundation
 
 struct CameraView: UIViewControllerRepresentable {
+    @Binding var isPresented: Bool
     @Binding var image: UIImage?
-    @Environment(\.dismiss) var dismiss
     @State private var showPermissionAlert = false
     
     func makeUIViewController(context: Context) -> UIViewController {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         
-        if status == .authorized {
-            return makeCameraController(context: context)
-        }
+        // Log which authorization status we have
+        print("[CameraView] makeUIViewController called — current authorization status: \(status)")
         
-        return UIHostingController(rootView: CameraPermissionDeniedView())
+        if status == .authorized {
+            print("[CameraView] Status is .authorized, returning UIImagePickerController")
+            return makeCameraController(context: context)
+        } else {
+            print("[CameraView] Status is \(status), returning CameraPermissionDeniedView")
+            return UIHostingController(rootView: CameraPermissionDeniedView())
+        }
     }
     
     private func makeCameraController(context: Context) -> UIImagePickerController {
+        print("[CameraView] Creating and configuring UIImagePickerController")
         let picker = UIImagePickerController()
         picker.sourceType = .camera
+        picker.cameraCaptureMode = .photo
         picker.delegate = context.coordinator
         picker.allowsEditing = true // Allow editing for better user experience
         return picker
     }
     
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        print("[CameraView] updateUIViewController called — no specific updates")
+    }
     
     private struct CameraPermissionDeniedView: View {
         var body: some View {
@@ -52,77 +61,39 @@ struct CameraView: UIViewControllerRepresentable {
     }
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(self)
+        print("[CameraView] makeCoordinator called")
+        return Coordinator(self)
     }
     
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
         let parent: CameraView
         
         init(_ parent: CameraView) {
+            print("[CameraView.Coordinator] init")
             self.parent = parent
         }
         
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let image = info[.editedImage] as? UIImage ?? info[.originalImage] as? UIImage {
-                parent.image = image
+        func imagePickerController(_ picker: UIImagePickerController,
+                                   didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            print("[CameraView.Coordinator] didFinishPickingMediaWithInfo called")
+            if let picked = info[.editedImage] as? UIImage {
+                print("[CameraView.Coordinator] Got .editedImage")
+                parent.image = picked
+            } else if let picked = info[.originalImage] as? UIImage {
+                print("[CameraView.Coordinator] Got .originalImage")
+                parent.image = picked
+            } else {
+                print("[CameraView.Coordinator] No valid image found in info dictionary")
             }
-            parent.dismiss()
+            
+            print("[CameraView.Coordinator] Setting parent.isPresented = false")
+            parent.isPresented = false
         }
         
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.dismiss()
+            print("[CameraView.Coordinator] imagePickerControllerDidCancel called")
+            print("[CameraView.Coordinator] Setting parent.isPresented = false")
+            parent.isPresented = false
         }
-    }
-}
-
-struct CameraViewWrapper: View {
-    @State private var capturedImage: UIImage? = nil
-    @State private var isCameraPresented: Bool = false
-
-    var body: some View {
-        VStack {
-            if let image = capturedImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .cornerRadius(12)
-                    .padding()
-                    .shadow(radius: 10)
-            } else {
-                Text("No image captured")
-                    .font(.title)
-                    .foregroundColor(.gray)
-                    .padding()
-            }
-
-            Button(action: {
-                isCameraPresented.toggle()
-            }) {
-                HStack {
-                    Image(systemName: "camera")
-                    Text("Capture Image")
-                }
-                .font(.headline)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(10)
-                .shadow(radius: 5)
-            }
-            .padding()
-        }
-        .fullScreenCover(isPresented: $isCameraPresented) {
-            CameraView(image: $capturedImage)
-        }
-        .navigationTitle("Camera")
-        .background(Color(.systemBackground).edgesIgnoringSafeArea(.all))
-    }
-}
-
-struct CameraViewWrapper_Previews: PreviewProvider {
-    static var previews: some View {
-        CameraViewWrapper()
     }
 }

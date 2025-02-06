@@ -27,7 +27,9 @@ struct NewBagView: View {
         // MARK: - Basic Info
         Section("Basic Info") {
             TextField("Brand Name (e.g. 'Intelligentsia')", text: $brandName)
+                .textContentType(.name)
             TextField("Location (e.ge 'Chicago')", text: $location)
+                .textContentType(.name)
             Picker("Roast Level", selection: $selectedRoast) {
                 ForEach(RoastLevel.allCases, id: \.self) { roast in
                     Text(roast.rawValue.capitalized).tag(roast)
@@ -39,6 +41,7 @@ struct NewBagView: View {
         // MARK: - Origin
         Section("Origin") {
             TextField("Origin (e.g. 'Ethiopia')", text: $origin)
+                .textContentType(.countryName)
         }
         
         .formStyle(.grouped)  // iOS 17+ modern grouping style
