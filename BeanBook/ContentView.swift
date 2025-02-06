@@ -40,8 +40,10 @@ struct ContentView: View {
             } else {
                 // If user not logged in, show a login screen
                 LoginView()
+                
             }
         }
+        
         // Observe changes to authManager.user
         .onChange(of: authManager.user) {
             guard let user = authManager.user else {

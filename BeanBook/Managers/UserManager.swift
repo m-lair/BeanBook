@@ -157,6 +157,40 @@ class UserManager {
                 }
             }
     }
+    // MARK: - Delete User
+    func deleteUser() async throws {
+            guard let uid = currentUID else {
+                print("No current user to delete.")
+                return
+            }
+            let userRef = db.collection("users").document(uid)
+            
+            // Replace this array with any fields you consider "personal" or "sensitive"
+            let fieldsToRemove: [String: Any] = [
+                "displayName": FieldValue.delete(),
+                "fcmToken": FieldValue.delete()
+                // you could remove or anonymize more fields if desired
+            ]
+            
+            do {
+                // 1) Mark isDeleted = true and set a deletedAt timestamp
+                // 2) Remove sensitive fields
+                try await userRef.updateData([
+                    "isDeleted": true,
+                    "deletedAt": FieldValue.serverTimestamp()
+                ].merging(fieldsToRemove) { (current, _) in current })
+                
+                // 3) Optionally sign them out locally or do other cleanup
+                // try Auth.auth().signOut()
+                
+                // 4) Reset local state
+                currentUserProfile = nil
+                print("Soft deleted user \(uid).")
+            } catch {
+                print("Error soft-deleting user: \(error)")
+                throw error
+            }
+        }
     
     func stopListeningForProfile() {
         listener?.remove()

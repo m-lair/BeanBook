@@ -31,7 +31,7 @@ struct LoginView: View {
             .ignoresSafeArea()
             
             VStack(spacing: 24) {
-                Text("Bean BooK")
+                Text("Bean Book")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.bottom)
