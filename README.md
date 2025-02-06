@@ -1,8 +1,3 @@
----
-layout: default
-title: "Bean Book Beta"
-description: "A simple marketing & support page for Bean Book's beta testing"
----
 
 # Bean Book Beta
 
