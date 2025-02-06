@@ -39,13 +39,6 @@ All data is used exclusively for improving Bean Book. Once the beta ends, your p
 - TestFlight installed.
 - Please be prepared to share feedback or any bugs you encounter!
 
-## Contact Us
-
-For any issues not listed above or if you just want to say hi:
-- **Twitter**: [@beanbookapp](https://twitter.com/beanbookapp) (example link)
-- **Instagram**: [@beanbookapp](https://instagram.com/beanbookapp)
-- **Website**: [www.beanbookapp.com](https://www.beanbookapp.com)
-
 ---
 
 _Cheers and happy brewing!_  
