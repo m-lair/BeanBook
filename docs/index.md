@@ -1,7 +1,10 @@
 ---
+remote_theme: pages-themes/modernist@v0.2.0
+plugins:
+- jekyll-remote-theme
 layout: default
 title: "Bean Book Beta"
-description: "A simple marketing & support page for Bean Book's beta testing"
+description: "A New Coffee Community!"
 ---
 
 # Bean Book Beta
@@ -20,15 +23,13 @@ Bean Book helps you track, rate, and explore coffee beans from around the world.
 
 ## How to Join the Beta
 
-1. **Sign Up**: Head over to [TestFlight Link] to request access (if you haven’t already).
+1. **Sign Up**: Head over to [TestFlight Link](https://testflight.apple.com/join/aJwMumma) to request access (if you haven’t already).
 2. **Install the App**: Open TestFlight on your iOS device, grab the Bean Book beta, and install.
 3. **Explore & Use**: Poke around the app, try different beans, and record your feedback.
 
 ## Feedback & Support
 
-- **Raise an Issue**: Found a bug? [Open an issue](https://github.com/m-lair/BeanBook/issues) in this repo.
 - **Email Support**: Prefer to chat? Shoot us an email at [support@beanbookapp.com](mailto:beanbookapp@gmail.com).
-- **Roadmap**: Check out our [project board](https://github.com/yourusername/beanbook/projects) for what's next.
 
 ## Privacy & Data Handling
 
@@ -47,8 +48,7 @@ All data is used exclusively for improving Bean Book. Once the beta ends, your p
 ## Contact Us
 
 For any issues not listed above or if you just want to say hi:
-- **BlueSky**: [@beanbookapp](https://twitter.com/beanbookapp) (example link)
-- **Instagram**: [@beanbookapp](https://instagram.com/beanbookapp)
+- **BlueSky**: [@beanbookapp](https://bsky.app/profile/beanbookapp.bsky.social)
 ---
 
 _Cheers and happy brewing!_  
