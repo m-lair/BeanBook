@@ -35,7 +35,7 @@ struct NewBrewView: View {
     @State private var bagOrigin: String = ""
     @State private var selectedRoast: RoastLevel = .medium
     @State private var location: String = ""
-    
+    @State private var bagId: String?
     // Image handling
     @State private var bagImage: UIImage?
     @State private var coffeeImage: UIImage?
@@ -55,8 +55,10 @@ struct NewBrewView: View {
                 if bagToggle {
                     BagDetailsForm(
                         brandName: $brandName,
+                        bagId: $bagId,
                         origin: $bagOrigin,
                         location: $location,
+                        bagImage: $bagImage,
                         selectedRoast: $selectedRoast
                     )
                     .task {
@@ -135,48 +137,69 @@ struct NewBrewView: View {
             isUploading = false
             print("Finished handleSave")
         }
-        
+
         do {
-            guard let user = userManager.currentUserProfile, let uid = userManager.currentUID else {
+            guard let user = userManager.currentUserProfile,
+                  let uid = userManager.currentUID
+            else {
                 print("User not found – aborting save process")
                 return
             }
             print("Starting save process for user: \(uid)")
-            
+
             // 1) Convert numeric values
             let brewTimeStr = "\(brewTimeSeconds)s"
             let coffeeStr   = String(format: "%.1f", coffeeAmount) + "g"
             let waterStr    = "\(Int(waterAmount))g"
-            print("Converted values: brewTimeStr: \(brewTimeStr), coffeeStr: \(coffeeStr), waterStr: \(waterStr)")
-            
-            // 2) If bagToggle is on, create a bag first
-            var bagId: String? = nil
+            print("Converted: brewTime = \(brewTimeStr), coffee = \(coffeeStr), water = \(waterStr)")
+
+            // 2) Handle Bag creation or update
+            // If bagToggle is ON, use existing bagId if available, else create a new bag.
+            var resolvedBagId: String? = bagId  // bagId might already be set from picking an existing bag
             if bagToggle {
-                print("Bag toggle is ON – creating CoffeeBag")
-                var newBag = CoffeeBag(
-                    brandName: brandName,
-                    roastLevel: selectedRoast.rawValue.capitalized,
-                    userName: user.displayName ?? "",
-                    userId: uid,
-                    location: location,
-                    origin: bagOrigin
-                )
-                
-                // Upload coffee bag image to "bag" folder
-                if let bagImage {
-                    print("Uploading bag image...")
-                    newBag.imageURL = try await uploadImage(bagImage, userId: uid, folder: "bag")
-                    print("Bag image uploaded successfully – URL: \(newBag.imageURL ?? "none")")
+                if let existingId = resolvedBagId, !existingId.isEmpty {
+                    // Update existing bag
+                    print("Bag toggle ON and we have an existing bagId (\(existingId)) – updating bag")
+                    var existingBag = try await bagManager.fetchById(existingId)
+                    existingBag.brandName = brandName
+                    existingBag.origin    = bagOrigin
+                    existingBag.roastLevel = selectedRoast.rawValue.capitalized
+                    existingBag.location  = location
+
+                    // If we have a new image, re-upload and update
+                    if let bagImage {
+                        print("Uploading updated bag image...")
+                        existingBag.imageURL = try await uploadImage(bagImage, userId: uid, folder: "bag")
+                        print("Bag image updated: \(existingBag.imageURL ?? "none")")
+                    }
+                    // Save the updated bag
+                    bagManager.updateBag(existingBag)
+
                 } else {
-                    print("No bag image provided")
+                    // Create new bag
+                    print("Bag toggle ON but no existing bagId – creating a new bag")
+                    var newBag = CoffeeBag(
+                        brandName: brandName,
+                        roastLevel: selectedRoast.rawValue.capitalized,
+                        userName: user.displayName ?? "",
+                        userId: uid,
+                        location: location,
+                        origin: bagOrigin
+                    )
+                    
+                    if let bagImage {
+                        print("Uploading bag image...")
+                        newBag.imageURL = try await uploadImage(bagImage, userId: uid, folder: "bag")
+                        print("New bag image URL: \(newBag.imageURL ?? "none")")
+                    }
+                    
+                    resolvedBagId = try await bagManager.addBag(newBag)
+                    print("New bag created with id: \(resolvedBagId ?? "nil")")
                 }
-                
-                bagId = try? await bagManager.addBag(newBag)
-                print("CoffeeBag added with id: \(bagId ?? "nil")")
             } else {
-                print("Bag toggle is OFF – skipping CoffeeBag creation")
+                print("Bag toggle OFF – no bag creation or update")
             }
-            
+
             // 3) Build the brew object
             print("Building CoffeeBrew object")
             var brew = CoffeeBrew(
@@ -190,23 +213,24 @@ struct NewBrewView: View {
                 creatorId: uid,
                 notes: notes
             )
-            brew.bagId = bagId
-            
-            // Upload brew image to "brew" folder
+            // Attach the resolved bag id (could be nil if toggle was off)
+            brew.bagId = resolvedBagId
+
+            // If we have a brew image, upload it
             if let coffeeImage {
                 print("Uploading brew image...")
                 brew.imageURL = try await uploadImage(coffeeImage, userId: uid, folder: "brew")
-                print("Brew image uploaded successfully – URL: \(brew.imageURL ?? "none")")
+                print("Brew image URL: \(brew.imageURL ?? "none")")
             } else {
                 print("No brew image provided")
             }
-            
+
             // 4) Save brew
             print("Saving CoffeeBrew")
             await brewManager.addBrew(brew)
             print("CoffeeBrew saved successfully")
             dismiss()
-            
+
         } catch {
             print("Error occurred: \(error.localizedDescription)")
             errorMessage = error.localizedDescription
@@ -451,7 +475,6 @@ private struct BrewParametersSection: View {
                 }
             }
             
-            
             // Brew Time
             VStack(alignment: .leading) {
                 Text(brewTimeLabel)
@@ -496,8 +519,10 @@ private struct BrewParametersSection: View {
 struct BagDetailsForm: View {
     @Environment(CoffeeBagManager.self) var bagManager
     @Binding var brandName: String
+    @Binding var bagId: String?
     @Binding var origin: String
     @Binding var location: String
+    @Binding var bagImage: UIImage?
     @Binding var selectedRoast: RoastLevel
     
     var existingBags: [CoffeeBag] { bagManager.bags }
@@ -509,9 +534,34 @@ struct BagDetailsForm: View {
                         Button {
                             // Populate fields when user taps an existing bag
                             brandName = bag.brandName
+                            bagId = bag.id ?? ""
                             origin = bag.origin
                             location = bag.location ?? ""
                             
+                            // If bag.roastLevel is stored as a capitalized string,
+                            // parse it back into the enum (light, medium, dark).
+                            if let roast = RoastLevel(rawValue: bag.roastLevel.lowercased()) {
+                                selectedRoast = roast
+                            }
+                            
+                            Task {
+                                guard
+                                    let urlString = bag.imageURL,
+                                    let url = URL(string: urlString)
+                                else {
+                                    return
+                                }
+                                
+                                do {
+                                    let (data, _) = try await URLSession.shared.data(from: url)
+                                    if let image = UIImage(data: data) {
+                                        bagImage = image
+                                    }
+                                } catch {
+                                    print("Failed to load bag image: \(error)")
+                                }
+                            }
+                            print("Selected: \(bagId)")
                             // If bag.roastLevel is stored as a capitalized string,
                             // parse it back into the enum (light, medium, dark)
                             if let roast = RoastLevel(rawValue: bag.roastLevel.lowercased()) {
@@ -541,6 +591,10 @@ struct BagDetailsForm: View {
                 } label: {
                     Label("Use Existing Bag", systemImage: "magnifyingglass.circle")
                 }
+            }
+        } else {
+            Section {
+                Text("No Bags Found. Add a Bag one to select it from here next time!")
             }
         }
         Section("Basic Info") {

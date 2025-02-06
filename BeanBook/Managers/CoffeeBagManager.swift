@@ -58,7 +58,16 @@ class CoffeeBagManager {
 
     func deleteBag(_ bag: CoffeeBag) async throws {
         guard let bagId = bag.id else { return }
-        try await db.collection("coffeeBags").document(bagId)
-            .delete()
+        
+        let snapshot = try await db.collection("coffeeBrews")
+            .whereField("bagId", isEqualTo: bagId)
+            .whereField("creatorId", isEqualTo: bag.userId)
+            .order(by: "createdAt", descending: true)
+            .getDocuments()
+        
+        if snapshot.documents.count <= 1{
+            try await db.collection("coffeeBags").document(bagId)
+                .delete()
+        }
     }
 }

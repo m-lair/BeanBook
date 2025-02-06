@@ -61,8 +61,7 @@ struct ProfileView: View {
                     } else {
                         BagListView()
                     }
-                    
-                    
+                
                     Spacer(minLength: 0)
                 }
                 .padding(.top, 16)
