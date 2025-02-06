@@ -1,7 +1,4 @@
 ---
-remote_theme: pages-themes/modernist@v0.2.0
-plugins:
-- jekyll-remote-theme
 layout: default
 title: "Bean Book Beta"
 description: "A New Coffee Community!"
