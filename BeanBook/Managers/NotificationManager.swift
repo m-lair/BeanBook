@@ -1,28 +1,19 @@
-//
-//  NotificationManager.swift
-//  BeanBook
-//
-//  Created by Marcus Lair on 1/24/25.
-//
-
-
+import Foundation
 import UserNotifications
 
 @MainActor
+@Observable
 final class NotificationManager {
-    static let shared = NotificationManager()
+    private let dailyReminderID = "daily_coffee_reminder"
 
-    private init() {}
-    
-    /// Schedules a repeating local notification every day at 8:00 AM.
-    /// Requests alert/sound authorization first so the toggle flow prompts the user on first enable.
+    /// Schedules a repeating local notification every day at the given time.
+    /// Requests authorization first; silently no-ops if the user denies.
     func scheduleDailyCoffeeReminder(hour: Int = 8, minute: Int = 0) async {
         let center = UNUserNotificationCenter.current()
         do {
             let granted = try await center.requestAuthorization(options: [.alert, .sound])
             guard granted else { return }
         } catch {
-            print("Notification authorization error: \(error)")
             return
         }
 
@@ -31,21 +22,17 @@ final class NotificationManager {
         content.body = "Don't forget to track your morning brew in BeanBook!"
         content.sound = .default
 
-        var dateComponents = DateComponents()
-        dateComponents.hour = hour
-        dateComponents.minute = minute
+        var components = DateComponents()
+        components.hour = hour
+        components.minute = minute
 
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
-        let request = UNNotificationRequest(
-            identifier: "daily_coffee_reminder",
-            content: content,
-            trigger: trigger
-        )
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+        let request = UNNotificationRequest(identifier: dailyReminderID, content: content, trigger: trigger)
+        try? await center.add(request)
+    }
 
-        do {
-            try await center.add(request)
-        } catch {
-            print("Error scheduling daily coffee reminder: \(error)")
-        }
+    func cancelDailyCoffeeReminder() {
+        UNUserNotificationCenter.current()
+            .removePendingNotificationRequests(withIdentifiers: [dailyReminderID])
     }
 }

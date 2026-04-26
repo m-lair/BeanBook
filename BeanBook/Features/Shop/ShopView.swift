@@ -8,6 +8,7 @@ struct ShopView: View {
     @State private var roastFilter: RoastLevel? = nil
     @State private var toastMessage: String? = nil
     @State private var toastTrigger = 0
+    @State private var toastTask: Task<Void, Never>?
 
     private var filtered: [CatalogBean] {
         guard let roastFilter else { return catalog.beans }
@@ -30,11 +31,11 @@ struct ShopView: View {
                         }
                     }
                     if filtered.isEmpty {
-                        ContentUnavailableView(
-                            "No matches",
-                            systemImage: "line.3.horizontal.decrease.circle",
-                            description: Text("Try a different roast filter.")
-                        )
+                        ContentUnavailableView {
+                            Label("No matches", systemImage: "line.3.horizontal.decrease.circle")
+                        } description: {
+                            Text("Try a different roast filter.")
+                        }
                         .frame(maxWidth: .infinity)
                         .padding(.top, 40)
                     }
@@ -66,7 +67,7 @@ struct ShopView: View {
     }
 
     private var filterChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        ScrollView(.horizontal) {
             HStack(spacing: 8) {
                 FilterChip(label: "All", selected: roastFilter == nil) {
                     roastFilter = nil
@@ -78,6 +79,7 @@ struct ShopView: View {
                 }
             }
         }
+        .scrollIndicators(.hidden)
     }
 
     private func addToBags(_ bean: CatalogBean) {
@@ -95,8 +97,10 @@ struct ShopView: View {
 
         toastMessage = "Added \(bean.name) to Bags"
         toastTrigger &+= 1
-        Task {
+        toastTask?.cancel()
+        toastTask = Task {
             try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
             withAnimation(.smooth) { toastMessage = nil }
         }
     }

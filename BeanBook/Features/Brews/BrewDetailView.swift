@@ -13,19 +13,10 @@ struct BrewDetailView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.cardSpacing) {
-                heroCard
-                paramsCard
+                BrewHeroCard(brew: brew)
+                BrewParamsCard(brew: brew)
                 if let notes = brew.notes, !notes.isEmpty {
-                    GlassCard {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Notes")
-                                .font(.caption)
-                                .foregroundStyle(Theme.onBackgroundVariant)
-                            Text(notes)
-                                .font(.body)
-                                .foregroundStyle(Theme.onBackground)
-                        }
-                    }
+                    BrewNotesCard(notes: notes)
                 }
                 Button {
                     showBrewAgain = true
@@ -39,16 +30,15 @@ struct BrewDetailView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle(brew.method.displayName)
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Menu {
+                Menu("Options", systemImage: "ellipsis.circle") {
                     Button("Delete", systemImage: "trash", role: .destructive) {
                         showDeleteConfirm = true
                     }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
                 }
+                .labelStyle(.iconOnly)
             }
         }
         .sheet(isPresented: $showBrewAgain) {
@@ -60,27 +50,32 @@ struct BrewDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Delete brew", role: .destructive) {
+                didDelete = true
                 context.delete(brew)
                 try? context.save()
-                didDelete = true
                 dismiss()
             }
             Button("Cancel", role: .cancel) {}
         }
         .sensoryFeedback(.warning, trigger: didDelete)
     }
+}
 
-    private var heroCard: some View {
+private struct BrewHeroCard: View {
+    let brew: Brew
+
+    var body: some View {
         VStack(spacing: 10) {
             Image(systemName: brew.method.symbol)
                 .font(.system(size: 48))
                 .foregroundStyle(.white)
+                .accessibilityHidden(true)
             Text(brew.formattedRatio)
                 .font(.system(.largeTitle, design: .rounded))
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
                 .monospacedDigit()
-            Text("\(formatted(brew.doseGrams))g → \(formatted(brew.yieldGrams))g · \(brew.formattedTime)")
+            Text("\(brewNumeric(brew.doseGrams))g → \(brewNumeric(brew.yieldGrams))g · \(brew.formattedTime)")
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.9))
             if let rating = brew.rating {
@@ -91,6 +86,8 @@ struct BrewDetailView: View {
                     }
                 }
                 .padding(.top, 4)
+                .accessibilityElement()
+                .accessibilityLabel("\(rating) of 5 stars")
             }
         }
         .frame(maxWidth: .infinity)
@@ -99,32 +96,61 @@ struct BrewDetailView: View {
         .background(Theme.heroGradient, in: .rect(cornerRadius: Theme.cardRadius))
         .shadow(color: Theme.primary.opacity(0.3), radius: 18, y: 10)
     }
+}
 
-    private var paramsCard: some View {
+private struct BrewParamsCard: View {
+    let brew: Brew
+
+    var body: some View {
         GlassCard {
             VStack(alignment: .leading, spacing: 12) {
-                row("Method", brew.method.displayName)
-                row("Dose", "\(formatted(brew.doseGrams)) g")
-                row(brew.method.yieldLabel, "\(formatted(brew.yieldGrams)) g")
-                row(brew.method.timeLabel, brew.formattedTime)
+                BrewInfoRow(label: "Method", value: brew.method.displayName)
+                BrewInfoRow(label: "Dose", value: "\(brewNumeric(brew.doseGrams)) g")
+                BrewInfoRow(label: brew.method.yieldLabel, value: "\(brewNumeric(brew.yieldGrams)) g")
+                BrewInfoRow(label: brew.method.timeLabel, value: brew.formattedTime)
                 if let temp = brew.waterTempC {
-                    row("Water temp", "\(Int(temp)) °C")
+                    BrewInfoRow(label: "Water temp", value: "\(Int(temp)) °C")
                 }
                 if let grind = brew.grindSetting, !grind.isEmpty {
-                    row("Grind", grind)
+                    BrewInfoRow(label: "Grind", value: grind)
                 }
                 if let bag = brew.bag {
-                    row("Bag", bag.displayTitle)
+                    BrewInfoRow(label: "Bag", value: bag.displayTitle)
                 }
-                row("Logged", brew.createdAt.formatted(date: .abbreviated, time: .shortened))
+                BrewInfoRow(
+                    label: "Logged",
+                    value: brew.createdAt.formatted(date: .abbreviated, time: .shortened)
+                )
             }
         }
     }
+}
 
-    private func row(_ label: String, _ value: String) -> some View {
+private struct BrewNotesCard: View {
+    let notes: String
+
+    var body: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Notes")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.onBackgroundVariant)
+                Text(notes)
+                    .font(.body)
+                    .foregroundStyle(Theme.onBackground)
+            }
+        }
+    }
+}
+
+private struct BrewInfoRow: View {
+    let label: String
+    let value: String
+
+    var body: some View {
         HStack {
             Text(label)
-                .font(.caption)
+                .font(.footnote)
                 .foregroundStyle(Theme.onBackgroundVariant)
             Spacer()
             Text(value)
@@ -133,9 +159,9 @@ struct BrewDetailView: View {
                 .foregroundStyle(Theme.onBackground)
         }
     }
+}
 
-    private func formatted(_ v: Double) -> String {
-        if v.truncatingRemainder(dividingBy: 1) == 0 { return String(Int(v)) }
-        return String(format: "%.1f", v)
-    }
+private func brewNumeric(_ v: Double) -> String {
+    if v.truncatingRemainder(dividingBy: 1) == 0 { return String(Int(v)) }
+    return v.formatted(.number.precision(.fractionLength(1)))
 }

@@ -22,6 +22,7 @@ struct CatalogBeanCard: View {
                     Spacer()
                     Image(systemName: "leaf.fill")
                         .foregroundStyle(Theme.primary.opacity(0.6))
+                        .accessibilityHidden(true)
                 }
 
                 HStack(spacing: 6) {
@@ -34,7 +35,7 @@ struct CatalogBeanCard: View {
                     FlowLayout(spacing: 6) {
                         ForEach(bean.tastingNotes, id: \.self) { note in
                             Text(note)
-                                .font(.caption2)
+                                .font(.caption)
                                 .padding(.horizontal, 9)
                                 .padding(.vertical, 4)
                                 .background(Theme.primaryContainer.opacity(0.4), in: .capsule)
@@ -71,7 +72,7 @@ struct CatalogBeanCard: View {
 
     private func metaChip(_ text: String) -> some View {
         Text(text)
-            .font(.caption2)
+            .font(.caption)
             .fontWeight(.medium)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)

@@ -20,6 +20,7 @@ struct NewBagSheet: View {
     @State private var imageData: Data?
     @State private var photoItem: PhotosPickerItem?
 
+    @State private var didHydrate = false
     @State private var isDirty = false
     @State private var savedSuccessfully = false
 
@@ -31,15 +32,24 @@ struct NewBagSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: Theme.cardSpacing) {
-                    photoSection
-                    detailsSection
-                    notesSection
+                    PhotoPickerSection(imageData: $imageData, photoItem: $photoItem)
+                    BagDetailsSection(
+                        brand: $brand,
+                        name: $name,
+                        origin: $origin,
+                        roastLevel: $roastLevel,
+                        process: $process,
+                        tastingNotes: $tastingNotes,
+                        roastedOn: $roastedOn,
+                        hasRoastedOn: $hasRoastedOn
+                    )
+                    NotesSection(notes: $notes)
                 }
                 .padding(Theme.screenPadding)
             }
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle(editing == nil ? "New Bag" : "Edit Bag")
-            .navigationBarTitleDisplayMode(.inline)
+            .toolbarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -53,25 +63,86 @@ struct NewBagSheet: View {
             .interactiveDismissDisabled(isDirty)
             .sensoryFeedback(.success, trigger: savedSuccessfully)
             .task { hydrateFromEditing() }
-            .onChange(of: brand) { trackDirty() }
-            .onChange(of: name) { trackDirty() }
-            .onChange(of: origin) { trackDirty() }
-            .onChange(of: roastLevel) { trackDirty() }
-            .onChange(of: process) { trackDirty() }
-            .onChange(of: tastingNotes) { trackDirty() }
-            .onChange(of: roastedOn) { trackDirty() }
-            .onChange(of: hasRoastedOn) { trackDirty() }
-            .onChange(of: notes) { trackDirty() }
-            .onChange(of: imageData) { trackDirty() }
+            .onChange(of: brand) { _, _ in trackDirty() }
+            .onChange(of: name) { _, _ in trackDirty() }
+            .onChange(of: origin) { _, _ in trackDirty() }
+            .onChange(of: roastLevel) { _, _ in trackDirty() }
+            .onChange(of: process) { _, _ in trackDirty() }
+            .onChange(of: tastingNotes) { _, _ in trackDirty() }
+            .onChange(of: roastedOn) { _, _ in trackDirty() }
+            .onChange(of: hasRoastedOn) { _, _ in trackDirty() }
+            .onChange(of: notes) { _, _ in trackDirty() }
+            .onChange(of: imageData) { _, _ in trackDirty() }
             .onChange(of: photoItem) { _, item in
                 Task { await loadPhoto(item) }
             }
         }
     }
 
-    // MARK: - Sections
+    // MARK: - Save / hydrate
 
-    private var photoSection: some View {
+    private func save() {
+        let bag = editing ?? Bag()
+        bag.brand = brand.trimmingCharacters(in: .whitespaces)
+        bag.name = name.trimmingCharacters(in: .whitespaces)
+        bag.origin = origin.trimmingCharacters(in: .whitespaces)
+        bag.roastLevel = roastLevel
+        bag.process = process
+        bag.tastingNotes = tastingNotes
+        bag.roastedOn = hasRoastedOn ? roastedOn : nil
+        bag.notes = notes.isEmpty ? nil : notes
+        bag.imageData = imageData
+        if editing == nil {
+            context.insert(bag)
+        }
+        try? context.save()
+        savedSuccessfully = true
+        dismiss()
+    }
+
+    private func hydrateFromEditing() {
+        guard !didHydrate else { return }
+        defer {
+            didHydrate = true
+            isDirty = false
+        }
+        guard let editing else { return }
+        brand = editing.brand
+        name = editing.name
+        origin = editing.origin
+        roastLevel = editing.roastLevel
+        process = editing.process
+        tastingNotes = editing.tastingNotes
+        if let roasted = editing.roastedOn {
+            roastedOn = roasted
+            hasRoastedOn = true
+        }
+        notes = editing.notes ?? ""
+        imageData = editing.imageData
+    }
+
+    private func trackDirty() {
+        guard didHydrate else { return }
+        isDirty = true
+    }
+
+    private func loadPhoto(_ item: PhotosPickerItem?) async {
+        guard let item else { return }
+        guard let data = try? await item.loadTransferable(type: Data.self) else { return }
+        let compressed = await Task.detached(priority: .utility) {
+            ImageCompressor.compress(data)
+        }.value
+        imageData = compressed
+    }
+}
+
+// MARK: - Sections
+
+private struct PhotoPickerSection: View {
+    @Binding var imageData: Data?
+    @Binding var photoItem: PhotosPickerItem?
+
+    var body: some View {
         PhotosPicker(selection: $photoItem, matching: .images) {
             ZStack {
                 RoundedRectangle(cornerRadius: Theme.cardRadius)
@@ -82,23 +153,36 @@ struct NewBagSheet: View {
                         .resizable()
                         .scaledToFill()
                         .frame(height: 160)
-                        .clipShape(RoundedRectangle(cornerRadius: Theme.cardRadius))
+                        .clipShape(.rect(cornerRadius: Theme.cardRadius))
                 } else {
                     VStack(spacing: 8) {
                         Image(systemName: "camera.fill")
                             .font(.title2)
                             .foregroundStyle(Theme.primary)
+                            .accessibilityHidden(true)
                         Text("Add photo")
-                            .font(.caption)
+                            .font(.footnote)
                             .foregroundStyle(Theme.onBackgroundVariant)
                     }
                 }
             }
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(imageData == nil ? "Add bag photo" : "Replace bag photo")
     }
+}
 
-    private var detailsSection: some View {
+private struct BagDetailsSection: View {
+    @Binding var brand: String
+    @Binding var name: String
+    @Binding var origin: String
+    @Binding var roastLevel: RoastLevel
+    @Binding var process: ProcessMethod?
+    @Binding var tastingNotes: [String]
+    @Binding var roastedOn: Date
+    @Binding var hasRoastedOn: Bool
+
+    var body: some View {
         GlassCard {
             VStack(alignment: .leading, spacing: 14) {
                 LabeledField("Roaster") {
@@ -140,15 +224,19 @@ struct NewBagSheet: View {
                         .foregroundStyle(Theme.onBackground)
                 }
                 if hasRoastedOn {
-                    DatePicker("", selection: $roastedOn, displayedComponents: .date)
+                    DatePicker("Roast date", selection: $roastedOn, displayedComponents: .date)
                         .labelsHidden()
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }
     }
+}
 
-    private var notesSection: some View {
+private struct NotesSection: View {
+    @Binding var notes: String
+
+    var body: some View {
         GlassCard {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Notes")
@@ -160,64 +248,4 @@ struct NewBagSheet: View {
             }
         }
     }
-
-    // MARK: - Save / hydrate
-
-    private func save() {
-        let bag = editing ?? Bag()
-        bag.brand = brand.trimmingCharacters(in: .whitespaces)
-        bag.name = name.trimmingCharacters(in: .whitespaces)
-        bag.origin = origin.trimmingCharacters(in: .whitespaces)
-        bag.roastLevel = roastLevel
-        bag.process = process
-        bag.tastingNotes = tastingNotes
-        bag.roastedOn = hasRoastedOn ? roastedOn : nil
-        bag.notes = notes.isEmpty ? nil : notes
-        bag.imageData = imageData
-        if editing == nil {
-            context.insert(bag)
-        }
-        try? context.save()
-        savedSuccessfully = true
-        dismiss()
-    }
-
-    private func hydrateFromEditing() {
-        guard let editing else { return }
-        brand = editing.brand
-        name = editing.name
-        origin = editing.origin
-        roastLevel = editing.roastLevel
-        process = editing.process
-        tastingNotes = editing.tastingNotes
-        if let roasted = editing.roastedOn {
-            roastedOn = roasted
-            hasRoastedOn = true
-        }
-        notes = editing.notes ?? ""
-        imageData = editing.imageData
-        // Reset dirty after hydration
-        DispatchQueue.main.async { isDirty = false }
-    }
-
-    private func trackDirty() { isDirty = true }
-
-    @MainActor
-    private func loadPhoto(_ item: PhotosPickerItem?) async {
-        guard let item else { return }
-        if let data = try? await item.loadTransferable(type: Data.self) {
-            imageData = compress(data)
-        }
-    }
-
-    private func compress(_ data: Data) -> Data {
-        guard let img = UIImage(data: data) else { return data }
-        let max: CGFloat = 1200
-        let scale = min(1, max / Swift.max(img.size.width, img.size.height))
-        let target = CGSize(width: img.size.width * scale, height: img.size.height * scale)
-        let renderer = UIGraphicsImageRenderer(size: target)
-        let resized = renderer.image { _ in img.draw(in: CGRect(origin: .zero, size: target)) }
-        return resized.jpegData(compressionQuality: 0.75) ?? data
-    }
 }
-

@@ -13,25 +13,24 @@ struct BagDetailView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.cardSpacing) {
-                header
-                infoCard
-                brewsCard
+                BagHeroCard(bag: bag)
+                BagInfoCard(bag: bag)
+                BagBrewsCard(bag: bag)
             }
             .padding(Theme.screenPadding)
         }
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle(bag.brand.isEmpty ? "Bag" : bag.brand)
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Menu {
+                Menu("Options", systemImage: "ellipsis.circle") {
                     Button("Edit", systemImage: "pencil") { showEditSheet = true }
                     Button("Delete", systemImage: "trash", role: .destructive) {
                         showDeleteConfirm = true
                     }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
                 }
+                .labelStyle(.iconOnly)
             }
         }
         .sheet(isPresented: $showEditSheet) {
@@ -43,9 +42,9 @@ struct BagDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Delete bag", role: .destructive) {
+                didDelete = true
                 context.delete(bag)
                 try? context.save()
-                didDelete = true
                 dismiss()
             }
             Button("Cancel", role: .cancel) {}
@@ -54,23 +53,30 @@ struct BagDetailView: View {
         }
         .sensoryFeedback(.warning, trigger: didDelete)
     }
+}
 
-    private var header: some View {
+private struct BagHeroCard: View {
+    let bag: Bag
+
+    @State private var hero: UIImage?
+
+    var body: some View {
         VStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: Theme.cardRadius)
                     .fill(Theme.softGradient)
                     .frame(height: 180)
-                if let data = bag.imageData, let img = UIImage(data: data) {
-                    Image(uiImage: img)
+                if let hero {
+                    Image(uiImage: hero)
                         .resizable()
                         .scaledToFill()
                         .frame(height: 180)
-                        .clipShape(RoundedRectangle(cornerRadius: Theme.cardRadius))
+                        .clipShape(.rect(cornerRadius: Theme.cardRadius))
                 } else {
                     Image(systemName: "bag.fill")
                         .font(.system(size: 60))
                         .foregroundStyle(Theme.primary.opacity(0.7))
+                        .accessibilityHidden(true)
                 }
             }
 
@@ -79,23 +85,33 @@ struct BagDetailView: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(Theme.onBackground)
         }
+        .task(id: bag.imageData) {
+            hero = bag.imageData.flatMap(UIImage.init(data:))
+        }
     }
+}
 
-    private var infoCard: some View {
+private struct BagInfoCard: View {
+    let bag: Bag
+
+    var body: some View {
         GlassCard {
             VStack(alignment: .leading, spacing: 12) {
-                infoRow("Origin", bag.origin.isEmpty ? "—" : bag.origin)
-                infoRow("Roast", bag.roastLevel.displayName)
+                BagInfoRow(label: "Origin", value: bag.origin.isEmpty ? "—" : bag.origin)
+                BagInfoRow(label: "Roast", value: bag.roastLevel.displayName)
                 if let p = bag.process {
-                    infoRow("Process", p.displayName)
+                    BagInfoRow(label: "Process", value: p.displayName)
                 }
                 if let date = bag.roastedOn {
-                    infoRow("Roasted", date.formatted(date: .abbreviated, time: .omitted))
+                    BagInfoRow(
+                        label: "Roasted",
+                        value: date.formatted(date: .abbreviated, time: .omitted)
+                    )
                 }
                 if !bag.tastingNotes.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Tasting notes")
-                            .font(.caption)
+                            .font(.footnote)
                             .foregroundStyle(Theme.onBackgroundVariant)
                         FlowLayout(spacing: 6) {
                             ForEach(bag.tastingNotes, id: \.self) { note in
@@ -117,8 +133,16 @@ struct BagDetailView: View {
             }
         }
     }
+}
 
-    private var brewsCard: some View {
+private struct BagBrewsCard: View {
+    let bag: Bag
+
+    private var sortedBrews: [Brew] {
+        bag.brews.sorted { $0.createdAt > $1.createdAt }
+    }
+
+    var body: some View {
         GlassCard {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Brews on this bag")
@@ -130,7 +154,7 @@ struct BagDetailView: View {
                         .font(.callout)
                         .foregroundStyle(Theme.onBackgroundVariant)
                 } else {
-                    ForEach(bag.brews.sorted { $0.createdAt > $1.createdAt }) { brew in
+                    ForEach(sortedBrews) { brew in
                         NavigationLink(value: brew.persistentModelID) {
                             BrewRowCompact(brew: brew)
                         }
@@ -140,12 +164,16 @@ struct BagDetailView: View {
             }
         }
     }
+}
 
-    @ViewBuilder
-    private func infoRow(_ label: String, _ value: String) -> some View {
+private struct BagInfoRow: View {
+    let label: String
+    let value: String
+
+    var body: some View {
         HStack {
             Text(label)
-                .font(.caption)
+                .font(.footnote)
                 .foregroundStyle(Theme.onBackgroundVariant)
             Spacer()
             Text(value)
@@ -165,18 +193,19 @@ struct BrewRowCompact: View {
                 .font(.title3)
                 .foregroundStyle(Theme.primary)
                 .frame(width: 32)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(brew.method.displayName)
                     .font(.callout)
                     .fontWeight(.medium)
                     .foregroundStyle(Theme.onBackground)
                 Text("\(Int(brew.doseGrams))g → \(Int(brew.yieldGrams))g · \(brew.formattedTime) · \(brew.formattedRatio)")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(Theme.onBackgroundVariant)
             }
             Spacer()
             Text(brew.createdAt.formatted(.relative(presentation: .numeric)))
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(Theme.onBackgroundVariant)
         }
         .padding(.vertical, 4)

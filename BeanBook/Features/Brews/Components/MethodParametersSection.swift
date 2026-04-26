@@ -12,8 +12,8 @@ struct MethodParametersSection: View {
         GlassCard {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 12) {
-                    numericField(label: method.doseLabel, value: $dose)
-                    numericField(label: method.yieldLabel, value: $yield)
+                    NumericField(label: method.doseLabel, value: $dose)
+                    NumericField(label: method.yieldLabel, value: $yield)
                 }
 
                 LabeledField(label: method.timeLabel) {
@@ -26,19 +26,7 @@ struct MethodParametersSection: View {
 
                 if method.usesTemperature {
                     LabeledField(label: "Water temp (°C)") {
-                        HStack {
-                            TextField(
-                                "—",
-                                value: Binding(
-                                    get: { waterTempC ?? method.defaultWaterTempC ?? 93 },
-                                    set: { waterTempC = $0 }
-                                ),
-                                format: .number.precision(.fractionLength(0))
-                            )
-                            .keyboardType(.numberPad)
-                            Text("°C")
-                                .foregroundStyle(Theme.onBackgroundVariant)
-                        }
+                        WaterTempField(method: method, waterTempC: $waterTempC)
                     }
                 }
 
@@ -50,7 +38,7 @@ struct MethodParametersSection: View {
     private var ratioRow: some View {
         HStack {
             Text("Ratio")
-                .font(.caption)
+                .font(.footnote)
                 .foregroundStyle(Theme.onBackgroundVariant)
             Spacer()
             Text(formattedRatio)
@@ -62,27 +50,57 @@ struct MethodParametersSection: View {
 
     private var formattedRatio: String {
         guard dose > 0 else { return "—" }
-        return String(format: "1:%.2f", yield / dose)
+        return "1:\((yield / dose).formatted(.number.precision(.fractionLength(2))))"
     }
+}
 
-    @ViewBuilder
-    private func numericField(label: String, value: Binding<Double>) -> some View {
+private struct NumericField: View {
+    let label: String
+    @Binding var value: Double
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
-                .font(.caption)
-                .fontWeight(.medium)
+                .font(.footnote)
                 .foregroundStyle(Theme.onBackgroundVariant)
             TextField(
                 "0",
-                value: value,
+                value: $value,
                 format: .number.precision(.fractionLength(0...1))
             )
             .keyboardType(.decimalPad)
             .padding(10)
             .background(Theme.surfaceBright, in: .rect(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.surfaceHigh, lineWidth: 1))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12).stroke(Theme.surfaceHigh, lineWidth: 1)
+            }
         }
         .frame(maxWidth: .infinity)
     }
 }
 
+private struct WaterTempField: View {
+    let method: BrewMethod
+    @Binding var waterTempC: Double?
+
+    @State private var local: Double = 0
+
+    var body: some View {
+        HStack {
+            TextField(
+                "—",
+                value: $local,
+                format: .number.precision(.fractionLength(0))
+            )
+            .keyboardType(.decimalPad)
+            .onChange(of: local) { _, newValue in
+                waterTempC = newValue == 0 ? nil : newValue
+            }
+            Text("°C")
+                .foregroundStyle(Theme.onBackgroundVariant)
+        }
+        .task(id: method) {
+            local = waterTempC ?? method.defaultWaterTempC ?? 0
+        }
+    }
+}

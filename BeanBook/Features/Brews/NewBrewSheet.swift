@@ -7,7 +7,6 @@ struct NewBrewSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @Query(sort: \Bag.createdAt, order: .reverse) private var bags: [Bag]
-    @Query(sort: \BrewPreset.createdAt, order: .reverse) private var presets: [BrewPreset]
 
     /// Optional bag to pre-link.
     var initialBag: Bag? = nil
@@ -49,7 +48,7 @@ struct NewBrewSheet: View {
                         }
 
                     SectionHeader(title: "Bag", subtitle: "Optional")
-                    bagPickerCard
+                    BagPickerCard(bags: bags, bag: $bag)
 
                     SectionHeader(title: "Parameters")
                     MethodParametersSection(
@@ -62,33 +61,27 @@ struct NewBrewSheet: View {
                     )
 
                     SectionHeader(title: "Result")
-                    resultCard
+                    ResultCard(
+                        rating: $rating,
+                        notes: $notes,
+                        imageData: $imageData,
+                        photoItem: $photoItem
+                    )
 
                     SectionHeader(title: "Save as preset", subtitle: "Reuse these settings later")
-                    presetCard
+                    PresetCard(saveAsPreset: $saveAsPreset, presetName: $presetName)
                 }
                 .padding(Theme.screenPadding)
             }
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle("New Brew")
-            .navigationBarTitleDisplayMode(.inline)
+            .toolbarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    if !presets.isEmpty {
-                        Menu {
-                            ForEach(presets.filter { $0.method == method }) { preset in
-                                Button(preset.name) { applyPreset(preset) }
-                            }
-                            if presets.filter({ $0.method == method }).isEmpty {
-                                Text("No presets for \(method.displayName)")
-                            }
-                        } label: {
-                            Image(systemName: "list.bullet.rectangle")
-                        }
-                    }
+                    PresetMenu(method: method, apply: applyPreset)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", action: save)
@@ -99,100 +92,22 @@ struct NewBrewSheet: View {
             .interactiveDismissDisabled(isDirty)
             .sensoryFeedback(.success, trigger: savedSuccessfully)
             .task { hydrate() }
-            .onChange(of: dose) { trackDirty() }
-            .onChange(of: yield) { trackDirty() }
-            .onChange(of: brewTimeSeconds) { trackDirty() }
-            .onChange(of: grindSetting) { trackDirty() }
-            .onChange(of: waterTempC) { trackDirty() }
+            .onChange(of: dose) { _, _ in trackDirty() }
+            .onChange(of: yield) { _, _ in trackDirty() }
+            .onChange(of: brewTimeSeconds) { _, _ in trackDirty() }
+            .onChange(of: grindSetting) { _, _ in trackDirty() }
+            .onChange(of: waterTempC) { _, _ in trackDirty() }
             .onChange(of: bag) { _, newBag in
                 trackDirty()
                 if let newBag {
                     pullDefaultsFromLastBrew(on: newBag)
                 }
             }
-            .onChange(of: rating) { trackDirty() }
-            .onChange(of: notes) { trackDirty() }
-            .onChange(of: imageData) { trackDirty() }
+            .onChange(of: rating) { _, _ in trackDirty() }
+            .onChange(of: notes) { _, _ in trackDirty() }
+            .onChange(of: imageData) { _, _ in trackDirty() }
             .onChange(of: photoItem) { _, item in
                 Task { await loadPhoto(item) }
-            }
-        }
-    }
-
-    // MARK: - Subsections
-
-    private var bagPickerCard: some View {
-        GlassCard {
-            HStack(spacing: 12) {
-                Image(systemName: "bag.fill")
-                    .foregroundStyle(Theme.primary)
-                Menu {
-                    Button("None") { bag = nil }
-                    if !bags.isEmpty {
-                        Section("Your bags") {
-                            ForEach(bags) { b in
-                                Button(b.displayTitle) { bag = b }
-                            }
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Text(bag?.displayTitle ?? "No bag selected")
-                            .foregroundStyle(bag == nil ? Theme.onBackgroundVariant : Theme.onBackground)
-                        Spacer()
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.caption)
-                            .foregroundStyle(Theme.onBackgroundVariant)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
-
-    private var resultCard: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    Text("Rating")
-                        .font(.caption)
-                        .foregroundStyle(Theme.onBackgroundVariant)
-                    Spacer()
-                    StarRating(rating: $rating)
-                }
-
-                Divider()
-
-                Text("Notes")
-                    .font(.caption)
-                    .foregroundStyle(Theme.onBackgroundVariant)
-                TextField("How did it taste?", text: $notes, axis: .vertical)
-                    .lineLimit(2...5)
-
-                PhotosPicker(selection: $photoItem, matching: .images) {
-                    HStack {
-                        Image(systemName: imageData == nil ? "camera" : "checkmark.circle.fill")
-                        Text(imageData == nil ? "Add photo" : "Photo attached")
-                            .font(.callout)
-                    }
-                    .foregroundStyle(Theme.primary)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private var presetCard: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 10) {
-                Toggle(isOn: $saveAsPreset) {
-                    Text("Save these settings as a preset")
-                        .font(.callout)
-                        .foregroundStyle(Theme.onBackground)
-                }
-                if saveAsPreset {
-                    TextField("Preset name (e.g. \"Morning shot\")", text: $presetName)
-                }
             }
         }
     }
@@ -200,7 +115,6 @@ struct NewBrewSheet: View {
     // MARK: - Defaults
 
     private func applyMethodDefaultsIfFresh(_ method: BrewMethod) {
-        // Don't clobber if user has typed values, unless they're the previous method's defaults.
         dose = method.defaultDose
         yield = method.defaultYield
         brewTimeSeconds = method.defaultTimeSeconds
@@ -221,7 +135,6 @@ struct NewBrewSheet: View {
 
     private func hydrate() {
         guard !didHydrate else { return }
-        didHydrate = true
 
         if let prefill {
             method = prefill.method
@@ -238,7 +151,9 @@ struct NewBrewSheet: View {
         } else {
             applyMethodDefaultsIfFresh(method)
         }
-        DispatchQueue.main.async { isDirty = false }
+
+        didHydrate = true
+        isDirty = false
     }
 
     private func applyPreset(_ preset: BrewPreset) {
@@ -288,23 +203,146 @@ struct NewBrewSheet: View {
         dismiss()
     }
 
-    private func trackDirty() { isDirty = true }
-
-    @MainActor
-    private func loadPhoto(_ item: PhotosPickerItem?) async {
-        guard let item else { return }
-        if let data = try? await item.loadTransferable(type: Data.self) {
-            imageData = compress(data)
-        }
+    private func trackDirty() {
+        guard didHydrate else { return }
+        isDirty = true
     }
 
-    private func compress(_ data: Data) -> Data {
-        guard let img = UIImage(data: data) else { return data }
-        let max: CGFloat = 1200
-        let scale = min(1, max / Swift.max(img.size.width, img.size.height))
-        let target = CGSize(width: img.size.width * scale, height: img.size.height * scale)
-        let renderer = UIGraphicsImageRenderer(size: target)
-        let resized = renderer.image { _ in img.draw(in: CGRect(origin: .zero, size: target)) }
-        return resized.jpegData(compressionQuality: 0.75) ?? data
+    private func loadPhoto(_ item: PhotosPickerItem?) async {
+        guard let item else { return }
+        guard let data = try? await item.loadTransferable(type: Data.self) else { return }
+        let compressed = await Task.detached(priority: .utility) {
+            ImageCompressor.compress(data)
+        }.value
+        imageData = compressed
+    }
+}
+
+// MARK: - Subviews
+
+private struct BagPickerCard: View {
+    let bags: [Bag]
+    @Binding var bag: Bag?
+
+    var body: some View {
+        GlassCard {
+            HStack(spacing: 12) {
+                Image(systemName: "bag.fill")
+                    .foregroundStyle(Theme.primary)
+                    .accessibilityHidden(true)
+                Menu {
+                    Button("None") { bag = nil }
+                    if !bags.isEmpty {
+                        Section("Your bags") {
+                            ForEach(bags) { b in
+                                Button(b.displayTitle) { bag = b }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Text(bag?.displayTitle ?? "No bag selected")
+                            .foregroundStyle(bag == nil ? Theme.onBackgroundVariant : Theme.onBackground)
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption)
+                            .foregroundStyle(Theme.onBackgroundVariant)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .accessibilityLabel("Bag")
+                .accessibilityValue(bag?.displayTitle ?? "None selected")
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+}
+
+private struct ResultCard: View {
+    @Binding var rating: Int?
+    @Binding var notes: String
+    @Binding var imageData: Data?
+    @Binding var photoItem: PhotosPickerItem?
+
+    var body: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Text("Rating")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.onBackgroundVariant)
+                    Spacer()
+                    StarRating(rating: $rating)
+                }
+
+                Divider()
+
+                Text("Notes")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.onBackgroundVariant)
+                TextField("How did it taste?", text: $notes, axis: .vertical)
+                    .lineLimit(2...5)
+
+                PhotosPicker(selection: $photoItem, matching: .images) {
+                    HStack {
+                        Image(systemName: imageData == nil ? "camera" : "checkmark.circle.fill")
+                        Text(imageData == nil ? "Add photo" : "Photo attached")
+                            .font(.callout)
+                    }
+                    .foregroundStyle(Theme.primary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+}
+
+private struct PresetCard: View {
+    @Binding var saveAsPreset: Bool
+    @Binding var presetName: String
+
+    var body: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 10) {
+                Toggle(isOn: $saveAsPreset) {
+                    Text("Save these settings as a preset")
+                        .font(.callout)
+                        .foregroundStyle(Theme.onBackground)
+                }
+                if saveAsPreset {
+                    TextField("Preset name (e.g. \"Morning shot\")", text: $presetName)
+                }
+            }
+        }
+    }
+}
+
+private struct PresetMenu: View {
+    let method: BrewMethod
+    let apply: (BrewPreset) -> Void
+
+    @Query private var presets: [BrewPreset]
+
+    init(method: BrewMethod, apply: @escaping (BrewPreset) -> Void) {
+        self.method = method
+        self.apply = apply
+        _presets = Query(
+            filter: #Predicate<BrewPreset> { $0.method == method },
+            sort: \BrewPreset.createdAt,
+            order: .reverse
+        )
+    }
+
+    var body: some View {
+        Menu("Presets", systemImage: "list.bullet.rectangle") {
+            if presets.isEmpty {
+                Text("No presets for \(method.displayName)")
+            } else {
+                ForEach(presets) { preset in
+                    Button(preset.name) { apply(preset) }
+                }
+            }
+        }
+        .labelStyle(.iconOnly)
     }
 }

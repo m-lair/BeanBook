@@ -4,6 +4,7 @@ import SwiftData
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+    @Environment(NotificationManager.self) private var notifications
 
     @AppStorage("dailyReminderEnabled") private var dailyReminderEnabled = false
     @AppStorage("preferredUnit") private var preferredUnit: String = "g"
@@ -22,16 +23,7 @@ struct SettingsView: View {
                             Label("Daily brew reminder", systemImage: "bell")
                         }
                         .onChange(of: dailyReminderEnabled) { _, on in
-                            if on {
-                                Task {
-                                    await NotificationManager.shared.scheduleDailyCoffeeReminder()
-                                }
-                            } else {
-                                UNUserNotificationCenter.current()
-                                    .removePendingNotificationRequests(
-                                        withIdentifiers: ["daily_coffee_reminder"]
-                                    )
-                            }
+                            handleReminderToggle(on)
                         }
                     }
                 }
@@ -60,29 +52,7 @@ struct SettingsView: View {
                                 .foregroundStyle(Theme.onBackgroundVariant)
                         } else {
                             ForEach(presets) { preset in
-                                HStack {
-                                    Image(systemName: preset.method.symbol)
-                                        .foregroundStyle(Theme.primary)
-                                        .frame(width: 28)
-                                    VStack(alignment: .leading, spacing: 1) {
-                                        Text(preset.name)
-                                            .font(.callout)
-                                            .fontWeight(.medium)
-                                        Text("\(Int(preset.doseGrams))g → \(Int(preset.yieldGrams))g")
-                                            .font(.caption2)
-                                            .foregroundStyle(Theme.onBackgroundVariant)
-                                    }
-                                    Spacer()
-                                    Button(role: .destructive) {
-                                        context.delete(preset)
-                                        try? context.save()
-                                    } label: {
-                                        Image(systemName: "trash")
-                                            .foregroundStyle(Theme.onBackgroundVariant)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                                .padding(.vertical, 4)
+                                PresetRow(preset: preset, onDelete: { delete(preset) })
                             }
                         }
                     }
@@ -103,11 +73,52 @@ struct SettingsView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Settings")
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") { dismiss() }
             }
         }
+    }
+
+    private func handleReminderToggle(_ on: Bool) {
+        if on {
+            Task { await notifications.scheduleDailyCoffeeReminder() }
+        } else {
+            notifications.cancelDailyCoffeeReminder()
+        }
+    }
+
+    private func delete(_ preset: BrewPreset) {
+        context.delete(preset)
+        try? context.save()
+    }
+}
+
+private struct PresetRow: View {
+    let preset: BrewPreset
+    let onDelete: () -> Void
+
+    var body: some View {
+        HStack {
+            Image(systemName: preset.method.symbol)
+                .foregroundStyle(Theme.primary)
+                .frame(width: 28)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(preset.name)
+                    .font(.callout)
+                    .fontWeight(.medium)
+                Text("\(Int(preset.doseGrams))g → \(Int(preset.yieldGrams))g")
+                    .font(.caption)
+                    .foregroundStyle(Theme.onBackgroundVariant)
+            }
+            Spacer()
+            Button("Delete \(preset.name)", systemImage: "trash", role: .destructive, action: onDelete)
+                .labelStyle(.iconOnly)
+                .buttonStyle(.plain)
+                .foregroundStyle(Theme.onBackgroundVariant)
+        }
+        .padding(.vertical, 4)
     }
 }

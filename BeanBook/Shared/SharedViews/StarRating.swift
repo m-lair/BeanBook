@@ -2,14 +2,13 @@ import SwiftUI
 
 struct StarRating: View {
     @Binding var rating: Int?
-    var max: Int = 5
+    var maxRating: Int = 5
 
     var body: some View {
         HStack(spacing: 6) {
-            ForEach(1...max, id: \.self) { star in
+            ForEach(1...maxRating, id: \.self) { star in
                 Button {
-                    if rating == star { rating = nil }
-                    else { rating = star }
+                    rating = (rating == star) ? nil : star
                 } label: {
                     Image(systemName: (rating ?? 0) >= star ? "star.fill" : "star")
                         .font(.title3)
@@ -20,8 +19,10 @@ struct StarRating: View {
                         )
                 }
                 .buttonStyle(.plain)
-                .sensoryFeedback(.selection, trigger: rating)
+                .accessibilityLabel("Rate \(star) out of \(maxRating)")
+                .accessibilityAddTraits((rating ?? 0) >= star ? [.isButton, .isSelected] : .isButton)
             }
         }
+        .sensoryFeedback(.selection, trigger: rating)
     }
 }

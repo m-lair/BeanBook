@@ -14,13 +14,13 @@ struct TastingNotesEditor: View {
                             Text(note)
                                 .font(.footnote)
                                 .fontWeight(.medium)
-                            Button {
+                            Button("Remove \(note)", systemImage: "xmark.circle.fill", role: .destructive) {
                                 notes.removeAll { $0 == note }
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.footnote)
-                                    .foregroundStyle(Theme.onBackgroundVariant)
                             }
+                            .labelStyle(.iconOnly)
+                            .font(.footnote)
+                            .foregroundStyle(Theme.onBackgroundVariant)
+                            .buttonStyle(.plain)
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)

@@ -14,7 +14,7 @@ struct BagListView: View {
             Theme.background.ignoresSafeArea()
 
             if bags.isEmpty {
-                emptyState
+                BagListEmptyState { showAddSheet = true }
             } else {
                 ScrollView {
                     LazyVStack(spacing: Theme.cardSpacing) {
@@ -32,12 +32,8 @@ struct BagListView: View {
         .navigationTitle("Bags")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showAddSheet = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .matchedTransitionSource(id: "addBag", in: addSheetNamespace)
+                Button("Add bag", systemImage: "plus") { showAddSheet = true }
+                    .matchedTransitionSource(id: "addBag", in: addSheetNamespace)
             }
         }
         .sheet(isPresented: $showAddSheet) {
@@ -45,19 +41,23 @@ struct BagListView: View {
                 .navigationTransition(.zoom(sourceID: "addBag", in: addSheetNamespace))
         }
         .navigationDestination(for: PersistentIdentifier.self) { id in
-            if let bag = bags.first(where: { $0.persistentModelID == id }) {
+            if let bag = context.model(for: id) as? Bag {
                 BagDetailView(bag: bag)
             }
         }
     }
+}
 
-    private var emptyState: some View {
+private struct BagListEmptyState: View {
+    let onAdd: () -> Void
+
+    var body: some View {
         ContentUnavailableView {
             Label("No bags yet", systemImage: "bag")
         } description: {
             Text("Track the beans you're brewing — origin, roast, tasting notes.")
         } actions: {
-            Button("Add a bag") { showAddSheet = true }
+            Button("Add a bag", action: onAdd)
                 .buttonStyle(.gradient)
         }
     }
@@ -66,6 +66,16 @@ struct BagListView: View {
 private struct BagRow: View {
     let bag: Bag
 
+    @State private var thumbnail: UIImage?
+
+    private var metaLine: String {
+        var parts: [String] = []
+        if !bag.origin.isEmpty { parts.append(bag.origin) }
+        parts.append(bag.roastLevel.displayName)
+        if let process = bag.process { parts.append(process.displayName) }
+        return parts.joined(separator: " · ")
+    }
+
     var body: some View {
         GlassCard {
             HStack(spacing: 14) {
@@ -73,18 +83,19 @@ private struct BagRow: View {
                     RoundedRectangle(cornerRadius: 14)
                         .fill(Theme.softGradient)
                         .frame(width: 56, height: 56)
-                    if let data = bag.imageData, let img = UIImage(data: data) {
-                        Image(uiImage: img)
+                    if let thumbnail {
+                        Image(uiImage: thumbnail)
                             .resizable()
                             .scaledToFill()
                             .frame(width: 56, height: 56)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .clipShape(.rect(cornerRadius: 14))
                     } else {
                         Image(systemName: "bag.fill")
                             .font(.title3)
                             .foregroundStyle(Theme.primary)
                     }
                 }
+                .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(bag.displayTitle)
@@ -96,8 +107,8 @@ private struct BagRow: View {
                         .foregroundStyle(Theme.onBackgroundVariant)
                         .lineLimit(1)
                     if !bag.brews.isEmpty {
-                        Text("\(bag.brews.count) brew\(bag.brews.count == 1 ? "" : "s")")
-                            .font(.caption2)
+                        Text("^[\(bag.brews.count) brew](inflect: true)")
+                            .font(.caption)
                             .foregroundStyle(Theme.primary)
                     }
                 }
@@ -107,15 +118,11 @@ private struct BagRow: View {
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundStyle(Theme.onBackgroundVariant.opacity(0.5))
+                    .accessibilityHidden(true)
             }
         }
-    }
-
-    private var metaLine: String {
-        var parts: [String] = []
-        if !bag.origin.isEmpty { parts.append(bag.origin) }
-        parts.append(bag.roastLevel.displayName)
-        if let process = bag.process { parts.append(process.displayName) }
-        return parts.joined(separator: " · ")
+        .task(id: bag.imageData) {
+            thumbnail = bag.imageData.flatMap(UIImage.init(data:))
+        }
     }
 }

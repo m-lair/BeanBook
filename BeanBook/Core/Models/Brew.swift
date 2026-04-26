@@ -3,6 +3,8 @@ import SwiftData
 
 @Model
 final class Brew {
+    #Index<Brew>([\.createdAt], [\.method])
+
     var method: BrewMethod = BrewMethod.espresso
     var doseGrams: Double = 0
     var yieldGrams: Double = 0
@@ -50,17 +52,17 @@ final class Brew {
 
     var formattedRatio: String {
         guard ratio > 0 else { return "—" }
-        return String(format: "1:%.2f", ratio)
+        return "1:\(ratio.formatted(.number.precision(.fractionLength(2))))"
     }
 
     var formattedTime: String {
         let s = brewTimeSeconds
-        if s < 60 { return "\(s)s" }
-        if s < 3600 {
-            return String(format: "%d:%02d", s / 60, s % 60)
+        if s < 60 {
+            return "\(s)s"
         }
-        let h = s / 3600
-        let m = (s % 3600) / 60
-        return "\(h)h \(m)m"
+        if s < 3600 {
+            return Duration.seconds(s).formatted(.time(pattern: .minuteSecond))
+        }
+        return Duration.seconds(s).formatted(.time(pattern: .hourMinute))
     }
 }

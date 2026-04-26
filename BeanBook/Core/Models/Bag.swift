@@ -3,6 +3,8 @@ import SwiftData
 
 @Model
 final class Bag {
+    #Index<Bag>([\.createdAt])
+
     var brand: String = ""
     var name: String = ""
     var roastLevel: RoastLevel = RoastLevel.medium

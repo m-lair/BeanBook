@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct BrewListView: View {
+    @Environment(\.modelContext) private var context
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \Brew.createdAt, order: .reverse) private var brews: [Brew]
 
@@ -15,26 +16,23 @@ struct BrewListView: View {
             Theme.background.ignoresSafeArea()
 
             if brews.isEmpty {
-                emptyState
+                BrewListEmptyState { showAddSheet = true }
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: Theme.cardSpacing) {
-                        heroCard
+                        BrewHeroCard(brews: brews)
                             .opacity(appeared ? 1 : 0)
                             .offset(y: appeared ? 0 : 16)
                             .animation(reduceMotion ? .none : .smooth, value: appeared)
 
-                        ForEach(Array(brews.enumerated()), id: \.element.persistentModelID) { index, brew in
+                        ForEach(brews) { brew in
                             NavigationLink(value: brew.persistentModelID) {
                                 BrewCard(brew: brew)
                             }
                             .buttonStyle(.plain)
                             .opacity(appeared ? 1 : 0)
                             .offset(y: appeared ? 0 : 16)
-                            .animation(
-                                reduceMotion ? .none : .smooth.delay(0.05 * Double(min(index, 5))),
-                                value: appeared
-                            )
+                            .animation(reduceMotion ? .none : .smooth, value: appeared)
                         }
                     }
                     .padding(Theme.screenPadding)
@@ -44,19 +42,11 @@ struct BrewListView: View {
         .navigationTitle("Brews")
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    showSettings = true
-                } label: {
-                    Image(systemName: "gearshape")
-                }
+                Button("Settings", systemImage: "gearshape") { showSettings = true }
             }
             ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showAddSheet = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .matchedTransitionSource(id: "addBrew", in: addSheetNamespace)
+                Button("Add brew", systemImage: "plus") { showAddSheet = true }
+                    .matchedTransitionSource(id: "addBrew", in: addSheetNamespace)
             }
         }
         .sheet(isPresented: $showAddSheet) {
@@ -67,17 +57,29 @@ struct BrewListView: View {
             NavigationStack { SettingsView() }
         }
         .navigationDestination(for: PersistentIdentifier.self) { id in
-            if let brew = brews.first(where: { $0.persistentModelID == id }) {
+            if let brew = context.model(for: id) as? Brew {
                 BrewDetailView(brew: brew)
             }
         }
-        .onAppear { appeared = true }
+        .task { appeared = true }
+    }
+}
+
+private struct BrewHeroCard: View {
+    let brews: [Brew]
+
+    private var favoriteMethodLabel: String {
+        let counts = Dictionary(grouping: brews, by: \.method).mapValues(\.count)
+        if let top = counts.max(by: { $0.value < $1.value })?.key {
+            return "Mostly \(top.displayName)"
+        }
+        return "Welcome back"
     }
 
-    private var heroCard: some View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(brews.count) brew\(brews.count == 1 ? "" : "s") logged")
-                .font(.caption)
+            Text("^[\(brews.count) brew](inflect: true) logged")
+                .font(.footnote)
                 .fontWeight(.medium)
                 .foregroundStyle(.white.opacity(0.85))
             Text(favoriteMethodLabel)
@@ -90,22 +92,18 @@ struct BrewListView: View {
         .background(Theme.heroGradient, in: .rect(cornerRadius: Theme.cardRadius))
         .shadow(color: Theme.primary.opacity(0.25), radius: 16, y: 8)
     }
+}
 
-    private var favoriteMethodLabel: String {
-        let counts = Dictionary(grouping: brews, by: \.method).mapValues(\.count)
-        if let top = counts.max(by: { $0.value < $1.value })?.key {
-            return "Mostly \(top.displayName)"
-        }
-        return "Welcome back"
-    }
+private struct BrewListEmptyState: View {
+    let onAdd: () -> Void
 
-    private var emptyState: some View {
+    var body: some View {
         ContentUnavailableView {
             Label("No brews yet", systemImage: "cup.and.saucer")
         } description: {
             Text("Log your first brew to start dialing in your recipes.")
         } actions: {
-            Button("Log a brew") { showAddSheet = true }
+            Button("Log a brew", action: onAdd)
                 .buttonStyle(.gradient)
         }
     }
@@ -124,6 +122,7 @@ private struct BrewCard: View {
                     Image(systemName: brew.method.symbol)
                         .foregroundStyle(Theme.primary)
                 }
+                .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
@@ -142,7 +141,7 @@ private struct BrewCard: View {
                     HStack(spacing: 8) {
                         if let bag = brew.bag {
                             Label(bag.displayTitle, systemImage: "bag")
-                                .font(.caption2)
+                                .font(.caption)
                                 .foregroundStyle(Theme.onBackgroundVariant)
                                 .lineLimit(1)
                         }
@@ -151,13 +150,15 @@ private struct BrewCard: View {
                             HStack(spacing: 2) {
                                 ForEach(0..<rating, id: \.self) { _ in
                                     Image(systemName: "star.fill")
-                                        .font(.caption2)
+                                        .font(.caption)
                                         .foregroundStyle(Theme.primary)
                                 }
                             }
+                            .accessibilityElement()
+                            .accessibilityLabel("\(rating) of 5 stars")
                         }
                         Text(brew.createdAt.formatted(.relative(presentation: .numeric)))
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundStyle(Theme.onBackgroundVariant)
                     }
                 }
@@ -169,6 +170,6 @@ private struct BrewCard: View {
         if value.truncatingRemainder(dividingBy: 1) == 0 {
             return String(Int(value))
         }
-        return String(format: "%.1f", value)
+        return value.formatted(.number.precision(.fractionLength(1)))
     }
 }
