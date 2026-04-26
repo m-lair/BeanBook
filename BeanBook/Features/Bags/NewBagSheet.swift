@@ -31,33 +31,48 @@ struct NewBagSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: Theme.cardSpacing) {
-                    PhotoPickerSection(imageData: $imageData, photoItem: $photoItem)
-                    BagDetailsSection(
+                VStack(alignment: .leading, spacing: 32) {
+                    IdentitySection(
                         brand: $brand,
                         name: $name,
                         origin: $origin,
+                        imageData: $imageData,
+                        photoItem: $photoItem
+                    )
+                    CharacteristicsSection(
                         roastLevel: $roastLevel,
                         process: $process,
-                        tastingNotes: $tastingNotes,
                         roastedOn: $roastedOn,
                         hasRoastedOn: $hasRoastedOn
                     )
-                    NotesSection(notes: $notes)
+                    TastingSection(
+                        tastingNotes: $tastingNotes,
+                        notes: $notes
+                    )
                 }
-                .padding(Theme.screenPadding)
+                .padding(.horizontal, Theme.screenPadding)
+                .padding(.top, 8)
+                .padding(.bottom, 40)
             }
             .background(Theme.background.ignoresSafeArea())
-            .navigationTitle(editing == nil ? "New Bag" : "Edit Bag")
+            .navigationTitle(editing == nil ? "New bag" : "Edit bag")
             .toolbarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .font(Theme.body(15))
+                        .foregroundStyle(Theme.ink)
+                }
+                ToolbarItem(placement: .principal) {
+                    Text(editing == nil ? "New bag" : "Edit bag")
+                        .font(Theme.display(17, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", action: save)
+                        .font(Theme.body(15, weight: .semibold))
+                        .foregroundStyle(isValid ? Theme.accent : Theme.ink3)
                         .disabled(!isValid)
-                        .fontWeight(.semibold)
                 }
             }
             .interactiveDismissDisabled(isDirty)
@@ -136,115 +151,357 @@ struct NewBagSheet: View {
     }
 }
 
-// MARK: - Sections
+// MARK: - Identity
 
-private struct PhotoPickerSection: View {
+private struct IdentitySection: View {
+    @Binding var brand: String
+    @Binding var name: String
+    @Binding var origin: String
+    @Binding var imageData: Data?
+    @Binding var photoItem: PhotosPickerItem?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Eyebrow("Identity", color: Theme.ink2)
+
+            (Text("What did you ")
+                .foregroundStyle(Theme.ink)
+             + Text("open")
+                .foregroundStyle(Theme.accent)
+                .italic()
+             + Text("?")
+                .foregroundStyle(Theme.accent))
+                .font(Theme.display(34, weight: .semibold))
+                .lineSpacing(2)
+
+            HStack(alignment: .top, spacing: 18) {
+                BagPhotoTile(imageData: $imageData, photoItem: $photoItem)
+                VStack(alignment: .leading, spacing: 14) {
+                    EditorialField(label: "Roaster", placeholder: "Onyx Coffee Lab", text: $brand, serif: false)
+                    EditorialField(label: "Bean", placeholder: "Geometry", text: $name, serif: true)
+                }
+            }
+
+            EditorialField(
+                label: "Origin",
+                placeholder: "Ethiopia · Yirgacheffe",
+                text: $origin,
+                serif: false
+            )
+        }
+    }
+}
+
+private struct BagPhotoTile: View {
     @Binding var imageData: Data?
     @Binding var photoItem: PhotosPickerItem?
 
     var body: some View {
         PhotosPicker(selection: $photoItem, matching: .images) {
             ZStack {
-                RoundedRectangle(cornerRadius: Theme.cardRadius)
-                    .fill(Theme.softGradient)
-                    .frame(height: 160)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Theme.accentSoft)
                 if let imageData, let img = UIImage(data: imageData) {
                     Image(uiImage: img)
                         .resizable()
                         .scaledToFill()
-                        .frame(height: 160)
-                        .clipShape(.rect(cornerRadius: Theme.cardRadius))
+                        .clipShape(.rect(cornerRadius: 18, style: .continuous))
                 } else {
-                    VStack(spacing: 8) {
-                        Image(systemName: "camera.fill")
-                            .font(.title2)
-                            .foregroundStyle(Theme.primary)
-                            .accessibilityHidden(true)
-                        Text("Add photo")
-                            .font(.footnote)
-                            .foregroundStyle(Theme.onBackgroundVariant)
-                    }
+                    Image(systemName: "bag.fill")
+                        .font(.system(size: 28, weight: .regular))
+                        .foregroundStyle(Theme.accent.opacity(0.8))
                 }
             }
+            .frame(width: 116, height: 116)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(imageData == nil ? "Add bag photo" : "Replace bag photo")
     }
 }
 
-private struct BagDetailsSection: View {
-    @Binding var brand: String
-    @Binding var name: String
-    @Binding var origin: String
+private struct EditorialField: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+    var serif: Bool = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Eyebrow(label, color: Theme.ink2)
+            TextField(
+                "",
+                text: $text,
+                prompt: Text(placeholder)
+                    .foregroundStyle(Theme.ink2.opacity(0.7))
+            )
+            .font(serif
+                  ? Theme.display(22, weight: .semibold)
+                  : Theme.body(17, weight: .regular))
+            .foregroundStyle(Theme.ink)
+            .textInputAutocapitalization(.words)
+            .padding(.bottom, 6)
+            HairRule(color: Theme.ink4)
+        }
+    }
+}
+
+// MARK: - Characteristics
+
+private struct CharacteristicsSection: View {
     @Binding var roastLevel: RoastLevel
     @Binding var process: ProcessMethod?
-    @Binding var tastingNotes: [String]
     @Binding var roastedOn: Date
     @Binding var hasRoastedOn: Bool
 
     var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 14) {
-                LabeledField("Roaster") {
-                    TextField("e.g. Onyx Coffee Lab", text: $brand)
-                        .textInputAutocapitalization(.words)
+        VStack(alignment: .leading, spacing: 22) {
+            Eyebrow("Characteristics", color: Theme.ink2)
+
+            VStack(alignment: .leading, spacing: 10) {
+                Eyebrow("Roast", color: Theme.ink2)
+                RoastPillControl(level: $roastLevel)
+                Text(roastHint)
+                    .font(Theme.body(12))
+                    .foregroundStyle(Theme.ink2)
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Eyebrow("Process", color: Theme.ink2)
+                ProcessPillControl(process: $process)
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Eyebrow("Roast date", color: Theme.ink2)
+                RoastDateRow(date: $roastedOn, hasDate: $hasRoastedOn)
+            }
+        }
+    }
+
+    private var roastHint: String {
+        switch roastLevel {
+        case .mediumLight, .mediumDark:
+            return "Tap again to refine (\(roastLevel.displayName))"
+        default:
+            return "Tap again to refine"
+        }
+    }
+}
+
+/// Three-pill roast control with "tap again to refine" — second tap on the
+/// anchor pill snaps to the adjacent half-step (Light → Medium-Light, Dark → Medium-Dark).
+private struct RoastPillControl: View {
+    @Binding var level: RoastLevel
+
+    private struct Anchor: Identifiable {
+        let id: RoastLevel
+        let title: String
+        let refined: RoastLevel?
+    }
+
+    private let anchors: [Anchor] = [
+        .init(id: .light, title: "Light", refined: .mediumLight),
+        .init(id: .medium, title: "Medium", refined: nil),
+        .init(id: .dark, title: "Dark", refined: .mediumDark)
+    ]
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(anchors) { anchor in
+                let active = isActive(anchor)
+                Button {
+                    tap(anchor)
+                } label: {
+                    Text(active && level == anchor.refined
+                         ? level.displayName
+                         : anchor.title)
+                        .font(Theme.body(15, weight: active ? .semibold : .regular))
+                        .foregroundStyle(active ? Color.white : Theme.ink)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(active ? Theme.accent : Color.clear)
+                        )
                 }
-                LabeledField("Bean name") {
-                    TextField("e.g. Geometry", text: $name)
-                        .textInputAutocapitalization(.words)
-                }
-                LabeledField("Origin") {
-                    TextField("e.g. Ethiopia, Yirgacheffe", text: $origin)
-                        .textInputAutocapitalization(.words)
-                }
-                LabeledField("Roast") {
-                    Picker("Roast", selection: $roastLevel) {
-                        ForEach(RoastLevel.allCases) { level in
-                            Text(level.displayName).tag(level)
-                        }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(
+            Capsule(style: .continuous)
+                .fill(Theme.card)
+        )
+        .overlay(
+            Capsule(style: .continuous)
+                .stroke(Theme.rule, lineWidth: 0.5)
+        )
+        .animation(.snappy(duration: 0.2), value: level)
+    }
+
+    private func isActive(_ anchor: Anchor) -> Bool {
+        if level == anchor.id { return true }
+        if let refined = anchor.refined, level == refined { return true }
+        return false
+    }
+
+    private func tap(_ anchor: Anchor) {
+        if level == anchor.id, let refined = anchor.refined {
+            level = refined
+        } else {
+            level = anchor.id
+        }
+    }
+}
+
+private struct ProcessPillControl: View {
+    @Binding var process: ProcessMethod?
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(ProcessMethod.allCases) { p in
+                    let active = process == p
+                    Button {
+                        process = active ? nil : p
+                    } label: {
+                        Text(p.displayName)
+                            .font(Theme.body(14, weight: active ? .semibold : .regular))
+                            .foregroundStyle(active ? Color.white : Theme.ink)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(active ? Theme.accent : Color.clear)
+                            )
                     }
-                    .pickerStyle(.segmented)
+                    .buttonStyle(.plain)
                 }
-                LabeledField("Process") {
-                    Picker("Process", selection: $process) {
-                        Text("—").tag(ProcessMethod?.none)
-                        ForEach(ProcessMethod.allCases) { p in
-                            Text(p.displayName).tag(ProcessMethod?.some(p))
-                        }
+            }
+            .padding(4)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(Theme.card)
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .stroke(Theme.rule, lineWidth: 0.5)
+            )
+        }
+        .animation(.snappy(duration: 0.2), value: process)
+    }
+}
+
+private struct RoastDateRow: View {
+    @Binding var date: Date
+    @Binding var hasDate: Bool
+    @State private var showingPicker = false
+
+    var body: some View {
+        Button {
+            showingPicker = true
+        } label: {
+            HStack {
+                Text(hasDate ? date.formatted(date: .abbreviated, time: .omitted) : "Not sure")
+                    .font(Theme.body(16))
+                    .foregroundStyle(hasDate ? Theme.ink : Theme.ink2)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Theme.ink2)
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Theme.card)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Theme.rule, lineWidth: 0.5)
+            )
+        }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showingPicker) {
+            RoastDatePickerSheet(date: $date, hasDate: $hasDate)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+    }
+}
+
+private struct RoastDatePickerSheet: View {
+    @Binding var date: Date
+    @Binding var hasDate: Bool
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                DatePicker("Roast date", selection: $date, displayedComponents: .date)
+                    .datePickerStyle(.graphical)
+                    .tint(Theme.accent)
+                    .padding(.horizontal)
+                Button("Not sure") {
+                    hasDate = false
+                    dismiss()
+                }
+                .font(Theme.body(15))
+                .foregroundStyle(Theme.ink2)
+            }
+            .padding(.top, 8)
+            .background(Theme.background)
+            .navigationTitle("Roast date")
+            .toolbarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        hasDate = true
+                        dismiss()
                     }
-                    .pickerStyle(.menu)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                LabeledField("Tasting notes") {
-                    TastingNotesEditor(notes: $tastingNotes)
-                }
-                Toggle(isOn: $hasRoastedOn) {
-                    Text("Roast date")
-                        .font(.callout)
-                        .foregroundStyle(Theme.onBackground)
-                }
-                if hasRoastedOn {
-                    DatePicker("Roast date", selection: $roastedOn, displayedComponents: .date)
-                        .labelsHidden()
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    .font(Theme.body(15, weight: .semibold))
+                    .foregroundStyle(Theme.accent)
                 }
             }
         }
     }
 }
 
-private struct NotesSection: View {
+// MARK: - Tasting
+
+private struct TastingSection: View {
+    @Binding var tastingNotes: [String]
     @Binding var notes: String
 
     var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Notes")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Theme.onBackground)
-                TextField("Anything to remember about this bag…", text: $notes, axis: .vertical)
-                    .lineLimit(3...6)
+        VStack(alignment: .leading, spacing: 22) {
+            Eyebrow("Tasting", color: Theme.ink2)
+
+            VStack(alignment: .leading, spacing: 10) {
+                Eyebrow("Notes", color: Theme.ink2)
+                TastingNotesEditor(notes: $tastingNotes)
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Eyebrow("Memory", color: Theme.ink2)
+                TextField(
+                    "",
+                    text: $notes,
+                    prompt: Text("Anything to remember about this bag…")
+                        .foregroundStyle(Theme.ink2.opacity(0.7)),
+                    axis: .vertical
+                )
+                .font(Theme.body(15))
+                .foregroundStyle(Theme.ink)
+                .lineLimit(3...6)
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Theme.card)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Theme.rule, lineWidth: 0.5)
+                )
             }
         }
     }

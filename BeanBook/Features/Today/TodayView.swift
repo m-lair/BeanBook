@@ -10,7 +10,6 @@ struct TodayView: View {
     @State private var showAddSheet = false
     @State private var showSettings = false
     @State private var showAllBrews = false
-    @Namespace private var addSheetNamespace
 
     private var openBags: [Bag] { bags }
 
@@ -27,18 +26,15 @@ struct TodayView: View {
                         hero
                         HairRule().padding(.horizontal, 24).padding(.top, 32)
                         lastLogged
-                        HairRule().padding(.horizontal, 24)
-                        beansPreview
+                        if !openBags.isEmpty {
+                            HairRule().padding(.horizontal, 24)
+                            beansPreview
+                        }
                         Spacer().frame(height: 120)
                     }
                     .padding(.top, 12)
                 }
                 .scrollIndicators(.hidden)
-            }
-
-            if !brews.isEmpty {
-                FAB { showAddSheet = true }
-                    .matchedTransitionSource(id: "addBrew", in: addSheetNamespace)
             }
         }
         .toolbarBackground(.hidden, for: .navigationBar)
@@ -56,7 +52,6 @@ struct TodayView: View {
         }
         .sheet(isPresented: $showAddSheet) {
             NewBrewSheet()
-                .navigationTransition(.zoom(sourceID: "addBrew", in: addSheetNamespace))
         }
         .sheet(isPresented: $showSettings) {
             NavigationStack { SettingsView() }
@@ -189,18 +184,20 @@ struct TodayView: View {
             return "Log your first brew below."
         }
         let bag = lastBag?.displayTitle ?? "Today's bag"
-        let rating = last.rating ?? 0
+        let time = last.formattedTime
+        guard let rating = last.rating, rating > 0 else {
+            return "\(bag). Same dose, pulled \(time)."
+        }
         let qual: String = {
             switch rating {
             case 5: "outstanding"
             case 4: "great"
-            case 3: "good"
-            case 2: "ok"
-            case 1: "off"
-            default: "no rating yet"
+            case 3: "solid"
+            case 2: "fine"
+            default: "off"
             }
         }()
-        return "\(bag). Same dose, pulled \(last.formattedTime). You rated yesterday's a \(qual)."
+        return "\(bag). Same dose, pulled \(time) — yesterday's was \(qual)."
     }
 }
 
@@ -237,8 +234,11 @@ private struct TodayBrewRow: View {
     }
 
     private var rowDetail: String {
-        let bag = brew.bag?.brand ?? "—"
-        return "\(bag) · \(brew.createdAt.formatted(.relative(presentation: .numeric)))"
+        let when = brew.createdAt.formatted(.relative(presentation: .numeric))
+        if let bag = brew.bag?.brand, !bag.isEmpty {
+            return "\(bag) · \(when)"
+        }
+        return when
     }
 }
 
@@ -316,28 +316,3 @@ struct TodayEmptyView: View {
     }
 }
 
-// MARK: - FAB
-
-struct FAB: View {
-    let action: () -> Void
-
-    var body: some View {
-        VStack {
-            Spacer()
-            HStack {
-                Spacer()
-                Button(action: action) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 60, height: 60)
-                        .background(Theme.accent, in: .circle)
-                        .shadow(color: Theme.accentGlow, radius: 14, y: 8)
-                }
-                .accessibilityLabel("Add brew")
-                .padding(.trailing, 22)
-                .padding(.bottom, 30)
-            }
-        }
-    }
-}
