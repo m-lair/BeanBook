@@ -13,20 +13,20 @@ struct BigRatio: View {
 
     var body: some View {
         VStack(alignment: alignment, spacing: 14) {
-            HStack(alignment: .firstTextBaseline, spacing: 0) {
+            HStack(alignment: .firstTextBaseline, spacing: size * 0.04) {
                 Text("1")
                     .font(.system(size: size, weight: .ultraLight, design: .serif))
                     .foregroundStyle(color)
                 Text(":")
-                    .font(.system(size: size * 0.58, weight: .ultraLight, design: .serif))
-                    .foregroundStyle(Theme.ink3)
+                    .font(.system(size: size * 0.85, weight: .regular, design: .serif))
+                    .foregroundStyle(Theme.accent)
+                    .baselineOffset(size * 0.05)
                 Text(displayRatio.formatted(.number.precision(.fractionLength(2))))
                     .font(.system(size: size, weight: .ultraLight, design: .serif))
                     .foregroundStyle(color)
                     .monospacedDigit()
                     .contentTransition(.numericText(value: displayRatio))
             }
-            .kerning(-size * 0.04)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
 
@@ -77,6 +77,16 @@ struct RatioBar: View {
         .frame(height: height)
         .background(Theme.rule, in: .rect(cornerRadius: height / 2))
     }
+}
+
+/// Inline ratio (`1:X.XX`) with the colon tinted accent + heavier weight so
+/// it reads as a separator instead of disappearing between digits. Digits
+/// inherit whatever `foregroundStyle` the caller applied to the surrounding `Text`.
+func RatioText(_ ratio: Double) -> Text {
+    let val = ratio.formatted(.number.precision(.fractionLength(2)))
+    return Text("1")
+        + Text(":").fontWeight(.bold).foregroundStyle(Theme.accent)
+        + Text(val)
 }
 
 private extension HorizontalAlignment {

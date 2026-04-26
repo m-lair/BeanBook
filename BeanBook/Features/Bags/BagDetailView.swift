@@ -225,10 +225,10 @@ private struct BagBrewRow: View {
                     if let r = brew.rating, r > 0 {
                         RatingDots(value: r, size: 5)
                     }
-                    Text(brew.formattedRatio)
+                    RatioText(brew.ratio)
                         .font(.system(size: 17, weight: .medium, design: .serif))
                         .monospacedDigit()
-                        .foregroundStyle(Theme.accent)
+                        .foregroundStyle(Theme.ink)
                 }
             }
             .padding(.vertical, 14)

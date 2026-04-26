@@ -117,10 +117,10 @@ private struct BrewListRow: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 6) {
-                    Text(brew.formattedRatio)
+                    RatioText(brew.ratio)
                         .font(.system(size: 16, weight: .medium, design: .serif))
                         .monospacedDigit()
-                        .foregroundStyle(Theme.accent)
+                        .foregroundStyle(Theme.ink)
                     if let r = brew.rating, r > 0 {
                         RatingDots(value: r, size: 5)
                     }

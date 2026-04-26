@@ -2,41 +2,32 @@ import SwiftUI
 import SwiftData
 
 struct RootTabView: View {
-    @State private var selection: TabSelection = .today
-    @State private var previous: TabSelection = .today
     @State private var showAddBrew = false
 
-    enum TabSelection: Hashable {
-        case today, beans, recipes, add
-    }
-
     var body: some View {
-        TabView(selection: $selection) {
-            Tab("Today", systemImage: "cup.and.saucer.fill", value: TabSelection.today) {
+        TabView {
+            Tab("Today", systemImage: "cup.and.saucer.fill") {
                 NavigationStack { TodayView() }
             }
-            Tab("Beans", systemImage: "bag.fill", value: TabSelection.beans) {
+            Tab("Beans", systemImage: "bag.fill") {
                 NavigationStack { BagListView() }
             }
-            Tab("Recipes", systemImage: "list.bullet", value: TabSelection.recipes) {
+            Tab("Recipes", systemImage: "list.bullet") {
                 NavigationStack { RecipesView() }
-            }
-            Tab(value: TabSelection.add, role: .search) {
-                Color.clear
-            } label: {
-                Label("Log brew", systemImage: "plus")
-                    .foregroundStyle(Theme.accent)
-                    .tint(Theme.accent)
             }
         }
         .tint(Theme.accent)
-        .onChange(of: selection) { _, new in
-            if new == .add {
+        .tabViewBottomAccessory {
+            Button {
                 showAddBrew = true
-                selection = previous
-            } else {
-                previous = new
+            } label: {
+                Label("Log brew", systemImage: "plus")
+                    .labelStyle(.iconOnly)
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 44, height: 44)
             }
+            .accessibilityLabel("Log brew")
         }
         .sheet(isPresented: $showAddBrew) {
             NewBrewSheet()
