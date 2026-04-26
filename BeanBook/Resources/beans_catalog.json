@@ -1,0 +1,167 @@
+[
+  {
+    "id": "onyx-geometry",
+    "roaster": "Onyx Coffee Lab",
+    "name": "Geometry",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "mediumLight",
+    "tastingNotes": ["chocolate", "almond", "orange"],
+    "description": "Onyx's flagship blend — balanced and approachable across brew methods.",
+    "roasterURL": "https://onyxcoffeelab.com/products/geometry"
+  },
+  {
+    "id": "onyx-southern-weather",
+    "roaster": "Onyx Coffee Lab",
+    "name": "Southern Weather",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "medium",
+    "tastingNotes": ["milk chocolate", "graham", "stone fruit"],
+    "description": "Espresso-forward blend designed to play well with milk.",
+    "roasterURL": "https://onyxcoffeelab.com/products/southern-weather"
+  },
+  {
+    "id": "intelligentsia-black-cat",
+    "roaster": "Intelligentsia",
+    "name": "Black Cat Classic Espresso",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "medium",
+    "tastingNotes": ["dark cherry", "molasses", "caramel"],
+    "description": "A modern classic — the espresso that built Intelligentsia.",
+    "roasterURL": "https://www.intelligentsia.com/products/black-cat-classic-espresso"
+  },
+  {
+    "id": "counter-culture-hologram",
+    "roaster": "Counter Culture",
+    "name": "Hologram",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "mediumLight",
+    "tastingNotes": ["citrus", "berry", "honey"],
+    "description": "Bright, complex blend that shines in pour-over.",
+    "roasterURL": "https://counterculturecoffee.com/products/hologram"
+  },
+  {
+    "id": "counter-culture-fast-forward",
+    "roaster": "Counter Culture",
+    "name": "Fast Forward",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "medium",
+    "tastingNotes": ["chocolate", "caramel", "toasted nuts"],
+    "description": "Smooth everyday blend built for espresso.",
+    "roasterURL": "https://counterculturecoffee.com/products/fast-forward"
+  },
+  {
+    "id": "stumptown-hair-bender",
+    "roaster": "Stumptown",
+    "name": "Hair Bender",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "medium",
+    "tastingNotes": ["citrus", "dark chocolate", "tropical fruit"],
+    "description": "Stumptown's signature espresso — punchy and complex.",
+    "roasterURL": "https://www.stumptowncoffee.com/products/hair-bender"
+  },
+  {
+    "id": "heart-stereo",
+    "roaster": "Heart Coffee Roasters",
+    "name": "Stereo",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "light",
+    "tastingNotes": ["lemon", "honey", "florals"],
+    "description": "Light and bright — a Heart house blend favorite.",
+    "roasterURL": "https://www.heartroasters.com/products/stereo"
+  },
+  {
+    "id": "blue-bottle-bella-donovan",
+    "roaster": "Blue Bottle",
+    "name": "Bella Donovan",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "mediumDark",
+    "tastingNotes": ["fudge", "blackberry", "graham cracker"],
+    "description": "Deep, fruity blend that's been a Blue Bottle staple for years.",
+    "roasterURL": "https://bluebottlecoffee.com/us/eng/store/bella-donovan"
+  },
+  {
+    "id": "tim-wendelboe-finca-tamana",
+    "roaster": "Tim Wendelboe",
+    "name": "Finca Tamana",
+    "origin": "Colombia, Huila",
+    "process": "washed",
+    "roastLevel": "light",
+    "tastingNotes": ["red apple", "milk chocolate", "almond"],
+    "description": "Long-running relationship coffee from Elias Roa's farm.",
+    "roasterURL": "https://timwendelboe.no/shop/coffee/"
+  },
+  {
+    "id": "sey-natural-ethiopia",
+    "roaster": "Sey Coffee",
+    "name": "Hambela Natural",
+    "origin": "Ethiopia, Guji",
+    "process": "natural",
+    "roastLevel": "light",
+    "tastingNotes": ["blueberry", "candied lemon", "rose"],
+    "description": "Vivid natural-process Ethiopia from Sey's rotating menu.",
+    "roasterURL": "https://www.seycoffee.com/collections/coffee"
+  },
+  {
+    "id": "verve-streetlevel",
+    "roaster": "Verve",
+    "name": "Streetlevel",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "medium",
+    "tastingNotes": ["milk chocolate", "almond", "caramel"],
+    "description": "Verve's daily-driver espresso blend.",
+    "roasterURL": "https://www.vervecoffee.com/products/streetlevel-blend"
+  },
+  {
+    "id": "ritual-sweetness",
+    "roaster": "Ritual Coffee Roasters",
+    "name": "Sweetness",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "medium",
+    "tastingNotes": ["caramel", "milk chocolate", "cherry"],
+    "description": "Sweet, balanced espresso blend from a SF pioneer.",
+    "roasterURL": "https://www.ritualcoffee.com/coffee"
+  },
+  {
+    "id": "passenger-driver",
+    "roaster": "Passenger Coffee",
+    "name": "Driver",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "medium",
+    "tastingNotes": ["chocolate", "graham", "stone fruit"],
+    "description": "Versatile blend that works as drip or espresso.",
+    "roasterURL": "https://passengercoffee.com/collections/coffee"
+  },
+  {
+    "id": "george-howell-alchemy",
+    "roaster": "George Howell",
+    "name": "Alchemy",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "light",
+    "tastingNotes": ["honey", "stone fruit", "florals"],
+    "description": "Light-roast blend from a third-wave pioneer.",
+    "roasterURL": "https://www.georgehowellcoffee.com/collections/coffee"
+  },
+  {
+    "id": "proud-mary-cult-of-done",
+    "roaster": "Proud Mary",
+    "name": "Cult of Done",
+    "origin": "Blend",
+    "process": "washed",
+    "roastLevel": "medium",
+    "tastingNotes": ["dark chocolate", "hazelnut", "red fruit"],
+    "description": "Rich, balanced blend from PDX/AUS roaster Proud Mary.",
+    "roasterURL": "https://proudmarycoffee.com/collections/coffee"
+  }
+]
