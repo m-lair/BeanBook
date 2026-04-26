@@ -15,6 +15,7 @@ struct BeanBookApp: App {
 
     @State private var catalog = CatalogService()
     @State private var notifications = NotificationManager()
+    @State private var pro = ProEntitlement()
 
     @AppStorage("hasOnboarded") private var hasOnboarded = false
 
@@ -23,9 +24,11 @@ struct BeanBookApp: App {
             RootTabView()
                 .environment(catalog)
                 .environment(notifications)
+                .environment(pro)
                 .tint(Theme.accent)
                 .preferredColorScheme(.light)
                 .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+                .task { await pro.start() }
                 .fullScreenCover(isPresented: .constant(!hasOnboarded)) {
                     OnboardingView { hasOnboarded = true }
                         .dynamicTypeSize(...DynamicTypeSize.accessibility2)

@@ -5,8 +5,11 @@ import PhotosUI
 struct NewBagSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(ProEntitlement.self) private var pro
 
     var editing: Bag? = nil
+
+    @State private var showingPaywall = false
 
     @State private var brand = ""
     @State private var name = ""
@@ -91,12 +94,26 @@ struct NewBagSheet: View {
             .onChange(of: photoItem) { _, item in
                 Task { await loadPhoto(item) }
             }
+            .sheet(isPresented: $showingPaywall) {
+                NavigationStack {
+                    PaywallSheet(headline: "You've reached the free limit of \(ProQuota.bags) bags. Unlock Pro for unlimited.")
+                }
+            }
         }
     }
 
     // MARK: - Save / hydrate
 
     private func save() {
+        // Quota gate — only on creation, never on edit.
+        if editing == nil {
+            let count = (try? context.fetchCount(FetchDescriptor<Bag>())) ?? 0
+            guard pro.canUse(.bag, currentCount: count) else {
+                showingPaywall = true
+                return
+            }
+        }
+
         let bag = editing ?? Bag()
         bag.brand = brand.trimmingCharacters(in: .whitespaces)
         bag.name = name.trimmingCharacters(in: .whitespaces)

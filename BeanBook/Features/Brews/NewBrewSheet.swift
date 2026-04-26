@@ -6,9 +6,13 @@ import SwiftData
 struct NewBrewSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(ProEntitlement.self) private var pro
 
     @Query(sort: \Bag.createdAt, order: .reverse) private var bags: [Bag]
     @Query(sort: \BrewPreset.createdAt, order: .reverse) private var presets: [BrewPreset]
+
+    @State private var showingPaywall = false
+    @State private var paywallHeadline: String = ""
 
     /// Optional bag to pre-link.
     var initialBag: Bag? = nil
@@ -70,6 +74,11 @@ struct NewBrewSheet: View {
                 .navigationBarTitleDisplayMode(.inline)
         }
         .interactiveDismissDisabled(true)
+        .sheet(isPresented: $showingPaywall) {
+            NavigationStack {
+                PaywallSheet(headline: paywallHeadline)
+            }
+        }
         .task { hydrate() }
         .task(id: showSaved) {
             guard showSaved else { return }
@@ -401,6 +410,22 @@ struct NewBrewSheet: View {
     }
 
     private func save() {
+        // Quota gates — brew is always new here; preset is optional.
+        let brewCount = (try? context.fetchCount(FetchDescriptor<Brew>())) ?? 0
+        guard pro.canUse(.brew, currentCount: brewCount) else {
+            paywallHeadline = "You've reached the free limit of \(ProQuota.brews) brews. Unlock Pro for unlimited."
+            showingPaywall = true
+            return
+        }
+        if saveAsPreset {
+            let presetCount = (try? context.fetchCount(FetchDescriptor<BrewPreset>())) ?? 0
+            guard pro.canUse(.recipe, currentCount: presetCount) else {
+                paywallHeadline = "You've reached the free limit of \(ProQuota.recipes) saved recipes. Unlock Pro for unlimited."
+                showingPaywall = true
+                return
+            }
+        }
+
         let brew = Brew(
             method: method,
             doseGrams: dose,

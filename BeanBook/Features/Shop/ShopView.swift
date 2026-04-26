@@ -6,11 +6,21 @@ struct ShopView: View {
     @Environment(CatalogService.self) private var catalog
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(ProEntitlement.self) private var pro
 
     @State private var roastFilter: RoastLevel? = nil
     @State private var toastMessage: String? = nil
     @State private var toastTrigger = 0
     @State private var toastTask: Task<Void, Never>?
+    @State private var showingPaywall = false
+
+    /// Stable global index of the bean in the unfiltered catalog.
+    /// Free tier can add the first `ProQuota.catalog` beans; the rest are locked.
+    private func isLocked(_ bean: CatalogBean) -> Bool {
+        guard !pro.isPro else { return false }
+        let idx = catalog.beans.firstIndex(of: bean) ?? Int.max
+        return idx >= ProQuota.catalog
+    }
 
     private var filtered: [CatalogBean] {
         guard let roastFilter else { return catalog.beans }
@@ -51,6 +61,11 @@ struct ShopView: View {
             }
         }
         .sensoryFeedback(.success, trigger: toastTrigger)
+        .sheet(isPresented: $showingPaywall) {
+            NavigationStack {
+                PaywallSheet(headline: "Unlock the full curated catalog with BeanBook Pro.")
+            }
+        }
     }
 
     private var header: some View {
@@ -129,7 +144,9 @@ struct ShopView: View {
                 }
                 .padding(.top, 14)
 
-                Button("Add to beans") { addToBags(bean) }
+                Button(isLocked(bean) ? "Unlock with Pro" : "Add to beans") {
+                    addToBags(bean)
+                }
                     .buttonStyle(.primaryPill)
                     .padding(.top, 18)
             }
@@ -149,7 +166,7 @@ struct ShopView: View {
     private var list: some View {
         VStack(spacing: 0) {
             ForEach(filtered.dropFirst()) { bean in
-                CatalogBeanCard(bean: bean) { addToBags(bean) }
+                CatalogBeanCard(bean: bean, locked: isLocked(bean)) { addToBags(bean) }
             }
             if filtered.isEmpty {
                 Text("No matches.")
@@ -164,6 +181,10 @@ struct ShopView: View {
     }
 
     private func addToBags(_ bean: CatalogBean) {
+        if isLocked(bean) {
+            showingPaywall = true
+            return
+        }
         let bag = Bag(
             brand: bean.roaster,
             name: bean.name,

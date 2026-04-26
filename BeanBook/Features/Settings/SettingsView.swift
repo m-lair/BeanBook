@@ -6,6 +6,9 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @Environment(NotificationManager.self) private var notifications
+    @Environment(ProEntitlement.self) private var pro
+
+    @State private var showingPaywall = false
 
     @AppStorage("dailyReminderEnabled") private var dailyReminderEnabled = false
     @AppStorage("preferredUnit") private var preferredUnit: String = "g"
@@ -22,6 +25,7 @@ struct SettingsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     title
+                    proSection
                     generalSection
                     brewingSection
                     dataSection
@@ -41,8 +45,65 @@ struct SettingsView: View {
             }
         }
         .onChange(of: dailyReminderEnabled) { _, on in handleReminderToggle(on) }
+        .sheet(isPresented: $showingPaywall) {
+            NavigationStack { PaywallSheet() }
+        }
         .task {
             brewCount = (try? context.fetchCount(FetchDescriptor<Brew>())) ?? 0
+        }
+    }
+
+    private var proSection: some View {
+        SettingsSection(title: pro.isPro ? "BeanBook Pro" : "Upgrade") {
+            Button {
+                showingPaywall = true
+            } label: {
+                HStack {
+                    Image(systemName: pro.isPro ? "checkmark.seal.fill" : "sparkles")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Theme.accent)
+                        .frame(width: 22)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(pro.isPro ? "Pro unlocked" : "BeanBook Pro")
+                            .font(Theme.body(15, weight: .semibold))
+                            .foregroundStyle(Theme.ink)
+                        Text(pro.isPro
+                             ? "Thanks for supporting BeanBook."
+                             : "Unlimited bags, brews, recipes & full catalog.")
+                            .font(Theme.body(12))
+                            .foregroundStyle(Theme.ink2)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Theme.ink3)
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 14)
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+
+            if !pro.isPro {
+                Divider().background(Theme.rule).padding(.leading, 24)
+                Button {
+                    Task { await pro.restore() }
+                } label: {
+                    HStack {
+                        Text("Restore Purchases")
+                            .font(Theme.body(15))
+                            .foregroundStyle(Theme.ink)
+                        Spacer()
+                        if case .loading = pro.purchaseState {
+                            ProgressView().controlSize(.small)
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 14)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 

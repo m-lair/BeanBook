@@ -3,6 +3,7 @@ import SwiftUI
 /// Discover row — 44×56 color block + brand eyebrow + name + notes + circular add.
 struct CatalogBeanCard: View {
     let bean: CatalogBean
+    var locked: Bool = false
     var onAddToBags: () -> Void
 
     var body: some View {
@@ -12,13 +13,14 @@ struct CatalogBeanCard: View {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(bean.roastLevel.swatch)
                     .frame(width: 44, height: 56)
+                    .opacity(locked ? 0.45 : 1)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Eyebrow(bean.roaster)
                     Text(bean.name)
                         .font(.system(size: 19, weight: .medium, design: .serif))
                         .tracking(-0.3)
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(locked ? Theme.ink2 : Theme.ink)
                         .padding(.top, 1)
                     Text(bean.tastingNotes.prefix(3).joined(separator: ", "))
                         .font(Theme.body(11.5))
@@ -30,14 +32,14 @@ struct CatalogBeanCard: View {
                 Spacer()
 
                 Button(action: onAddToBags) {
-                    Image(systemName: "plus")
+                    Image(systemName: locked ? "lock.fill" : "plus")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(locked ? Theme.accent : Theme.ink)
                         .frame(width: 32, height: 32)
-                        .overlay(Circle().stroke(Theme.ink, lineWidth: 0.5))
+                        .overlay(Circle().stroke(locked ? Theme.accent : Theme.ink, lineWidth: 0.5))
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Add \(bean.name)")
+                .accessibilityLabel(locked ? "Pro feature — \(bean.name)" : "Add \(bean.name)")
             }
             .padding(.vertical, 16)
         }
