@@ -1,14 +1,14 @@
 import SwiftUI
 import SwiftData
 
+/// "All brews" — destination of the Today screen's "All" link. Editorial list,
+/// rule-separated rows; no toolbar Settings button (Settings now lives on Today).
 struct BrewListView: View {
     @Environment(\.modelContext) private var context
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dismiss) private var dismiss
     @Query(sort: \Brew.createdAt, order: .reverse) private var brews: [Brew]
 
     @State private var showAddSheet = false
-    @State private var showSettings = false
-    @State private var appeared = false
     @Namespace private var addSheetNamespace
 
     var body: some View {
@@ -16,160 +16,124 @@ struct BrewListView: View {
             Theme.background.ignoresSafeArea()
 
             if brews.isEmpty {
-                BrewListEmptyState { showAddSheet = true }
+                emptyState
             } else {
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: Theme.cardSpacing) {
-                        BrewHeroCard(brews: brews)
-                            .opacity(appeared ? 1 : 0)
-                            .offset(y: appeared ? 0 : 16)
-                            .animation(reduceMotion ? .none : .smooth, value: appeared)
-
-                        ForEach(brews) { brew in
-                            NavigationLink(value: brew.persistentModelID) {
-                                BrewCard(brew: brew)
-                            }
-                            .buttonStyle(.plain)
-                            .opacity(appeared ? 1 : 0)
-                            .offset(y: appeared ? 0 : 16)
-                            .animation(reduceMotion ? .none : .smooth, value: appeared)
-                        }
+                    VStack(alignment: .leading, spacing: 0) {
+                        header
+                        list
+                        Spacer().frame(height: 80)
                     }
-                    .padding(Theme.screenPadding)
+                    .padding(.top, 12)
                 }
+                .scrollIndicators(.hidden)
             }
         }
-        .navigationTitle("Brews")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button("Settings", systemImage: "gearshape") { showSettings = true }
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Done") { dismiss() }
+                    .foregroundStyle(Theme.accent)
             }
             ToolbarItem(placement: .primaryAction) {
-                Button("Add brew", systemImage: "plus") { showAddSheet = true }
-                    .matchedTransitionSource(id: "addBrew", in: addSheetNamespace)
+                Button {
+                    showAddSheet = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .foregroundStyle(Theme.ink)
+                .matchedTransitionSource(id: "addBrew", in: addSheetNamespace)
             }
         }
         .sheet(isPresented: $showAddSheet) {
             NewBrewSheet()
                 .navigationTransition(.zoom(sourceID: "addBrew", in: addSheetNamespace))
         }
-        .sheet(isPresented: $showSettings) {
-            NavigationStack { SettingsView() }
+        .navigationDestination(for: Brew.self) { BrewDetailView(brew: $0) }
+        .navigationDestination(for: Bag.self) { BagDetailView(bag: $0) }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Eyebrow("\(brews.count) logged")
+            Text("Brews")
+                .font(.system(size: 36, weight: .medium, design: .serif))
+                .tracking(-1)
+                .foregroundStyle(Theme.ink)
         }
-        .navigationDestination(for: PersistentIdentifier.self) { id in
-            if let brew = context.model(for: id) as? Brew {
-                BrewDetailView(brew: brew)
+        .padding(.horizontal, 24)
+    }
+
+    private var list: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(brews.enumerated()), id: \.element.id) { _, brew in
+                NavigationLink(value: brew) {
+                    BrewListRow(brew: brew)
+                }
+                .buttonStyle(.plain)
             }
         }
-        .task { appeared = true }
-    }
-}
-
-private struct BrewHeroCard: View {
-    let brews: [Brew]
-
-    private var favoriteMethodLabel: String {
-        let counts = Dictionary(grouping: brews, by: \.method).mapValues(\.count)
-        if let top = counts.max(by: { $0.value < $1.value })?.key {
-            return "Mostly \(top.displayName)"
-        }
-        return "Welcome back"
+        .padding(.horizontal, 24)
+        .padding(.top, 28)
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("^[\(brews.count) brew](inflect: true) logged")
-                .font(.footnote)
-                .fontWeight(.medium)
-                .foregroundStyle(.white.opacity(0.85))
-            Text(favoriteMethodLabel)
-                .font(.system(.title2, design: .rounded))
-                .fontWeight(.bold)
-                .foregroundStyle(.white)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Theme.cardPadding)
-        .background(Theme.heroGradient, in: .rect(cornerRadius: Theme.cardRadius))
-        .shadow(color: Theme.primary.opacity(0.25), radius: 16, y: 8)
-    }
-}
-
-private struct BrewListEmptyState: View {
-    let onAdd: () -> Void
-
-    var body: some View {
-        ContentUnavailableView {
-            Label("No brews yet", systemImage: "cup.and.saucer")
-        } description: {
+    private var emptyState: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("\(Text("No\n").foregroundStyle(Theme.ink))\(Text("brews yet.").foregroundStyle(Theme.accent))")
+                .font(.system(size: 36, weight: .medium, design: .serif))
+                .tracking(-1)
             Text("Log your first brew to start dialing in your recipes.")
-        } actions: {
-            Button("Log a brew", action: onAdd)
-                .buttonStyle(.gradient)
+                .font(Theme.body(14))
+                .foregroundStyle(Theme.ink2)
+                .lineSpacing(3)
+                .frame(maxWidth: 280, alignment: .leading)
+            Button("Log a brew") { showAddSheet = true }
+                .buttonStyle(.primaryPill)
+                .padding(.top, 16)
         }
+        .padding(.horizontal, 32)
+        .padding(.top, 80)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
-private struct BrewCard: View {
+private struct BrewListRow: View {
     let brew: Brew
 
     var body: some View {
-        GlassCard {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(Theme.softGradient)
-                        .frame(width: 48, height: 48)
-                    Image(systemName: brew.method.symbol)
-                        .foregroundStyle(Theme.primary)
-                }
-                .accessibilityHidden(true)
-
+        VStack(spacing: 0) {
+            HairRule()
+            HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(brew.method.displayName)
-                            .font(.headline)
-                            .foregroundStyle(Theme.onBackground)
-                        Spacer()
-                        Text(brew.formattedRatio)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Theme.primary)
-                    }
-                    Text("\(formatted(brew.doseGrams))g → \(formatted(brew.yieldGrams))g · \(brew.formattedTime)")
-                        .font(.caption)
-                        .foregroundStyle(Theme.onBackgroundVariant)
-                    HStack(spacing: 8) {
-                        if let bag = brew.bag {
-                            Label(bag.displayTitle, systemImage: "bag")
-                                .font(.caption)
-                                .foregroundStyle(Theme.onBackgroundVariant)
-                                .lineLimit(1)
-                        }
-                        Spacer()
-                        if let rating = brew.rating {
-                            HStack(spacing: 2) {
-                                ForEach(0..<rating, id: \.self) { _ in
-                                    Image(systemName: "star.fill")
-                                        .font(.caption)
-                                        .foregroundStyle(Theme.primary)
-                                }
-                            }
-                            .accessibilityElement()
-                            .accessibilityLabel("\(rating) of 5 stars")
-                        }
-                        Text(brew.createdAt.formatted(.relative(presentation: .numeric)))
-                            .font(.caption)
-                            .foregroundStyle(Theme.onBackgroundVariant)
+                    Text(brew.method.displayName)
+                        .font(.system(size: 20, weight: .medium, design: .serif))
+                        .tracking(-0.4)
+                        .foregroundStyle(Theme.ink)
+                    Text(detail)
+                        .font(Theme.body(12))
+                        .foregroundStyle(Theme.ink2)
+                        .lineLimit(1)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 6) {
+                    Text(brew.formattedRatio)
+                        .font(.system(size: 16, weight: .medium, design: .serif))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.accent)
+                    if let r = brew.rating, r > 0 {
+                        RatingDots(value: r, size: 5)
                     }
                 }
             }
+            .padding(.vertical, 16)
         }
+        .contentShape(.rect)
     }
 
-    private func formatted(_ value: Double) -> String {
-        if value.truncatingRemainder(dividingBy: 1) == 0 {
-            return String(Int(value))
-        }
-        return value.formatted(.number.precision(.fractionLength(1)))
+    private var detail: String {
+        let bag = brew.bag?.brand ?? "—"
+        let date = brew.createdAt.formatted(.relative(presentation: .numeric))
+        return "\(bag) · \(date)"
     }
 }

@@ -3,7 +3,7 @@ import SwiftData
 
 @Model
 final class Brew {
-    #Index<Brew>([\.createdAt], [\.method])
+    #Index<Brew>([\.createdAt])
 
     var method: BrewMethod = BrewMethod.espresso
     var doseGrams: Double = 0

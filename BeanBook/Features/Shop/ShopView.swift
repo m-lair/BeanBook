@@ -1,9 +1,11 @@
 import SwiftUI
 import SwiftData
 
+/// Discover — folded-in catalog. Featured `accentSoft` card + list rows with color blocks.
 struct ShopView: View {
     @Environment(CatalogService.self) private var catalog
     @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
 
     @State private var roastFilter: RoastLevel? = nil
     @State private var toastMessage: String? = nil
@@ -20,58 +22,59 @@ struct ShopView: View {
             Theme.background.ignoresSafeArea()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: Theme.cardSpacing) {
-                    intro
-                    filterChips
-                    LazyVStack(spacing: Theme.cardSpacing) {
-                        ForEach(filtered) { bean in
-                            CatalogBeanCard(bean: bean) {
-                                addToBags(bean)
-                            }
-                        }
+                VStack(alignment: .leading, spacing: 0) {
+                    header
+                    if let featured = filtered.first {
+                        featuredCard(featured)
+                            .padding(.top, 32)
                     }
-                    if filtered.isEmpty {
-                        ContentUnavailableView {
-                            Label("No matches", systemImage: "line.3.horizontal.decrease.circle")
-                        } description: {
-                            Text("Try a different roast filter.")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 40)
-                    }
+                    moreHeader
+                    list
+                    Spacer().frame(height: 80)
                 }
-                .padding(Theme.screenPadding)
-                .padding(.bottom, 80)
+                .padding(.top, 12)
             }
+            .scrollIndicators(.hidden)
 
             if let toastMessage {
                 ToastView(message: toastMessage)
-                    .padding(.bottom, 24)
+                    .padding(.bottom, 30)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .navigationTitle("Shop")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Done") { dismiss() }
+                    .foregroundStyle(Theme.accent)
+            }
+        }
         .sensoryFeedback(.success, trigger: toastTrigger)
     }
 
-    private var intro: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Discover beans")
-                .font(.system(.title3, design: .rounded))
-                .fontWeight(.bold)
-                .foregroundStyle(Theme.onBackground)
-            Text("Curated picks from notable roasters. Tap to add to your Bags or buy direct.")
-                .font(.callout)
-                .foregroundStyle(Theme.onBackgroundVariant)
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Eyebrow("Discover · \(catalog.beans.count) curated")
+                .padding(.bottom, 16)
+            Text("\(Text("Worth a\n").foregroundStyle(Theme.ink))\(Text("look.").foregroundStyle(Theme.accent))")
+                .font(.system(size: 36, weight: .medium, design: .serif))
+                .tracking(-1)
+            Text("Hand-picked roasters and coffees, refreshed weekly.")
+                .font(Theme.body(14))
+                .foregroundStyle(Theme.ink2)
+                .lineSpacing(2)
+                .frame(maxWidth: 280, alignment: .leading)
+                .padding(.top, 16)
+            filterChips.padding(.top, 20)
         }
+        .padding(.horizontal, 24)
     }
 
     private var filterChips: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 8) {
-                FilterChip(label: "All", selected: roastFilter == nil) {
-                    roastFilter = nil
-                }
+                FilterChip(label: "All", selected: roastFilter == nil) { roastFilter = nil }
                 ForEach(RoastLevel.allCases) { level in
                     FilterChip(label: level.displayName, selected: roastFilter == level) {
                         roastFilter = level
@@ -80,6 +83,84 @@ struct ShopView: View {
             }
         }
         .scrollIndicators(.hidden)
+    }
+
+    private func featuredCard(_ bean: CatalogBean) -> some View {
+        ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Theme.accentSoft)
+
+            // Tilted color tile — anchored to the trailing edge so it scales with width
+            // rather than relying on a fixed pixel offset.
+            RoundedRectangle(cornerRadius: 8)
+                .fill(bean.roastLevel.swatch.opacity(0.85))
+                .frame(width: 110, height: 140)
+                .rotationEffect(.degrees(8))
+                .frame(maxWidth: .infinity, alignment: .topTrailing)
+                .padding(.top, -20)
+                .padding(.trailing, -30)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 0) {
+                Eyebrow(bean.roaster, color: Theme.accent)
+                Text(bean.name)
+                    .font(.system(size: 32, weight: .medium, design: .serif))
+                    .tracking(-0.8)
+                    .foregroundStyle(Theme.ink)
+                    .padding(.top, 4)
+                Text(bean.description)
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.ink2)
+                    .lineSpacing(2)
+                    .lineLimit(3)
+                    .frame(maxWidth: 200, alignment: .leading)
+                    .padding(.top, 10)
+
+                FlowLayout(spacing: 6) {
+                    ForEach(bean.tastingNotes.prefix(3), id: \.self) { note in
+                        Text(note)
+                            .font(Theme.body(11, weight: .semibold))
+                            .foregroundStyle(Theme.accent)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 3)
+                            .background(.white, in: .capsule)
+                            .overlay(Capsule().stroke(Theme.accent.opacity(0.25), lineWidth: 0.5))
+                    }
+                }
+                .padding(.top, 14)
+
+                Button("Add to beans") { addToBags(bean) }
+                    .buttonStyle(.primaryPill)
+                    .padding(.top, 18)
+            }
+            .padding(24)
+            .frame(maxWidth: 260, alignment: .leading)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .padding(.horizontal, 24)
+    }
+
+    private var moreHeader: some View {
+        Eyebrow("More from this week")
+            .padding(.horizontal, 24)
+            .padding(.top, 32)
+    }
+
+    private var list: some View {
+        VStack(spacing: 0) {
+            ForEach(filtered.dropFirst()) { bean in
+                CatalogBeanCard(bean: bean) { addToBags(bean) }
+            }
+            if filtered.isEmpty {
+                Text("No matches.")
+                    .font(Theme.body(14))
+                    .foregroundStyle(Theme.ink3)
+                    .padding(.top, 40)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 12)
     }
 
     private func addToBags(_ bean: CatalogBean) {
@@ -95,13 +176,15 @@ struct ShopView: View {
         context.insert(bag)
         try? context.save()
 
-        toastMessage = "Added \(bean.name) to Bags"
+        withAnimation(.easeOut(duration: 0.25)) {
+            toastMessage = "Added \(bean.name) to Beans"
+        }
         toastTrigger &+= 1
         toastTask?.cancel()
         toastTask = Task {
             try? await Task.sleep(for: .seconds(2))
             guard !Task.isCancelled else { return }
-            withAnimation(.smooth) { toastMessage = nil }
+            withAnimation(.easeOut(duration: 0.25)) { toastMessage = nil }
         }
     }
 }
@@ -114,44 +197,28 @@ private struct FilterChip: View {
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.caption)
-                .fontWeight(.semibold)
+                .font(Theme.body(11, weight: .semibold))
+                .tracking(0.6)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 7)
-                .foregroundStyle(selected ? .white : Theme.onBackground)
-                .background(
-                    selected
-                        ? AnyShapeStyle(Theme.heroGradient)
-                        : AnyShapeStyle(Theme.surfaceLow),
-                    in: .capsule
-                )
-                .overlay(
-                    Capsule().stroke(Theme.surfaceHigh, lineWidth: selected ? 0 : 1)
-                )
+                .foregroundStyle(selected ? .white : Theme.ink2)
+                .background(selected ? Theme.accent : Theme.card, in: .capsule)
+                .overlay(Capsule().stroke(selected ? .clear : Theme.rule, lineWidth: 0.5))
         }
         .buttonStyle(.plain)
     }
 }
 
 private struct ToastView: View {
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let message: String
 
     var body: some View {
         Text(message)
-            .font(.subheadline)
-            .fontWeight(.semibold)
-            .foregroundStyle(Theme.onBackground)
+            .font(Theme.body(13, weight: .semibold))
+            .foregroundStyle(.white)
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
-            .background {
-                Capsule()
-                    .fill(Theme.surfaceLow)
-                    .glassEffect(
-                        reduceTransparency ? .identity : .regular.tint(Theme.primary.opacity(0.15)),
-                        in: .capsule
-                    )
-            }
-            .shadow(color: Theme.cardShadowColor, radius: 12, y: 4)
+            .background(Theme.ink, in: .capsule)
+            .shadow(color: Theme.ink.opacity(0.18), radius: 14, y: 8)
     }
 }

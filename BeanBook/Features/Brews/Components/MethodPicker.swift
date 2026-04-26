@@ -1,49 +1,50 @@
 import SwiftUI
 
+/// Vertical method list — matches the C2 NewBrew step 1 layout.
 struct MethodPicker: View {
     @Binding var selection: BrewMethod
 
     var body: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 10) {
-                ForEach(BrewMethod.allCases) { method in
-                    MethodChip(method: method, isSelected: selection == method) {
-                        withAnimation(.snappy) { selection = method }
-                    }
+        VStack(spacing: 0) {
+            ForEach(BrewMethod.allCases) { method in
+                MethodRow(method: method, isSelected: selection == method) {
+                    withAnimation(.snappy) { selection = method }
                 }
             }
-            .padding(.horizontal, 4)
         }
-        .scrollIndicators(.hidden)
         .sensoryFeedback(.selection, trigger: selection)
     }
 }
 
-private struct MethodChip: View {
+private struct MethodRow: View {
     let method: BrewMethod
     let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 6) {
-                Image(systemName: method.symbol)
-                    .font(.title3)
-                Text(method.displayName)
-                    .font(.caption)
-                    .fontWeight(.medium)
-            }
-            .frame(width: 84, height: 76)
-            .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(Theme.onBackground))
-            .background(
-                isSelected
-                    ? AnyShapeStyle(Theme.heroGradient)
-                    : AnyShapeStyle(Theme.surfaceLow),
-                in: .rect(cornerRadius: 18)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 18)
-                    .stroke(Theme.surfaceHigh, lineWidth: isSelected ? 0 : 1)
+            VStack(spacing: 0) {
+                HairRule()
+                HStack(spacing: 14) {
+                    Image(systemName: method.symbol)
+                        .font(.system(size: 20, weight: .light))
+                        .foregroundStyle(isSelected ? Theme.accent : Theme.ink2)
+                        .frame(width: 26)
+                    Text(method.displayName)
+                        .font(.system(size: 21,
+                                      weight: isSelected ? .semibold : .regular,
+                                      design: .serif))
+                        .tracking(-0.3)
+                        .foregroundStyle(isSelected ? Theme.accent : Theme.ink)
+                    Spacer()
+                    if isSelected {
+                        Circle()
+                            .fill(Theme.accent)
+                            .frame(width: 8, height: 8)
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 18)
             }
         }
         .buttonStyle(.plain)

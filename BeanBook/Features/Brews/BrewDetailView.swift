@@ -1,8 +1,10 @@
 import SwiftUI
 import SwiftData
 
+/// Brew detail — editorial layout: eyebrow, big serif method title, large
+/// animated ratio, italic note quote, rule-separated params, ink "Brew this again" pill.
 struct BrewDetailView: View {
-    @Bindable var brew: Brew
+    let brew: Brew
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
@@ -11,34 +13,33 @@ struct BrewDetailView: View {
     @State private var didDelete = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: Theme.cardSpacing) {
-                BrewHeroCard(brew: brew)
-                BrewParamsCard(brew: brew)
-                if let notes = brew.notes, !notes.isEmpty {
-                    BrewNotesCard(notes: notes)
+        ZStack {
+            Theme.background.ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    header
+                    ratioBlock
+                    if let notes = brew.notes, !notes.isEmpty {
+                        noteSection(notes)
+                    }
+                    params
+                    brewAgain
                 }
-                Button {
-                    showBrewAgain = true
-                } label: {
-                    Label("Brew this again", systemImage: "arrow.clockwise")
-                }
-                .buttonStyle(.gradient)
-                .padding(.top, 8)
+                .padding(.bottom, 60)
             }
-            .padding(Theme.screenPadding)
         }
-        .background(Theme.background.ignoresSafeArea())
-        .navigationTitle(brew.method.displayName)
-        .toolbarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Menu("Options", systemImage: "ellipsis.circle") {
+                Menu {
                     Button("Delete", systemImage: "trash", role: .destructive) {
                         showDeleteConfirm = true
                     }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundStyle(Theme.ink2)
                 }
-                .labelStyle(.iconOnly)
             }
         }
         .sheet(isPresented: $showBrewAgain) {
@@ -59,109 +60,108 @@ struct BrewDetailView: View {
         }
         .sensoryFeedback(.warning, trigger: didDelete)
     }
-}
 
-private struct BrewHeroCard: View {
-    let brew: Brew
-
-    var body: some View {
-        VStack(spacing: 10) {
-            Image(systemName: brew.method.symbol)
-                .font(.system(size: 48))
-                .foregroundStyle(.white)
-                .accessibilityHidden(true)
-            Text(brew.formattedRatio)
-                .font(.system(.largeTitle, design: .rounded))
-                .fontWeight(.bold)
-                .foregroundStyle(.white)
-                .monospacedDigit()
-            Text("\(brewNumeric(brew.doseGrams))g → \(brewNumeric(brew.yieldGrams))g · \(brew.formattedTime)")
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.9))
-            if let rating = brew.rating {
-                HStack(spacing: 3) {
-                    ForEach(0..<rating, id: \.self) { _ in
-                        Image(systemName: "star.fill")
-                            .foregroundStyle(.white)
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Eyebrow(brew.createdAt.formatted(date: .abbreviated, time: .shortened))
+            Text(brew.method.displayName)
+                .font(.system(size: 48, weight: .medium, design: .serif))
+                .tracking(-1.4)
+                .foregroundStyle(Theme.ink)
+                .padding(.top, 6)
+            if let bag = brew.bag {
+                NavigationLink(value: bag) {
+                    HStack(spacing: 4) {
+                        Text("\(bag.brand) · \(bag.name)")
+                            .font(Theme.body(13.5, weight: .medium))
+                            .foregroundStyle(Theme.accent)
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Theme.accent)
                     }
                 }
-                .padding(.top, 4)
-                .accessibilityElement()
-                .accessibilityLabel("\(rating) of 5 stars")
+                .buttonStyle(.plain)
+                .padding(.top, 8)
+            }
+        }
+        .padding(.horizontal, 28)
+        .padding(.top, Theme.p(28))
+    }
+
+    private var ratioBlock: some View {
+        VStack(spacing: 28) {
+            BigRatio(
+                ratio: brew.ratio,
+                size: 96,
+                sub: "\(numeric(brew.doseGrams))g · \(numeric(brew.yieldGrams))g · \(brew.formattedTime)"
+            )
+            VStack(spacing: 6) {
+                RatioBar(ratio: brew.ratio, height: 4)
+                    .frame(maxWidth: 200)
+                HStack {
+                    Eyebrow("Dose").tracking(1)
+                    Spacer()
+                    Eyebrow("Yield").tracking(1)
+                }
+                .frame(maxWidth: 200)
+            }
+            if let r = brew.rating, r > 0 {
+                RatingDots(value: r, size: 8)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(Theme.cardPadding)
-        .padding(.vertical, 8)
-        .background(Theme.heroGradient, in: .rect(cornerRadius: Theme.cardRadius))
-        .shadow(color: Theme.primary.opacity(0.3), radius: 18, y: 10)
+        .padding(.horizontal, 24)
+        .padding(.top, Theme.p(48))
     }
-}
 
-private struct BrewParamsCard: View {
-    let brew: Brew
+    private func noteSection(_ notes: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Eyebrow("Note")
+            Text(notes)
+                .italic()
+                .font(.system(size: 20, weight: .regular, design: .serif))
+                .tracking(-0.3)
+                .lineSpacing(3)
+                .foregroundStyle(Theme.ink)
+        }
+        .padding(.horizontal, 28)
+        .padding(.top, Theme.p(44))
+    }
 
-    var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 12) {
-                BrewInfoRow(label: "Method", value: brew.method.displayName)
-                BrewInfoRow(label: "Dose", value: "\(brewNumeric(brew.doseGrams)) g")
-                BrewInfoRow(label: brew.method.yieldLabel, value: "\(brewNumeric(brew.yieldGrams)) g")
-                BrewInfoRow(label: brew.method.timeLabel, value: brew.formattedTime)
-                if let temp = brew.waterTempC {
-                    BrewInfoRow(label: "Water temp", value: "\(Int(temp)) °C")
-                }
-                if let grind = brew.grindSetting, !grind.isEmpty {
-                    BrewInfoRow(label: "Grind", value: grind)
-                }
-                if let bag = brew.bag {
-                    BrewInfoRow(label: "Bag", value: bag.displayTitle)
-                }
-                BrewInfoRow(
-                    label: "Logged",
-                    value: brew.createdAt.formatted(date: .abbreviated, time: .shortened)
-                )
+    private var params: some View {
+        VStack(spacing: 0) {
+            RuleRow("Dose", value: "\(numeric(brew.doseGrams)) g")
+            RuleRow(brew.method.yieldLabel.replacingOccurrences(of: " (g)", with: ""),
+                    value: "\(numeric(brew.yieldGrams)) g")
+            RuleRow("Time", value: brew.formattedTime)
+            if let temp = brew.waterTempC {
+                RuleRow("Water", value: "\(Int(temp))°C")
             }
+            RuleRow("Grind", value: brew.grindSetting?.isEmpty == false ? brew.grindSetting! : "—")
         }
+        .padding(.horizontal, 28)
+        .padding(.top, Theme.p(36))
     }
-}
 
-private struct BrewNotesCard: View {
-    let notes: String
-
-    var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Notes")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.onBackgroundVariant)
-                Text(notes)
-                    .font(.body)
-                    .foregroundStyle(Theme.onBackground)
+    private var brewAgain: some View {
+        Button {
+            showBrewAgain = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 14, weight: .medium))
+                Text("Brew this again")
             }
+            .frame(maxWidth: .infinity)
         }
+        .buttonStyle(.primaryPill)
+        .padding(.horizontal, 28)
+        .padding(.top, Theme.p(36))
     }
-}
 
-private struct BrewInfoRow: View {
-    let label: String
-    let value: String
-
-    var body: some View {
-        HStack {
-            Text(label)
-                .font(.footnote)
-                .foregroundStyle(Theme.onBackgroundVariant)
-            Spacer()
-            Text(value)
-                .font(.callout)
-                .fontWeight(.medium)
-                .foregroundStyle(Theme.onBackground)
-        }
+    private func numeric(_ v: Double) -> String {
+        v.truncatingRemainder(dividingBy: 1) == 0
+            ? String(Int(v))
+            : v.formatted(.number.precision(.fractionLength(1)))
     }
-}
-
-private func brewNumeric(_ v: Double) -> String {
-    if v.truncatingRemainder(dividingBy: 1) == 0 { return String(Int(v)) }
-    return v.formatted(.number.precision(.fractionLength(1)))
 }

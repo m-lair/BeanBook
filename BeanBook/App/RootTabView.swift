@@ -4,16 +4,17 @@ import SwiftData
 struct RootTabView: View {
     var body: some View {
         TabView {
-            Tab("Brews", systemImage: "cup.and.saucer.fill") {
-                NavigationStack { BrewListView() }
+            Tab("Today", systemImage: "cup.and.saucer.fill") {
+                NavigationStack { TodayView() }
             }
-            Tab("Bags", systemImage: "bag.fill") {
+            Tab("Beans", systemImage: "bag.fill") {
                 NavigationStack { BagListView() }
             }
-            Tab("Shop", systemImage: "sparkles") {
-                NavigationStack { ShopView() }
+            Tab("Recipes", systemImage: "list.bullet") {
+                NavigationStack { RecipesView() }
             }
         }
+        .tint(Theme.accent)
     }
 }
 

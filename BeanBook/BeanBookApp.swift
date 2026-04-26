@@ -16,12 +16,20 @@ struct BeanBookApp: App {
     @State private var catalog = CatalogService()
     @State private var notifications = NotificationManager()
 
+    @AppStorage("hasOnboarded") private var hasOnboarded = false
+
     var body: some Scene {
         WindowGroup {
             RootTabView()
                 .environment(catalog)
                 .environment(notifications)
-                .tint(Theme.primary)
+                .tint(Theme.accent)
+                .preferredColorScheme(.light)
+                .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+                .fullScreenCover(isPresented: .constant(!hasOnboarded)) {
+                    OnboardingView { hasOnboarded = true }
+                        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+                }
         }
         .modelContainer(container)
     }

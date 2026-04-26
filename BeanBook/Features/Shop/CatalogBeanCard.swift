@@ -1,82 +1,45 @@
 import SwiftUI
 
+/// Discover row — 44×56 color block + brand eyebrow + name + notes + circular add.
 struct CatalogBeanCard: View {
     let bean: CatalogBean
     var onAddToBags: () -> Void
 
     var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(bean.roaster)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Theme.primary)
-                            .textCase(.uppercase)
-                        Text(bean.name)
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Theme.onBackground)
-                    }
-                    Spacer()
-                    Image(systemName: "leaf.fill")
-                        .foregroundStyle(Theme.primary.opacity(0.6))
-                        .accessibilityHidden(true)
+        VStack(spacing: 0) {
+            HairRule()
+            HStack(spacing: 14) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(bean.roastLevel.swatch)
+                    .frame(width: 44, height: 56)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Eyebrow(bean.roaster)
+                    Text(bean.name)
+                        .font(.system(size: 19, weight: .medium, design: .serif))
+                        .tracking(-0.3)
+                        .foregroundStyle(Theme.ink)
+                        .padding(.top, 1)
+                    Text(bean.tastingNotes.prefix(3).joined(separator: ", "))
+                        .font(Theme.body(11.5))
+                        .foregroundStyle(Theme.ink2)
+                        .lineLimit(1)
+                        .padding(.top, 1)
                 }
 
-                HStack(spacing: 6) {
-                    metaChip(bean.origin)
-                    metaChip(bean.roastLevel.displayName)
-                    metaChip(bean.process.displayName)
+                Spacer()
+
+                Button(action: onAddToBags) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .frame(width: 32, height: 32)
+                        .overlay(Circle().stroke(Theme.ink, lineWidth: 0.5))
                 }
-
-                if !bean.tastingNotes.isEmpty {
-                    FlowLayout(spacing: 6) {
-                        ForEach(bean.tastingNotes, id: \.self) { note in
-                            Text(note)
-                                .font(.caption)
-                                .padding(.horizontal, 9)
-                                .padding(.vertical, 4)
-                                .background(Theme.primaryContainer.opacity(0.4), in: .capsule)
-                        }
-                    }
-                }
-
-                Text(bean.description)
-                    .font(.callout)
-                    .foregroundStyle(Theme.onBackgroundVariant)
-                    .lineLimit(3)
-
-                HStack(spacing: 10) {
-                    Button(action: onAddToBags) {
-                        Label("Add to Bags", systemImage: "bag.badge.plus")
-                    }
-                    .buttonStyle(.gradient)
-
-                    if let url = bean.url {
-                        Link(destination: url) {
-                            Label("Buy", systemImage: "arrow.up.right")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .padding(.horizontal, 18)
-                                .padding(.vertical, 12)
-                                .foregroundStyle(Theme.onBackground)
-                                .background(Theme.surfaceHigh, in: .capsule)
-                        }
-                    }
-                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Add \(bean.name)")
             }
+            .padding(.vertical, 16)
         }
-    }
-
-    private func metaChip(_ text: String) -> some View {
-        Text(text)
-            .font(.caption)
-            .fontWeight(.medium)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .foregroundStyle(Theme.onBackgroundVariant)
-            .background(Theme.surfaceHigh.opacity(0.6), in: .capsule)
     }
 }
