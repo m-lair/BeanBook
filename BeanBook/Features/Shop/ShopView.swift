@@ -1,30 +1,44 @@
 import SwiftUI
 import SwiftData
+import CoreLocation
 
 /// Discover — folded-in catalog. Featured `accentSoft` card + list rows with color blocks.
 struct ShopView: View {
     @Environment(CatalogService.self) private var catalog
+    @Environment(LocationService.self) private var location
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @Environment(ProEntitlement.self) private var pro
 
     @State private var roastFilter: RoastLevel? = nil
     @State private var toastMessage: String? = nil
     @State private var toastTrigger = 0
     @State private var toastTask: Task<Void, Never>?
-    @State private var showingPaywall = false
 
-    /// Stable global index of the bean in the unfiltered catalog.
-    /// Free tier can add the first `ProQuota.catalog` beans; the rest are locked.
-    private func isLocked(_ bean: CatalogBean) -> Bool {
-        guard !pro.isPro else { return false }
-        let idx = catalog.beans.firstIndex(of: bean) ?? Int.max
-        return idx >= ProQuota.catalog
-    }
+    /// Beans within this radius of the user are surfaced in "Near you".
+    private static let nearbyRadiusMiles: Double = 250
 
     private var filtered: [CatalogBean] {
         guard let roastFilter else { return catalog.beans }
         return catalog.beans.filter { $0.roastLevel == roastFilter }
+    }
+
+    /// Roaster-deduplicated, distance-sorted nearby beans.
+    /// Empty when location is unknown or no roaster is in range.
+    private var nearbyBeans: [(bean: CatalogBean, miles: Double)] {
+        guard let coord = location.coordinate else { return [] }
+        var seenRoasters = Set<String>()
+        let candidates: [(CatalogBean, Double)] = catalog.beans.compactMap { bean in
+            guard let lat = bean.roasterLat, let lng = bean.roasterLng else { return nil }
+            let beanCoord = CLLocationCoordinate2D(latitude: lat, longitude: lng)
+            let miles = coord.distanceMiles(to: beanCoord)
+            guard miles <= Self.nearbyRadiusMiles else { return nil }
+            return (bean, miles)
+        }
+        return candidates
+            .sorted { $0.1 < $1.1 }
+            .filter { seenRoasters.insert($0.0.roaster).inserted }
+            .prefix(4)
+            .map { (bean: $0.0, miles: $0.1) }
     }
 
     var body: some View {
@@ -34,6 +48,7 @@ struct ShopView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     header
+                    nearYouSection
                     if let featured = filtered.first {
                         featuredCard(featured)
                             .padding(.top, 32)
@@ -45,6 +60,7 @@ struct ShopView: View {
                 .padding(.top, 12)
             }
             .scrollIndicators(.hidden)
+            .task { location.requestIfNeeded() }
 
             if let toastMessage {
                 ToastView(message: toastMessage)
@@ -61,11 +77,6 @@ struct ShopView: View {
             }
         }
         .sensoryFeedback(.success, trigger: toastTrigger)
-        .sheet(isPresented: $showingPaywall) {
-            NavigationStack {
-                PaywallSheet(headline: "Unlock the full curated catalog with BeanBook Pro.")
-            }
-        }
     }
 
     private var header: some View {
@@ -144,9 +155,7 @@ struct ShopView: View {
                 }
                 .padding(.top, 14)
 
-                Button(isLocked(bean) ? "Unlock with Pro" : "Add to beans") {
-                    addToBags(bean)
-                }
+                Button("Add to beans") { addToBags(bean) }
                     .buttonStyle(.primaryPill)
                     .padding(.top, 18)
             }
@@ -155,6 +164,33 @@ struct ShopView: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 18))
         .padding(.horizontal, 24)
+    }
+
+    @ViewBuilder
+    private var nearYouSection: some View {
+        let entries = nearbyBeans
+        if !entries.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 6) {
+                    Image(systemName: "location.fill")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Theme.accent)
+                    Eyebrow("Near you", color: Theme.accent)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 28)
+                .padding(.bottom, 12)
+
+                VStack(spacing: 0) {
+                    ForEach(entries, id: \.bean.id) { entry in
+                        NearbyRosterRow(bean: entry.bean, miles: entry.miles) {
+                            addToBags(entry.bean)
+                        }
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+        }
     }
 
     private var moreHeader: some View {
@@ -166,7 +202,7 @@ struct ShopView: View {
     private var list: some View {
         VStack(spacing: 0) {
             ForEach(filtered.dropFirst()) { bean in
-                CatalogBeanCard(bean: bean, locked: isLocked(bean)) { addToBags(bean) }
+                CatalogBeanCard(bean: bean) { addToBags(bean) }
             }
             if filtered.isEmpty {
                 Text("No matches.")
@@ -181,10 +217,6 @@ struct ShopView: View {
     }
 
     private func addToBags(_ bean: CatalogBean) {
-        if isLocked(bean) {
-            showingPaywall = true
-            return
-        }
         let bag = Bag(
             brand: bean.roaster,
             name: bean.name,
@@ -206,6 +238,65 @@ struct ShopView: View {
             try? await Task.sleep(for: .seconds(2))
             guard !Task.isCancelled else { return }
             withAnimation(.easeOut(duration: 0.25)) { toastMessage = nil }
+        }
+    }
+}
+
+private struct NearbyRosterRow: View {
+    let bean: CatalogBean
+    let miles: Double
+    let onAdd: () -> Void
+
+    private var distanceLabel: String {
+        if miles < 1 { return "< 1 mi" }
+        if miles < 10 { return String(format: "%.1f mi", miles) }
+        return "\(Int(miles.rounded())) mi"
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HairRule()
+            HStack(spacing: 14) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(bean.roastLevel.swatch)
+                    .frame(width: 44, height: 56)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Eyebrow(bean.roaster)
+                    Text(bean.name)
+                        .font(.system(size: 18, weight: .medium, design: .serif))
+                        .tracking(-0.3)
+                        .foregroundStyle(Theme.ink)
+                        .padding(.top, 1)
+                    HStack(spacing: 6) {
+                        if let loc = bean.roasterLocationLabel {
+                            Text(loc)
+                                .font(Theme.body(11.5))
+                                .foregroundStyle(Theme.ink2)
+                        }
+                        Text("·")
+                            .font(Theme.body(11.5))
+                            .foregroundStyle(Theme.ink3)
+                        Text(distanceLabel)
+                            .font(Theme.body(11.5, weight: .semibold))
+                            .foregroundStyle(Theme.accent)
+                    }
+                    .padding(.top, 1)
+                }
+
+                Spacer()
+
+                Button(action: onAdd) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .frame(width: 32, height: 32)
+                        .overlay(Circle().stroke(Theme.ink, lineWidth: 0.5))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Add \(bean.name)")
+            }
+            .padding(.vertical, 14)
         }
     }
 }

@@ -4,5 +4,7 @@
 <dict>
 	<key>NSCameraPortraitEffectEnabled</key>
 	<false/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>BeanBook uses your location to surface roasters near you in the Discover tab. Your location stays on-device and is never uploaded.</string>
 </dict>
 </plist>

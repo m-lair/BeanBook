@@ -16,6 +16,7 @@ struct BeanBookApp: App {
     @State private var catalog = CatalogService()
     @State private var notifications = NotificationManager()
     @State private var pro = ProEntitlement()
+    @State private var location = LocationService()
 
     @AppStorage("hasOnboarded") private var hasOnboarded = false
 
@@ -25,6 +26,7 @@ struct BeanBookApp: App {
                 .environment(catalog)
                 .environment(notifications)
                 .environment(pro)
+                .environment(location)
                 .tint(Theme.accent)
                 .preferredColorScheme(.light)
                 .dynamicTypeSize(...DynamicTypeSize.accessibility2)

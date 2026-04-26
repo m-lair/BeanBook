@@ -8,7 +8,12 @@
     "roastLevel": "mediumLight",
     "tastingNotes": ["chocolate", "almond", "orange"],
     "description": "Onyx's flagship blend — balanced and approachable across brew methods.",
-    "roasterURL": "https://onyxcoffeelab.com/products/geometry"
+    "roasterURL": "https://onyxcoffeelab.com/products/geometry",
+    "roasterCity": "Rogers",
+    "roasterRegion": "AR",
+    "roasterCountry": "USA",
+    "roasterLat": 36.3320,
+    "roasterLng": -94.1185
   },
   {
     "id": "onyx-southern-weather",
@@ -19,7 +24,12 @@
     "roastLevel": "medium",
     "tastingNotes": ["milk chocolate", "graham", "stone fruit"],
     "description": "Espresso-forward blend designed to play well with milk.",
-    "roasterURL": "https://onyxcoffeelab.com/products/southern-weather"
+    "roasterURL": "https://onyxcoffeelab.com/products/southern-weather",
+    "roasterCity": "Rogers",
+    "roasterRegion": "AR",
+    "roasterCountry": "USA",
+    "roasterLat": 36.3320,
+    "roasterLng": -94.1185
   },
   {
     "id": "intelligentsia-black-cat",
@@ -30,7 +40,12 @@
     "roastLevel": "medium",
     "tastingNotes": ["dark cherry", "molasses", "caramel"],
     "description": "A modern classic — the espresso that built Intelligentsia.",
-    "roasterURL": "https://www.intelligentsia.com/products/black-cat-classic-espresso"
+    "roasterURL": "https://www.intelligentsia.com/products/black-cat-classic-espresso",
+    "roasterCity": "Chicago",
+    "roasterRegion": "IL",
+    "roasterCountry": "USA",
+    "roasterLat": 41.8781,
+    "roasterLng": -87.6298
   },
   {
     "id": "counter-culture-hologram",
@@ -41,7 +56,12 @@
     "roastLevel": "mediumLight",
     "tastingNotes": ["citrus", "berry", "honey"],
     "description": "Bright, complex blend that shines in pour-over.",
-    "roasterURL": "https://counterculturecoffee.com/products/hologram"
+    "roasterURL": "https://counterculturecoffee.com/products/hologram",
+    "roasterCity": "Durham",
+    "roasterRegion": "NC",
+    "roasterCountry": "USA",
+    "roasterLat": 35.9940,
+    "roasterLng": -78.8986
   },
   {
     "id": "counter-culture-fast-forward",
@@ -52,7 +72,12 @@
     "roastLevel": "medium",
     "tastingNotes": ["chocolate", "caramel", "toasted nuts"],
     "description": "Smooth everyday blend built for espresso.",
-    "roasterURL": "https://counterculturecoffee.com/products/fast-forward"
+    "roasterURL": "https://counterculturecoffee.com/products/fast-forward",
+    "roasterCity": "Durham",
+    "roasterRegion": "NC",
+    "roasterCountry": "USA",
+    "roasterLat": 35.9940,
+    "roasterLng": -78.8986
   },
   {
     "id": "stumptown-hair-bender",
@@ -63,7 +88,12 @@
     "roastLevel": "medium",
     "tastingNotes": ["citrus", "dark chocolate", "tropical fruit"],
     "description": "Stumptown's signature espresso — punchy and complex.",
-    "roasterURL": "https://www.stumptowncoffee.com/products/hair-bender"
+    "roasterURL": "https://www.stumptowncoffee.com/products/hair-bender",
+    "roasterCity": "Portland",
+    "roasterRegion": "OR",
+    "roasterCountry": "USA",
+    "roasterLat": 45.5098,
+    "roasterLng": -122.6814
   },
   {
     "id": "heart-stereo",
@@ -74,7 +104,12 @@
     "roastLevel": "light",
     "tastingNotes": ["lemon", "honey", "florals"],
     "description": "Light and bright — a Heart house blend favorite.",
-    "roasterURL": "https://www.heartroasters.com/products/stereo"
+    "roasterURL": "https://www.heartroasters.com/products/stereo",
+    "roasterCity": "Portland",
+    "roasterRegion": "OR",
+    "roasterCountry": "USA",
+    "roasterLat": 45.5051,
+    "roasterLng": -122.6750
   },
   {
     "id": "blue-bottle-bella-donovan",
@@ -85,7 +120,12 @@
     "roastLevel": "mediumDark",
     "tastingNotes": ["fudge", "blackberry", "graham cracker"],
     "description": "Deep, fruity blend that's been a Blue Bottle staple for years.",
-    "roasterURL": "https://bluebottlecoffee.com/us/eng/store/bella-donovan"
+    "roasterURL": "https://bluebottlecoffee.com/us/eng/store/bella-donovan",
+    "roasterCity": "Oakland",
+    "roasterRegion": "CA",
+    "roasterCountry": "USA",
+    "roasterLat": 37.8044,
+    "roasterLng": -122.2712
   },
   {
     "id": "tim-wendelboe-finca-tamana",
@@ -96,7 +136,12 @@
     "roastLevel": "light",
     "tastingNotes": ["red apple", "milk chocolate", "almond"],
     "description": "Long-running relationship coffee from Elias Roa's farm.",
-    "roasterURL": "https://timwendelboe.no/shop/coffee/"
+    "roasterURL": "https://timwendelboe.no/shop/coffee/",
+    "roasterCity": "Oslo",
+    "roasterRegion": null,
+    "roasterCountry": "Norway",
+    "roasterLat": 59.9275,
+    "roasterLng": 10.7615
   },
   {
     "id": "sey-natural-ethiopia",
@@ -107,7 +152,12 @@
     "roastLevel": "light",
     "tastingNotes": ["blueberry", "candied lemon", "rose"],
     "description": "Vivid natural-process Ethiopia from Sey's rotating menu.",
-    "roasterURL": "https://www.seycoffee.com/collections/coffee"
+    "roasterURL": "https://www.seycoffee.com/collections/coffee",
+    "roasterCity": "Brooklyn",
+    "roasterRegion": "NY",
+    "roasterCountry": "USA",
+    "roasterLat": 40.7081,
+    "roasterLng": -73.9571
   },
   {
     "id": "verve-streetlevel",
@@ -118,7 +168,12 @@
     "roastLevel": "medium",
     "tastingNotes": ["milk chocolate", "almond", "caramel"],
     "description": "Verve's daily-driver espresso blend.",
-    "roasterURL": "https://www.vervecoffee.com/products/streetlevel-blend"
+    "roasterURL": "https://www.vervecoffee.com/products/streetlevel-blend",
+    "roasterCity": "Santa Cruz",
+    "roasterRegion": "CA",
+    "roasterCountry": "USA",
+    "roasterLat": 36.9741,
+    "roasterLng": -122.0308
   },
   {
     "id": "ritual-sweetness",
@@ -129,7 +184,12 @@
     "roastLevel": "medium",
     "tastingNotes": ["caramel", "milk chocolate", "cherry"],
     "description": "Sweet, balanced espresso blend from a SF pioneer.",
-    "roasterURL": "https://www.ritualcoffee.com/coffee"
+    "roasterURL": "https://www.ritualcoffee.com/coffee",
+    "roasterCity": "San Francisco",
+    "roasterRegion": "CA",
+    "roasterCountry": "USA",
+    "roasterLat": 37.7749,
+    "roasterLng": -122.4194
   },
   {
     "id": "passenger-driver",
@@ -140,7 +200,12 @@
     "roastLevel": "medium",
     "tastingNotes": ["chocolate", "graham", "stone fruit"],
     "description": "Versatile blend that works as drip or espresso.",
-    "roasterURL": "https://passengercoffee.com/collections/coffee"
+    "roasterURL": "https://passengercoffee.com/collections/coffee",
+    "roasterCity": "Lancaster",
+    "roasterRegion": "PA",
+    "roasterCountry": "USA",
+    "roasterLat": 40.0379,
+    "roasterLng": -76.3055
   },
   {
     "id": "george-howell-alchemy",
@@ -151,7 +216,12 @@
     "roastLevel": "light",
     "tastingNotes": ["honey", "stone fruit", "florals"],
     "description": "Light-roast blend from a third-wave pioneer.",
-    "roasterURL": "https://www.georgehowellcoffee.com/collections/coffee"
+    "roasterURL": "https://www.georgehowellcoffee.com/collections/coffee",
+    "roasterCity": "Acton",
+    "roasterRegion": "MA",
+    "roasterCountry": "USA",
+    "roasterLat": 42.4848,
+    "roasterLng": -71.4328
   },
   {
     "id": "proud-mary-cult-of-done",
@@ -162,6 +232,11 @@
     "roastLevel": "medium",
     "tastingNotes": ["dark chocolate", "hazelnut", "red fruit"],
     "description": "Rich, balanced blend from PDX/AUS roaster Proud Mary.",
-    "roasterURL": "https://proudmarycoffee.com/collections/coffee"
+    "roasterURL": "https://proudmarycoffee.com/collections/coffee",
+    "roasterCity": "Portland",
+    "roasterRegion": "OR",
+    "roasterCountry": "USA",
+    "roasterLat": 45.5234,
+    "roasterLng": -122.6489
   }
 ]

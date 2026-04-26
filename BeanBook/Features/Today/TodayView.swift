@@ -66,10 +66,20 @@ struct TodayView: View {
     // MARK: - Sections
 
     private var topRow: some View {
-        Eyebrow(Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+        Eyebrow(headerText)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 24)
             .padding(.vertical, 12)
+    }
+
+    private var headerText: String {
+        let date = Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
+        let count = brews.filter { Calendar.current.isDateInToday($0.createdAt) }.count
+        switch count {
+        case 0: return "\(date) · First brew"
+        case 1: return "\(date) · 1 brew"
+        default: return "\(date) · \(count) brews"
+        }
     }
 
     private var hero: some View {
@@ -81,13 +91,10 @@ struct TodayView: View {
         let time = last?.formattedTime ?? "30s"
 
         return VStack(alignment: .leading, spacing: 0) {
-            Eyebrow("Today", color: Theme.accent)
-
             Text("\(Text("\(last?.method.displayName ?? "Espresso"), like\nyesterday — but a touch ").foregroundStyle(Theme.ink))\(Text("finer.").italic().foregroundStyle(Theme.accent))")
                 .font(.system(size: 36, weight: .medium, design: .serif))
                 .tracking(-1.0)
                 .lineSpacing(2)
-                .padding(.top, 14)
 
             Text(heroDescription(last: last, lastBag: lastBag))
                 .font(Theme.body(14))

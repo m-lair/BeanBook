@@ -86,9 +86,6 @@ struct PaywallSheet: View {
             BulletRow(icon: "infinity",
                       title: "Unlimited bags, brews & recipes",
                       detail: "Free tier caps lifted.")
-            BulletRow(icon: "books.vertical",
-                      title: "Full curated catalog",
-                      detail: "Browse every roaster, not just the first ten.")
             BulletRow(icon: "heart.circle",
                       title: "Support indie development",
                       detail: "BeanBook is built by one person — thank you.")

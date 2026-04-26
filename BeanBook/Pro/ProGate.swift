@@ -5,7 +5,6 @@ enum ProQuota {
     static let bags = 15
     static let brews = 50
     static let recipes = 3
-    static let catalog = 10
 }
 
 /// Features that can be gated behind Pro.
@@ -13,7 +12,6 @@ enum ProFeature {
     case bag
     case brew
     case recipe
-    case catalog
 }
 
 extension ProEntitlement {
@@ -22,10 +20,9 @@ extension ProEntitlement {
     func canUse(_ feature: ProFeature, currentCount: Int) -> Bool {
         if isPro { return true }
         switch feature {
-        case .bag:     return currentCount < ProQuota.bags
-        case .brew:    return currentCount < ProQuota.brews
-        case .recipe:  return currentCount < ProQuota.recipes
-        case .catalog: return currentCount < ProQuota.catalog
+        case .bag:    return currentCount < ProQuota.bags
+        case .brew:   return currentCount < ProQuota.brews
+        case .recipe: return currentCount < ProQuota.recipes
         }
     }
 
@@ -33,10 +30,9 @@ extension ProEntitlement {
     func quota(for feature: ProFeature) -> Int? {
         guard !isPro else { return nil }
         switch feature {
-        case .bag:     return ProQuota.bags
-        case .brew:    return ProQuota.brews
-        case .recipe:  return ProQuota.recipes
-        case .catalog: return ProQuota.catalog
+        case .bag:    return ProQuota.bags
+        case .brew:   return ProQuota.brews
+        case .recipe: return ProQuota.recipes
         }
     }
 }
