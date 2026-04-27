@@ -5,7 +5,7 @@ import PhotosUI
 struct NewBagSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @Environment(ProEntitlement.self) private var pro
+    @Environment(BagStore.self) private var bagStore
 
     var editing: Bag? = nil
 
@@ -105,31 +105,49 @@ struct NewBagSheet: View {
     // MARK: - Save / hydrate
 
     private func save() {
-        // Quota gate — only on creation, never on edit.
-        if editing == nil {
-            let count = (try? context.fetchCount(FetchDescriptor<Bag>())) ?? 0
-            guard pro.canUse(.bag, currentCount: count) else {
-                showingPaywall = true
-                return
-            }
+        let trimmedBrand = brand.trimmingCharacters(in: .whitespaces)
+        let trimmedName = name.trimmingCharacters(in: .whitespaces)
+        let trimmedOrigin = origin.trimmingCharacters(in: .whitespaces)
+        let resolvedNotes = notes.isEmpty ? nil : notes
+        let resolvedRoastedOn = hasRoastedOn ? roastedOn : nil
+
+        if let editing {
+            // Edits bypass the quota — never block existing data.
+            editing.brand = trimmedBrand
+            editing.name = trimmedName
+            editing.origin = trimmedOrigin
+            editing.roastLevel = roastLevel
+            editing.process = process
+            editing.tastingNotes = tastingNotes
+            editing.roastedOn = resolvedRoastedOn
+            editing.notes = resolvedNotes
+            editing.imageData = imageData
+            try? context.save()
+            savedSuccessfully = true
+            dismiss()
+            return
         }
 
-        let bag = editing ?? Bag()
-        bag.brand = brand.trimmingCharacters(in: .whitespaces)
-        bag.name = name.trimmingCharacters(in: .whitespaces)
-        bag.origin = origin.trimmingCharacters(in: .whitespaces)
-        bag.roastLevel = roastLevel
-        bag.process = process
-        bag.tastingNotes = tastingNotes
-        bag.roastedOn = hasRoastedOn ? roastedOn : nil
-        bag.notes = notes.isEmpty ? nil : notes
-        bag.imageData = imageData
-        if editing == nil {
-            context.insert(bag)
+        do {
+            try bagStore.create(
+                brand: trimmedBrand,
+                name: trimmedName,
+                roastLevel: roastLevel,
+                origin: trimmedOrigin,
+                process: process,
+                tastingNotes: tastingNotes,
+                roastedOn: resolvedRoastedOn,
+                notes: resolvedNotes,
+                imageData: imageData
+            )
+            savedSuccessfully = true
+            dismiss()
+        } catch is QuotaExceededError {
+            showingPaywall = true
+        } catch {
+            // Persistence failures fall through silently — same as the previous
+            // `try? context.save()` behavior. Re-raise here if telemetry is added later.
         }
-        try? context.save()
-        savedSuccessfully = true
-        dismiss()
     }
 
     private func hydrateFromEditing() {

@@ -7,16 +7,23 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Environment(NotificationManager.self) private var notifications
     @Environment(ProEntitlement.self) private var pro
+    @Environment(BagStore.self) private var bagStore
+    @Environment(BrewStore.self) private var brewStore
+    @Environment(BrewPresetStore.self) private var brewPresetStore
 
     @State private var showingPaywall = false
+    @State private var showingPalettePicker = false
 
     @AppStorage("dailyReminderEnabled") private var dailyReminderEnabled = false
     @AppStorage("preferredUnit") private var preferredUnit: String = "g"
     @AppStorage("autoPrefillFromLast") private var autoPrefill = true
     @AppStorage("timerCountsDown") private var timerCountsDown = true
+    @AppStorage("paletteID") private var paletteIDRaw: String = PaletteID.forest.rawValue
+    @AppStorage("defaultBrewMethod") private var defaultBrewMethodRaw: String = BrewMethod.espresso.rawValue
 
     @Query(sort: \BrewPreset.createdAt, order: .reverse) private var presets: [BrewPreset]
-    @State private var brewCount: Int = 0
+    @Query private var bags: [Bag]
+    @Query private var brews: [Brew]
 
     var body: some View {
         ZStack {
@@ -48,9 +55,18 @@ struct SettingsView: View {
         .sheet(isPresented: $showingPaywall) {
             NavigationStack { PaywallSheet() }
         }
-        .task {
-            brewCount = (try? context.fetchCount(FetchDescriptor<Brew>())) ?? 0
+        .sheet(isPresented: $showingPalettePicker) {
+            NavigationStack { PalettePickerSheet() }
         }
+    }
+
+    private var defaultBrewMethod: BrewMethod {
+        BrewMethod(rawValue: defaultBrewMethodRaw) ?? .espresso
+    }
+
+    private var currentPaletteName: String {
+        let id = PaletteID(rawValue: paletteIDRaw) ?? .forest
+        return Palette.with(id: id).name
     }
 
     private var proSection: some View {
@@ -86,6 +102,10 @@ struct SettingsView: View {
 
             if !pro.isPro {
                 Divider().background(Theme.rule).padding(.leading, 24)
+                QuotaUsageRow(label: "Bags", count: bags.count, quota: ProQuota.bags)
+                QuotaUsageRow(label: "Brews", count: brews.count, quota: ProQuota.brews)
+                QuotaUsageRow(label: "Recipes", count: presets.count, quota: ProQuota.recipes)
+
                 Button {
                     Task { await pro.restore() }
                 } label: {
@@ -128,8 +148,19 @@ struct SettingsView: View {
                 .pickerStyle(.menu)
                 .tint(Theme.ink2)
             }
-            SettingsRow(label: "Theme", value: "Light")
-            SettingsRow(label: "Default method", value: "Espresso")
+            NavigableSettingsRow(label: "Theme", value: currentPaletteName) {
+                showingPalettePicker = true
+            }
+            SettingsRow(label: "Default method") {
+                Picker("Default method", selection: $defaultBrewMethodRaw) {
+                    ForEach(BrewMethod.allCases) { method in
+                        Text(method.displayName).tag(method.rawValue)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .tint(Theme.ink2)
+            }
         }
     }
 
@@ -159,7 +190,7 @@ struct SettingsView: View {
 
     private var dataSection: some View {
         SettingsSection(title: "Data") {
-            SettingsRow(label: "Brews logged", value: "\(brewCount)")
+            SettingsRow(label: "Brews logged", value: "\(brews.count)")
             SettingsRow(label: "Saved recipes", value: "\(presets.count)")
         }
     }
@@ -276,23 +307,54 @@ private struct SettingsRow<Trailing: View>: View {
 }
 
 extension SettingsRow where Trailing == SettingsValueTrailing {
+    /// Read-only display row. No chevron, no tap target.
     init(label: String, value: String) {
         self.label = label
-        self.trailing = { SettingsValueTrailing(value: value) }
+        self.trailing = { SettingsValueTrailing(value: value, navigable: false) }
+    }
+}
+
+/// Navigable row variant — shows a chevron and wraps the entire row in a
+/// Button so the whole surface is tappable.
+private struct NavigableSettingsRow: View {
+    let label: String
+    let value: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 0) {
+                HStack {
+                    Text(label)
+                        .font(Theme.body(15))
+                        .foregroundStyle(Theme.ink)
+                    Spacer()
+                    SettingsValueTrailing(value: value, navigable: true)
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 14)
+                .contentShape(.rect)
+                Divider().background(Theme.rule).padding(.leading, 24)
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
 
 struct SettingsValueTrailing: View {
     let value: String
+    var navigable: Bool = true
 
     var body: some View {
         HStack(spacing: 6) {
             Text(value)
                 .font(Theme.body(14))
                 .foregroundStyle(Theme.ink2)
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Theme.ink3)
+            if navigable {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Theme.ink3)
+            }
         }
     }
 }

@@ -6,13 +6,14 @@ import CoreLocation
 struct ShopView: View {
     @Environment(CatalogService.self) private var catalog
     @Environment(LocationService.self) private var location
-    @Environment(\.modelContext) private var context
+    @Environment(BagStore.self) private var bagStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var roastFilter: RoastLevel? = nil
     @State private var toastMessage: String? = nil
     @State private var toastTrigger = 0
     @State private var toastTask: Task<Void, Never>?
+    @State private var showingPaywall = false
 
     /// Beans within this radius of the user are surfaced in "Near you".
     private static let nearbyRadiusMiles: Double = 250
@@ -77,6 +78,11 @@ struct ShopView: View {
             }
         }
         .sensoryFeedback(.success, trigger: toastTrigger)
+        .sheet(isPresented: $showingPaywall) {
+            NavigationStack {
+                PaywallSheet(headline: "You've reached the free limit of \(ProQuota.bags) bags. Unlock Pro for unlimited.")
+            }
+        }
     }
 
     private var header: some View {
@@ -217,17 +223,22 @@ struct ShopView: View {
     }
 
     private func addToBags(_ bean: CatalogBean) {
-        let bag = Bag(
-            brand: bean.roaster,
-            name: bean.name,
-            roastLevel: bean.roastLevel,
-            origin: bean.origin,
-            process: bean.process,
-            tastingNotes: bean.tastingNotes,
-            notes: bean.description
-        )
-        context.insert(bag)
-        try? context.save()
+        do {
+            try bagStore.create(
+                brand: bean.roaster,
+                name: bean.name,
+                roastLevel: bean.roastLevel,
+                origin: bean.origin,
+                process: bean.process,
+                tastingNotes: bean.tastingNotes,
+                notes: bean.description
+            )
+        } catch is QuotaExceededError {
+            showingPaywall = true
+            return
+        } catch {
+            return
+        }
 
         withAnimation(.easeOut(duration: 0.25)) {
             toastMessage = "Added \(bean.name) to Beans"

@@ -14,7 +14,7 @@ enum ProFeature {
     case recipe
 }
 
-extension ProEntitlement {
+extension ProEntitlementProviding {
     /// Returns true if the user can perform the action given their current
     /// item count. Pro users always pass.
     func canUse(_ feature: ProFeature, currentCount: Int) -> Bool {

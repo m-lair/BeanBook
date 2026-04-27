@@ -1,6 +1,13 @@
 import Foundation
 import StoreKit
 
+/// Read-only seam used by gated stores so tests can inject a stub without
+/// touching StoreKit. Real entitlement is `ProEntitlement`.
+@MainActor
+protocol ProEntitlementProviding: AnyObject {
+    var isPro: Bool { get }
+}
+
 /// One-time non-consumable "BeanBook Pro" entitlement, backed by StoreKit 2.
 ///
 /// Lifecycle:
@@ -13,7 +20,7 @@ import StoreKit
 /// gating works in airplane mode and is revalidated when entitlements refresh.
 @MainActor
 @Observable
-final class ProEntitlement {
+final class ProEntitlement: ProEntitlementProviding {
     static let productID = "com.beanbook.pro.lifetime"
     private static let cacheKey = "pro.isProCached"
 

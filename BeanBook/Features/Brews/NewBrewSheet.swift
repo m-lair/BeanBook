@@ -4,9 +4,9 @@ import SwiftData
 /// 4-step new-brew flow — Method → Bag → Ratio → Rate.
 /// Mirrors `C2NewBrew` with progress ticks, save-success overlay, and prefill.
 struct NewBrewSheet: View {
-    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @Environment(ProEntitlement.self) private var pro
+    @Environment(BrewStore.self) private var brewStore
+    @Environment(BrewPresetStore.self) private var brewPresetStore
 
     @Query(sort: \Bag.createdAt, order: .reverse) private var bags: [Bag]
     @Query(sort: \BrewPreset.createdAt, order: .reverse) private var presets: [BrewPreset]
@@ -410,51 +410,51 @@ struct NewBrewSheet: View {
     }
 
     private func save() {
-        // Quota gates — brew is always new here; preset is optional.
-        let brewCount = (try? context.fetchCount(FetchDescriptor<Brew>())) ?? 0
-        guard pro.canUse(.brew, currentCount: brewCount) else {
-            paywallHeadline = "You've reached the free limit of \(ProQuota.brews) brews. Unlock Pro for unlimited."
-            showingPaywall = true
-            return
-        }
-        if saveAsPreset {
-            let presetCount = (try? context.fetchCount(FetchDescriptor<BrewPreset>())) ?? 0
-            guard pro.canUse(.recipe, currentCount: presetCount) else {
-                paywallHeadline = "You've reached the free limit of \(ProQuota.recipes) saved recipes. Unlock Pro for unlimited."
-                showingPaywall = true
-                return
-            }
-        }
+        let resolvedGrind = grindSetting.isEmpty ? nil : grindSetting
+        let resolvedNotes = notes.isEmpty ? nil : notes
 
-        let brew = Brew(
-            method: method,
-            doseGrams: dose,
-            yieldGrams: yield,
-            brewTimeSeconds: brewTimeSeconds,
-            grindSetting: grindSetting.isEmpty ? nil : grindSetting,
-            waterTempC: waterTempC,
-            rating: rating,
-            notes: notes.isEmpty ? nil : notes,
-            bag: bag
-        )
-        context.insert(brew)
-
-        if saveAsPreset {
-            let trimmed = presetName.trimmingCharacters(in: .whitespaces)
-            let name = trimmed.isEmpty ? "\(method.displayName) recipe" : trimmed
-            let preset = BrewPreset(
-                name: name,
+        do {
+            try brewStore.create(
                 method: method,
                 doseGrams: dose,
                 yieldGrams: yield,
                 brewTimeSeconds: brewTimeSeconds,
-                grindSetting: grindSetting.isEmpty ? nil : grindSetting,
-                waterTempC: waterTempC
+                grindSetting: resolvedGrind,
+                waterTempC: waterTempC,
+                rating: rating,
+                notes: resolvedNotes,
+                bag: bag
             )
-            context.insert(preset)
+        } catch is QuotaExceededError {
+            paywallHeadline = "You've reached the free limit of \(ProQuota.brews) brews. Unlock Pro for unlimited."
+            showingPaywall = true
+            return
+        } catch {
+            return
         }
 
-        try? context.save()
+        if saveAsPreset {
+            let trimmed = presetName.trimmingCharacters(in: .whitespaces)
+            let name = trimmed.isEmpty ? "\(method.displayName) recipe" : trimmed
+            do {
+                try brewPresetStore.create(
+                    name: name,
+                    method: method,
+                    doseGrams: dose,
+                    yieldGrams: yield,
+                    brewTimeSeconds: brewTimeSeconds,
+                    grindSetting: resolvedGrind,
+                    waterTempC: waterTempC
+                )
+            } catch is QuotaExceededError {
+                // Brew was already saved; offer Pro for the recipe slot.
+                paywallHeadline = "You've reached the free limit of \(ProQuota.recipes) saved recipes. Unlock Pro for unlimited."
+                showingPaywall = true
+                return
+            } catch {
+                // Same fall-through as above.
+            }
+        }
 
         withAnimation(.easeOut(duration: 0.25)) { showSaved = true }
     }

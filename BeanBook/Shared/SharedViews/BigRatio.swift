@@ -82,6 +82,7 @@ struct RatioBar: View {
 /// Inline ratio (`1:X.XX`) with the colon tinted accent + heavier weight so
 /// it reads as a separator instead of disappearing between digits. Digits
 /// inherit whatever `foregroundStyle` the caller applied to the surrounding `Text`.
+@MainActor
 func RatioText(_ ratio: Double) -> Text {
     let val = ratio.formatted(.number.precision(.fractionLength(2)))
     return Text("1")
