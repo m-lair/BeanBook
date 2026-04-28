@@ -4,6 +4,7 @@ import SwiftData
 /// "The shelf" — bag list. Color-stripe rows, big serif title, fold-in Discover entry.
 struct BagListView: View {
     @Environment(\.modelContext) private var context
+    @Environment(BagStore.self) private var bagStore
     @Query(sort: \Bag.createdAt, order: .reverse) private var bags: [Bag]
 
     @State private var showAddSheet = false
@@ -65,13 +66,30 @@ struct BagListView: View {
         .padding(.horizontal, 24)
     }
 
+    private var sortedBags: [Bag] {
+        bags.sorted { lhs, rhs in
+            if lhs.isPinned != rhs.isPinned { return lhs.isPinned }
+            return lhs.createdAt > rhs.createdAt
+        }
+    }
+
     private var list: some View {
         VStack(spacing: 0) {
-            ForEach(bags) { bag in
+            ForEach(sortedBags) { bag in
                 NavigationLink(value: bag) {
                     BagShelfRow(bag: bag)
                 }
                 .buttonStyle(.plain)
+                .contextMenu {
+                    Button {
+                        bagStore.pin(bag)
+                    } label: {
+                        Label(
+                            bag.isPinned ? "Unpin" : "Pin as default",
+                            systemImage: bag.isPinned ? "pin.slash" : "pin"
+                        )
+                    }
+                }
             }
         }
         .padding(.horizontal, 24)
@@ -142,7 +160,14 @@ private struct BagShelfRow: View {
                     .frame(minHeight: 56)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Eyebrow(bag.brand.isEmpty ? "Bag" : bag.brand)
+                    HStack(spacing: 6) {
+                        Eyebrow(bag.brand.isEmpty ? "Bag" : bag.brand)
+                        if bag.isPinned {
+                            Image(systemName: "pin.fill")
+                                .font(.system(size: 9))
+                                .foregroundStyle(Theme.accent)
+                        }
+                    }
                     Text(bag.name.isEmpty ? "Untitled" : bag.name)
                         .font(.system(size: 22, weight: .medium, design: .serif))
                         .tracking(-0.5)

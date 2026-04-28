@@ -9,7 +9,10 @@ struct BrewListView: View {
     @Query(sort: \Brew.createdAt, order: .reverse) private var brews: [Brew]
 
     @State private var showAddSheet = false
+    @State private var hotStartBrew: Brew?
     @Namespace private var addSheetNamespace
+
+    private var recentBrews: [Brew] { Array(brews.prefix(5)) }
 
     var body: some View {
         ZStack {
@@ -21,6 +24,12 @@ struct BrewListView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         header
+                        if recentBrews.count > 1 {
+                            RecentShotsStrip(brews: recentBrews) { brew in
+                                hotStartBrew = brew
+                            }
+                            .padding(.top, 24)
+                        }
                         list
                         Spacer().frame(height: 80)
                     }
@@ -50,6 +59,9 @@ struct BrewListView: View {
             NewBrewSheet()
                 .navigationTransition(.zoom(sourceID: "addBrew", in: addSheetNamespace))
         }
+        .sheet(item: $hotStartBrew) { brew in
+            NewBrewSheet(prefill: brew)
+        }
         .navigationDestination(for: Brew.self) { BrewDetailView(brew: $0) }
         .navigationDestination(for: Bag.self) { BagDetailView(bag: $0) }
     }
@@ -72,6 +84,13 @@ struct BrewListView: View {
                     BrewListRow(brew: brew)
                 }
                 .buttonStyle(.plain)
+                .contextMenu {
+                    Button {
+                        hotStartBrew = brew
+                    } label: {
+                        Label("Brew again", systemImage: "arrow.clockwise")
+                    }
+                }
             }
         }
         .padding(.horizontal, 24)

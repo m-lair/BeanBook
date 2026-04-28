@@ -1,12 +1,13 @@
 import SwiftUI
 import SwiftData
 
-/// 4-step new-brew flow — Method → Bag → Ratio → Rate.
-/// Mirrors `C2NewBrew` with progress ticks, save-success overlay, and prefill.
+/// 3-step new-brew flow — Context → Shot → Outcome.
+/// Prefilled from last brew (or explicit `prefill: Brew`); hot-start lands on Shot step.
 struct NewBrewSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(BrewStore.self) private var brewStore
     @Environment(BrewPresetStore.self) private var brewPresetStore
+    @Environment(BagStore.self) private var bagStore
 
     @Query(sort: \Bag.createdAt, order: .reverse) private var bags: [Bag]
     @Query(sort: \BrewPreset.createdAt, order: .reverse) private var presets: [BrewPreset]
@@ -16,7 +17,7 @@ struct NewBrewSheet: View {
 
     /// Optional bag to pre-link.
     var initialBag: Bag? = nil
-    /// Optional brew to pre-fill from (for "Brew this again").
+    /// Optional brew to pre-fill from (for "Brew this again" / Recipe launch).
     var prefill: Brew? = nil
 
     @State private var step: Int = 0
@@ -30,6 +31,11 @@ struct NewBrewSheet: View {
     @State private var rating: Int? = nil
     @State private var notes: String = ""
 
+    /// Snapshot of the values used to prefill the form. Used to render Δ-from-last hints.
+    @State private var prefillSnapshot: PrefillSnapshot?
+    /// The bag whose values were used for prefill — surfaced as a "recent" swap chip if user has a different pinned bag.
+    @State private var recentBag: Bag?
+
     @State private var saveAsPreset = false
     @State private var presetName: String = ""
 
@@ -38,8 +44,12 @@ struct NewBrewSheet: View {
     @State private var didHydrate = false
 
     @AppStorage("timerCountsDown") private var timerCountsDown = true
+    @AppStorage("defaultBrewMethod") private var defaultBrewMethodRaw: String = BrewMethod.espresso.rawValue
+    @AppStorage("autoPrefillFromLast") private var autoPrefillFromLast = true
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private static let totalSteps = 3
 
     private var ratio: Double {
         guard dose > 0 else { return 0 }
@@ -97,11 +107,9 @@ struct NewBrewSheet: View {
                 ScrollView {
                     Group {
                         switch step {
-                        case 0: methodStep
-                        case 1: bagStep
-                        case 2: ratioStep
-                        case 3: timerStep
-                        default: rateStep
+                        case 0: contextStep
+                        case 1: shotStep
+                        default: outcomeStep
                         }
                     }
                     .id(step)
@@ -128,7 +136,7 @@ struct NewBrewSheet: View {
 
     private var progressIndicator: some View {
         HStack(spacing: 4) {
-            ForEach(0..<5, id: \.self) { i in
+            ForEach(0..<Self.totalSteps, id: \.self) { i in
                 Capsule()
                     .fill(i <= step ? Theme.accent : Theme.rule)
                     .frame(width: i == step ? 26 : 16, height: 2)
@@ -136,12 +144,12 @@ struct NewBrewSheet: View {
         }
         .animation(.snappy(duration: 0.32), value: step)
         .accessibilityElement()
-        .accessibilityLabel("Step \(step + 1) of 5")
+        .accessibilityLabel("Step \(step + 1) of \(Self.totalSteps)")
     }
 
     private var stepHeader: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Eyebrow("Step \(step + 1) of 5")
+            Eyebrow("Step \(step + 1) of \(Self.totalSteps)")
                 .contentTransition(.opacity)
             Text(stepTitle)
                 .font(.system(size: 32, weight: .medium, design: .serif))
@@ -158,10 +166,8 @@ struct NewBrewSheet: View {
 
     private var stepTitle: String {
         switch step {
-        case 0: "How are you brewing today?"
-        case 1: "What are you brewing?"
-        case 2: "And the ratio?"
-        case 3: "Time the pour."
+        case 0: "What are you brewing?"
+        case 1: "Pull the shot."
         default: "How was it?"
         }
     }
@@ -171,7 +177,7 @@ struct NewBrewSheet: View {
             Button {
                 advance()
             } label: {
-                Text(step < 4 ? "Continue" : "Save brew")
+                Text(step < Self.totalSteps - 1 ? "Continue" : "Save brew")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.primaryPill)
@@ -210,42 +216,79 @@ struct NewBrewSheet: View {
         .animation(.snappy(duration: 0.3), value: step)
     }
 
-    // MARK: - Steps
+    // MARK: - Step 0: Context (method + bag)
 
-    private var methodStep: some View {
-        VStack(spacing: 0) {
+    private var contextStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Eyebrow("Method")
+                .padding(.horizontal, 24)
+                .padding(.bottom, 12)
+
             MethodPicker(selection: $method)
+                .padding(.horizontal, 20)
                 .onChange(of: method) { _, newValue in
                     applyMethodDefaultsIfFresh(newValue)
                 }
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 32)
-    }
 
-    private var bagStep: some View {
-        VStack(spacing: 0) {
-            ForEach(bags) { b in
+            HairRule().padding(.top, 28)
+
+            HStack {
+                Eyebrow("Bag")
+                Spacer()
+                if let pinned = bagStore.pinnedBag, bag?.id == pinned.id {
+                    Text("Pinned")
+                        .font(Theme.body(11, weight: .semibold))
+                        .tracking(1.2)
+                        .foregroundStyle(Theme.accent)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 22)
+            .padding(.bottom, 8)
+
+            // "Recent: [bag]" swap affordance — only when a different bag is currently selected
+            if let recent = recentBag, recent.id != bag?.id {
                 Button {
-                    bag = b
+                    bag = recent
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.uturn.backward")
+                            .font(.system(size: 10, weight: .semibold))
+                        Text("Recent: \(recent.displayTitle)")
+                            .font(Theme.body(12))
+                    }
+                    .foregroundStyle(Theme.ink2)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Theme.card, in: .capsule)
+                    .overlay(Capsule().stroke(Theme.rule, lineWidth: 0.5))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 8)
+            }
+
+            VStack(spacing: 0) {
+                ForEach(bags) { b in
+                    Button {
+                        bag = b
+                    } label: {
+                        bagRow(b)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Button {
+                    bag = nil
                 } label: {
                     VStack(spacing: 0) {
                         HairRule()
-                        HStack(spacing: 14) {
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(b.roastLevel.swatch)
-                                .frame(width: 6, height: 38)
-                            VStack(alignment: .leading, spacing: 3) {
-                                Eyebrow(b.brand.isEmpty ? "Bag" : b.brand)
-                                Text(b.name.isEmpty ? "Untitled" : b.name)
-                                    .font(.system(size: 18,
-                                                  weight: bag?.id == b.id ? .semibold : .regular,
-                                                  design: .serif))
-                                    .tracking(-0.3)
-                                    .foregroundStyle(bag?.id == b.id ? Theme.accent : Theme.ink)
-                            }
+                        HStack {
+                            Text("Skip — no bag")
+                                .font(Theme.body(14))
+                                .foregroundStyle(bag == nil ? Theme.accent : Theme.ink2)
                             Spacer()
-                            if bag?.id == b.id {
+                            if bag == nil {
                                 Circle().fill(Theme.accent).frame(width: 8, height: 8)
                             }
                         }
@@ -255,32 +298,47 @@ struct NewBrewSheet: View {
                 }
                 .buttonStyle(.plain)
             }
-
-            Button {
-                bag = nil
-            } label: {
-                VStack(spacing: 0) {
-                    HairRule()
-                    HStack {
-                        Text("Skip — no bag")
-                            .font(Theme.body(14))
-                            .foregroundStyle(bag == nil ? Theme.accent : Theme.ink2)
-                        Spacer()
-                        if bag == nil {
-                            Circle().fill(Theme.accent).frame(width: 8, height: 8)
-                        }
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 16)
-                }
-            }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 20)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 32)
+        .padding(.top, 28)
     }
 
-    private var ratioStep: some View {
+    private func bagRow(_ b: Bag) -> some View {
+        VStack(spacing: 0) {
+            HairRule()
+            HStack(spacing: 14) {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(b.roastLevel.swatch)
+                    .frame(width: 6, height: 38)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Eyebrow(b.brand.isEmpty ? "Bag" : b.brand)
+                        if b.isPinned {
+                            Image(systemName: "pin.fill")
+                                .font(.system(size: 9))
+                                .foregroundStyle(Theme.accent)
+                        }
+                    }
+                    Text(b.name.isEmpty ? "Untitled" : b.name)
+                        .font(.system(size: 18,
+                                      weight: bag?.id == b.id ? .semibold : .regular,
+                                      design: .serif))
+                        .tracking(-0.3)
+                        .foregroundStyle(bag?.id == b.id ? Theme.accent : Theme.ink)
+                }
+                Spacer()
+                if bag?.id == b.id {
+                    Circle().fill(Theme.accent).frame(width: 8, height: 8)
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 16)
+        }
+    }
+
+    // MARK: - Step 1: Shot (dose, yield, time, grind)
+
+    private var shotStep: some View {
         VStack(spacing: 0) {
             VStack(spacing: 22) {
                 BigRatio(ratio: ratio, size: 84)
@@ -290,25 +348,43 @@ struct NewBrewSheet: View {
             .padding(.top, 8)
 
             VStack(spacing: 0) {
-                StepperRow(label: "Dose", value: $dose, unit: "g",
-                           range: method.doseRange, stepValue: 1)
-                StepperRow(label: method.yieldLabel.replacingOccurrences(of: " (g)", with: ""),
-                           value: $yield, unit: "g",
-                           range: method.yieldRange, stepValue: 1)
+                StepperRow(
+                    label: "Dose",
+                    value: $dose,
+                    unit: "g",
+                    range: method.doseRange,
+                    stepValue: 1,
+                    caption: doseCaption
+                )
+                StepperRow(
+                    label: method.yieldLabel.replacingOccurrences(of: " (g)", with: ""),
+                    value: $yield,
+                    unit: "g",
+                    range: method.yieldRange,
+                    stepValue: 1,
+                    caption: yieldCaption
+                )
             }
-            .padding(.top, 36)
+            .padding(.top, 28)
+
+            VStack(spacing: 18) {
+                BrewTimer(seconds: $brewTimeSeconds, countsDown: timerCountsDown)
+                if let cap = timeCaption {
+                    DeltaCaption(text: cap, reduceMotion: reduceMotion)
+                }
+            }
+            .padding(.top, 28)
+
+            GrindRow(value: $grindSetting, caption: grindCaption)
+                .padding(.top, 28)
         }
         .padding(.horizontal, 24)
-        .padding(.top, 36)
+        .padding(.top, 28)
     }
 
-    private var timerStep: some View {
-        BrewTimer(seconds: $brewTimeSeconds, countsDown: timerCountsDown)
-            .padding(.horizontal, 24)
-            .padding(.top, 36)
-    }
+    // MARK: - Step 2: Outcome (rating, notes, save-as-recipe)
 
-    private var rateStep: some View {
+    private var outcomeStep: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(spacing: 14) {
                 StarRating(rating: $rating, dotSize: 24)
@@ -345,6 +421,41 @@ struct NewBrewSheet: View {
         }
         .padding(.horizontal, 24)
         .padding(.top, 40)
+    }
+
+    // MARK: - Δ-from-last captions
+
+    private var doseCaption: String? {
+        guard let s = prefillSnapshot, s.dose != dose else { return nil }
+        return "was \(format(s.dose)) g"
+    }
+
+    private var yieldCaption: String? {
+        guard let s = prefillSnapshot, s.yield != yield else { return nil }
+        return "was \(format(s.yield)) g"
+    }
+
+    private var timeCaption: String? {
+        guard let s = prefillSnapshot, s.brewTimeSeconds != brewTimeSeconds else { return nil }
+        return "was \(formatTime(s.brewTimeSeconds))"
+    }
+
+    private var grindCaption: String? {
+        guard let s = prefillSnapshot,
+              s.grindSetting != grindSetting,
+              !s.grindSetting.isEmpty else { return nil }
+        return "was \(s.grindSetting)"
+    }
+
+    private func format(_ v: Double) -> String {
+        v.truncatingRemainder(dividingBy: 1) == 0
+            ? String(Int(v))
+            : v.formatted(.number.precision(.fractionLength(1)))
+    }
+
+    private func formatTime(_ s: Int) -> String {
+        if s < 60 { return "\(s)s" }
+        return Duration.seconds(s).formatted(.time(pattern: .minuteSecond))
     }
 
     // MARK: - Save success overlay
@@ -394,15 +505,13 @@ struct NewBrewSheet: View {
     }
 
     private var formattedTime: String {
-        let s = brewTimeSeconds
-        if s < 60 { return "\(s)s" }
-        return Duration.seconds(s).formatted(.time(pattern: .minuteSecond))
+        formatTime(brewTimeSeconds)
     }
 
     // MARK: - Lifecycle
 
     private func advance() {
-        if step < 4 {
+        if step < Self.totalSteps - 1 {
             withAnimation(.snappy(duration: 0.32)) { step += 1 }
         } else {
             save()
@@ -447,7 +556,6 @@ struct NewBrewSheet: View {
                     waterTempC: waterTempC
                 )
             } catch is QuotaExceededError {
-                // Brew was already saved; offer Pro for the recipe slot.
                 paywallHeadline = "You've reached the free limit of \(ProQuota.recipes) saved recipes. Unlock Pro for unlimited."
                 showingPaywall = true
                 return
@@ -461,22 +569,55 @@ struct NewBrewSheet: View {
 
     private func hydrate() {
         guard !didHydrate else { return }
+        defer { didHydrate = true }
+
         if let prefill {
-            method = prefill.method
-            dose = prefill.doseGrams
-            yield = prefill.yieldGrams
-            brewTimeSeconds = prefill.brewTimeSeconds
-            grindSetting = prefill.grindSetting ?? ""
-            waterTempC = prefill.waterTempC
-            bag = prefill.bag
-            step = 1
-        } else if let initialBag {
-            bag = initialBag
-            applyMethodDefaultsIfFresh(method)
-        } else {
-            applyMethodDefaultsIfFresh(method)
+            applyPrefill(from: prefill, jumpToShot: true)
+            return
         }
-        didHydrate = true
+
+        if let initialBag {
+            bag = initialBag
+            method = BrewMethod(rawValue: defaultBrewMethodRaw) ?? .espresso
+            applyMethodDefaultsIfFresh(method)
+            return
+        }
+
+        // Cold start. Honor autoPrefillFromLast: hydrate values (and bag) from most recent brew.
+        if autoPrefillFromLast, let recent = brewStore.mostRecent() {
+            applyPrefill(from: recent, jumpToShot: false)
+            // Pin override: if user has a pinned bag and it's different from recent's bag,
+            // surface pinned as the active selection but keep recent visible as a swap chip.
+            if let pinned = bagStore.pinnedBag, pinned.id != recent.bag?.id {
+                recentBag = recent.bag
+                bag = pinned
+            }
+            return
+        }
+
+        // True cold-cold start: method defaults only.
+        method = BrewMethod(rawValue: defaultBrewMethodRaw) ?? .espresso
+        applyMethodDefaultsIfFresh(method)
+        if let pinned = bagStore.pinnedBag {
+            bag = pinned
+        }
+    }
+
+    private func applyPrefill(from source: Brew, jumpToShot: Bool) {
+        method = source.method
+        dose = source.doseGrams
+        yield = source.yieldGrams
+        brewTimeSeconds = source.brewTimeSeconds
+        grindSetting = source.grindSetting ?? ""
+        waterTempC = source.waterTempC
+        bag = source.bag
+        prefillSnapshot = PrefillSnapshot(
+            dose: source.doseGrams,
+            yield: source.yieldGrams,
+            brewTimeSeconds: source.brewTimeSeconds,
+            grindSetting: source.grindSetting ?? ""
+        )
+        if jumpToShot { step = 1 }
     }
 
     private func applyMethodDefaultsIfFresh(_ method: BrewMethod) {
@@ -484,6 +625,30 @@ struct NewBrewSheet: View {
         yield = method.defaultYield
         brewTimeSeconds = method.defaultTimeSeconds
         waterTempC = method.defaultWaterTempC
+    }
+}
+
+// MARK: - Prefill snapshot
+
+private struct PrefillSnapshot: Equatable {
+    let dose: Double
+    let yield: Double
+    let brewTimeSeconds: Int
+    let grindSetting: String
+}
+
+// MARK: - Δ caption
+
+private struct DeltaCaption: View {
+    let text: String
+    let reduceMotion: Bool
+
+    var body: some View {
+        Text(text)
+            .font(Theme.body(11))
+            .tracking(0.3)
+            .foregroundStyle(Theme.ink3)
+            .transition(reduceMotion ? .identity : .opacity)
     }
 }
 
@@ -495,14 +660,22 @@ private struct StepperRow: View {
     let unit: String
     let range: ClosedRange<Double>
     let stepValue: Double
+    var caption: String? = nil
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 0) {
             HairRule()
             HStack {
-                Text(label)
-                    .font(Theme.body(14.5))
-                    .foregroundStyle(Theme.ink2)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label)
+                        .font(Theme.body(14.5))
+                        .foregroundStyle(Theme.ink2)
+                    if let caption {
+                        DeltaCaption(text: caption, reduceMotion: reduceMotion)
+                    }
+                }
                 Spacer()
                 stepper
             }
@@ -588,6 +761,43 @@ private struct StepperIntRow: View {
                         }
                     }
                 }
+            }
+            .padding(.vertical, 18)
+        }
+    }
+}
+
+// MARK: - Grind row
+
+private struct GrindRow: View {
+    @Binding var value: String
+    var caption: String?
+
+    @FocusState private var focused: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HairRule()
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Grind")
+                        .font(Theme.body(14.5))
+                        .foregroundStyle(Theme.ink2)
+                    if let caption {
+                        DeltaCaption(text: caption, reduceMotion: reduceMotion)
+                    }
+                }
+                Spacer()
+                TextField("e.g. 2.4", text: $value)
+                    .focused($focused)
+                    .multilineTextAlignment(.trailing)
+                    .font(.system(size: 22, weight: .medium, design: .serif))
+                    .foregroundStyle(Theme.ink)
+                    .tracking(-0.3)
+                    .frame(minWidth: 90, maxWidth: 140)
+                    .submitLabel(.done)
+                    .onSubmit { focused = false }
             }
             .padding(.vertical, 18)
         }

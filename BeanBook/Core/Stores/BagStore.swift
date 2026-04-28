@@ -46,4 +46,22 @@ final class BagStore {
         try? context.save()
         return bag
     }
+
+    /// Pinned bag (if any). Single-pin invariant enforced by `pin(_:)`.
+    var pinnedBag: Bag? {
+        var descriptor = FetchDescriptor<Bag>(predicate: #Predicate { $0.isPinned })
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.first
+    }
+
+    /// Pin a bag, unpinning all others. Pass the same bag again to unpin.
+    func pin(_ bag: Bag) {
+        let shouldUnpin = bag.isPinned
+        let all = (try? context.fetch(FetchDescriptor<Bag>(predicate: #Predicate { $0.isPinned }))) ?? []
+        for b in all where b.id != bag.id {
+            b.isPinned = false
+        }
+        bag.isPinned = !shouldUnpin
+        try? context.save()
+    }
 }

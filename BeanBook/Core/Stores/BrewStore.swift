@@ -46,4 +46,13 @@ final class BrewStore {
         try? context.save()
         return brew
     }
+
+    /// Most recently logged brew, if any. Used for prefill defaults.
+    func mostRecent() -> Brew? {
+        var descriptor = FetchDescriptor<Brew>(
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.first
+    }
 }

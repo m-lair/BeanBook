@@ -16,6 +16,7 @@ final class Bag {
     var imageData: Data?
     var notes: String?
     var createdAt: Date = Date()
+    var isPinned: Bool = false
 
     @Relationship(deleteRule: .nullify, inverse: \Brew.bag)
     var brews: [Brew] = []
@@ -31,7 +32,8 @@ final class Bag {
         purchasedAt: Date? = nil,
         imageData: Data? = nil,
         notes: String? = nil,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        isPinned: Bool = false
     ) {
         self.brand = brand
         self.name = name
@@ -44,6 +46,7 @@ final class Bag {
         self.imageData = imageData
         self.notes = notes
         self.createdAt = createdAt
+        self.isPinned = isPinned
     }
 
     var displayTitle: String {
