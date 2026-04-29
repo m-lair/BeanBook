@@ -231,8 +231,14 @@ private struct BagPhotoTile: View {
     @Binding var imageData: Data?
     @Binding var photoItem: PhotosPickerItem?
 
+    @State private var showSourceDialog = false
+    @State private var showLibraryPicker = false
+    @State private var showCamera = false
+
     var body: some View {
-        PhotosPicker(selection: $photoItem, matching: .images) {
+        Button {
+            showSourceDialog = true
+        } label: {
             ZStack {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(Theme.accentSoft)
@@ -240,17 +246,39 @@ private struct BagPhotoTile: View {
                     Image(uiImage: img)
                         .resizable()
                         .scaledToFill()
-                        .clipShape(.rect(cornerRadius: 18, style: .continuous))
                 } else {
-                    Image(systemName: "bag.fill")
-                        .font(.system(size: 28, weight: .regular))
-                        .foregroundStyle(Theme.accent.opacity(0.8))
+                    VStack(spacing: 6) {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 24, weight: .regular))
+                            .foregroundStyle(Theme.accent.opacity(0.8))
+                        Text("Add photo")
+                            .font(Theme.body(11, weight: .semibold))
+                            .tracking(0.4)
+                            .foregroundStyle(Theme.accent.opacity(0.85))
+                    }
                 }
             }
             .frame(width: 116, height: 116)
+            .clipShape(.rect(cornerRadius: 18, style: .continuous))
+            .contentShape(.rect(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(imageData == nil ? "Add bag photo" : "Replace bag photo")
+        .confirmationDialog("Bag photo", isPresented: $showSourceDialog, titleVisibility: .hidden) {
+            if CameraPicker.isAvailable {
+                Button("Take Photo") { showCamera = true }
+            }
+            Button("Choose from Library") { showLibraryPicker = true }
+            if imageData != nil {
+                Button("Remove Photo", role: .destructive) { imageData = nil }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .photosPicker(isPresented: $showLibraryPicker, selection: $photoItem, matching: .images)
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraPicker(imageData: $imageData)
+                .ignoresSafeArea()
+        }
     }
 }
 

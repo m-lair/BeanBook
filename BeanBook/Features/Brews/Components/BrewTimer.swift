@@ -19,6 +19,10 @@ struct BrewTimer: View {
     @State private var accumulated: TimeInterval = 0
     @State private var hasFinished = false
 
+    @State private var isEditingTime = false
+    @State private var editMinutes: Int = 0
+    @State private var editSeconds: Int = 30
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     enum Phase: Hashable { case idle, running, paused, finished }
@@ -44,6 +48,15 @@ struct BrewTimer: View {
                     .contentTransition(.numericText())
                     .animation(.snappy(duration: 0.3), value: phase)
                     .padding(.top, 18)
+                    .contentShape(.rect)
+                    .onTapGesture {
+                        guard phase == .idle else { return }
+                        let t = Int(target.rounded())
+                        editMinutes = t / 60
+                        editSeconds = t % 60
+                        isEditingTime = true
+                    }
+                    .accessibilityHint(phase == .idle ? "Double tap to set timer duration" : "")
                     .onChange(of: remaining <= 0) { _, finished in
                         if finished && phase == .running { finish() }
                     }
@@ -67,10 +80,13 @@ struct BrewTimer: View {
             }
 
             Button(action: toggle) {
-                Text(toggleLabel)
-                    .frame(maxWidth: .infinity)
+                HStack(spacing: 8) {
+                    Image(systemName: toggleSymbol)
+                        .font(.system(size: 13, weight: .semibold))
+                    Text(toggleLabel)
+                }
             }
-            .buttonStyle(.primaryPill)
+            .buttonStyle(.outlinePill)
             .padding(.top, phase == .idle ? 22 : 36)
             .sensoryFeedback(.impact(weight: .light), trigger: phase)
 
@@ -97,6 +113,24 @@ struct BrewTimer: View {
         .animation(.snappy(duration: 0.3), value: phase)
         .onAppear { hydrateFromBinding() }
         .onDisappear { commitElapsed() }
+        .sheet(isPresented: $isEditingTime) {
+            TimeEditSheet(
+                minutes: $editMinutes,
+                seconds: $editSeconds,
+                lowerBound: lowerBound,
+                upperBound: upperBound,
+                onCommit: applyEditedTime
+            )
+            .presentationDetents([.height(320)])
+            .presentationDragIndicator(.visible)
+        }
+    }
+
+    private func applyEditedTime() {
+        let total = editMinutes * 60 + editSeconds
+        let clamped = min(max(total, lowerBound), upperBound)
+        target = TimeInterval(clamped)
+        seconds = clamped
     }
 
     // MARK: - Subviews
@@ -152,10 +186,19 @@ struct BrewTimer: View {
 
     private var toggleLabel: String {
         switch phase {
-        case .idle: "Start"
+        case .idle: "Start timer"
         case .running: "Pause"
         case .paused: "Resume"
         case .finished: "Start over"
+        }
+    }
+
+    private var toggleSymbol: String {
+        switch phase {
+        case .idle: "play.fill"
+        case .running: "pause.fill"
+        case .paused: "play.fill"
+        case .finished: "arrow.counterclockwise"
         }
     }
 
@@ -261,6 +304,73 @@ struct BrewTimer: View {
             seconds = max(lowerBound, Int(accumulated.rounded()))
         } else {
             seconds = max(lowerBound, Int(target.rounded()))
+        }
+    }
+}
+
+private struct TimeEditSheet: View {
+    @Binding var minutes: Int
+    @Binding var seconds: Int
+    let lowerBound: Int
+    let upperBound: Int
+    let onCommit: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    private var maxMinutes: Int { upperBound / 60 }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                HStack(spacing: 0) {
+                    Picker("Minutes", selection: $minutes) {
+                        ForEach(0...maxMinutes, id: \.self) { m in
+                            Text("\(m)").tag(m)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+
+                    Text("min")
+                        .font(Theme.body(13))
+                        .foregroundStyle(Theme.ink2)
+
+                    Picker("Seconds", selection: $seconds) {
+                        ForEach(0..<60, id: \.self) { s in
+                            Text(String(format: "%02d", s)).tag(s)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+
+                    Text("sec")
+                        .font(Theme.body(13))
+                        .foregroundStyle(Theme.ink2)
+                }
+                .frame(height: 180)
+                .padding(.horizontal, 24)
+
+                Spacer(minLength: 0)
+            }
+            .padding(.top, 8)
+            .background(Theme.background)
+            .navigationTitle("Set timer")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundStyle(Theme.ink2)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        onCommit()
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Theme.accent)
+                    .disabled(minutes * 60 + seconds < lowerBound)
+                }
+            }
         }
     }
 }

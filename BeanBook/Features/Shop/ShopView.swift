@@ -104,17 +104,7 @@ struct ShopView: View {
     }
 
     private var filterChips: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                FilterChip(label: "All", selected: roastFilter == nil) { roastFilter = nil }
-                ForEach(RoastLevel.allCases) { level in
-                    FilterChip(label: level.displayName, selected: roastFilter == level) {
-                        roastFilter = level
-                    }
-                }
-            }
-        }
-        .scrollIndicators(.hidden)
+        RoastFilterRow(selection: $roastFilter)
     }
 
     private func featuredCard(_ bean: CatalogBean) -> some View {
@@ -333,9 +323,10 @@ private struct NearbyRosterRow: View {
         VStack(spacing: 0) {
             HairRule()
             HStack(spacing: 14) {
-                RoundedRectangle(cornerRadius: 4)
+                Circle()
                     .fill(bean.roastLevel.swatch)
-                    .frame(width: 44, height: 56)
+                    .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 0.75).blendMode(.overlay))
+                    .frame(width: 44, height: 44)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Eyebrow(bean.roaster)
@@ -374,26 +365,6 @@ private struct NearbyRosterRow: View {
             }
             .padding(.vertical, 14)
         }
-    }
-}
-
-private struct FilterChip: View {
-    let label: String
-    let selected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(label)
-                .font(Theme.body(11, weight: .semibold))
-                .tracking(0.6)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .foregroundStyle(selected ? .white : Theme.ink2)
-                .background(selected ? Theme.accent : Theme.card, in: .capsule)
-                .overlay(Capsule().stroke(selected ? .clear : Theme.rule, lineWidth: 0.5))
-        }
-        .buttonStyle(.plain)
     }
 }
 

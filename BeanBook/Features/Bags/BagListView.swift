@@ -9,6 +9,7 @@ struct BagListView: View {
 
     @State private var showAddSheet = false
     @State private var showDiscover = false
+    @State private var roastFilter: RoastLevel? = nil
     @Namespace private var addSheetNamespace
 
     var body: some View {
@@ -21,6 +22,7 @@ struct BagListView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         header
+                        filterRow
                         list
                         discoverLink
                         Spacer().frame(height: 80)
@@ -67,10 +69,17 @@ struct BagListView: View {
     }
 
     private var sortedBags: [Bag] {
-        bags.sorted { lhs, rhs in
+        let filtered = roastFilter.map { level in bags.filter { $0.roastLevel == level } } ?? bags
+        return filtered.sorted { lhs, rhs in
             if lhs.isPinned != rhs.isPinned { return lhs.isPinned }
             return lhs.createdAt > rhs.createdAt
         }
+    }
+
+    private var filterRow: some View {
+        RoastFilterRow(selection: $roastFilter)
+            .padding(.horizontal, 24)
+            .padding(.top, 24)
     }
 
     private var list: some View {
@@ -93,7 +102,7 @@ struct BagListView: View {
             }
         }
         .padding(.horizontal, 24)
-        .padding(.top, 32)
+        .padding(.top, 18)
     }
 
     private var discoverLink: some View {

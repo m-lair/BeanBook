@@ -102,9 +102,9 @@ struct NewBrewSheet: View {
         ZStack {
             Theme.background.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                stepHeader
-                ScrollView {
+            ScrollView {
+                VStack(spacing: 0) {
+                    stepHeader
                     Group {
                         switch step {
                         case 0: contextStep
@@ -117,11 +117,11 @@ struct NewBrewSheet: View {
                         insertion: .opacity.combined(with: .move(edge: .trailing)),
                         removal: .opacity.combined(with: .move(edge: .leading))
                     ))
-                    .padding(.bottom, 140)
                 }
-                .scrollIndicators(.hidden)
-                .animation(.snappy(duration: 0.32), value: step)
+                .padding(.bottom, 140)
             }
+            .scrollIndicators(.hidden)
+            .animation(.snappy(duration: 0.32), value: step)
 
             VStack {
                 Spacer()
@@ -177,7 +177,7 @@ struct NewBrewSheet: View {
             Button {
                 advance()
             } label: {
-                Text(step < Self.totalSteps - 1 ? "Continue" : "Save brew")
+                Text(step < Self.totalSteps - 1 ? "Next" : "Save brew")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.primaryPill)

@@ -9,9 +9,11 @@ struct CatalogBeanCard: View {
         VStack(spacing: 0) {
             HairRule()
             HStack(spacing: 14) {
-                RoundedRectangle(cornerRadius: 4)
+                Circle()
                     .fill(bean.roastLevel.swatch)
-                    .frame(width: 44, height: 56)
+                    .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 0.75).blendMode(.overlay))
+                    .frame(width: 44, height: 44)
+                    .accessibilityLabel("\(bean.roastLevel.displayName) roast")
 
                 VStack(alignment: .leading, spacing: 3) {
                     Eyebrow(bean.roaster)
