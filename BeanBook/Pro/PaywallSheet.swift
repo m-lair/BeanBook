@@ -70,12 +70,23 @@ struct PaywallSheet: View {
                 .foregroundStyle(Theme.ink)
                 .padding(.top, 8)
 
+            valuePropChips
+                .padding(.top, 16)
+
             if let headline {
                 Text(headline)
                     .font(Theme.body(14))
                     .foregroundStyle(Theme.ink2)
-                    .padding(.top, 12)
+                    .padding(.top, 16)
             }
+        }
+    }
+
+    private var valuePropChips: some View {
+        FlowLayout(spacing: 6) {
+            ValueChip(symbol: "checkmark", text: "Pay once")
+            ValueChip(symbol: "xmark.circle", text: "No subscription")
+            ValueChip(symbol: "sparkles", text: "Future features included")
         }
     }
 
@@ -148,7 +159,7 @@ struct PaywallSheet: View {
         case .purchasing: return "Purchasing…"
         default:
             if let price = pro.product?.displayPrice {
-                return "Unlock for \(price)"
+                return "Unlock Pro · \(price) once"
             }
             return "Unlock Pro"
         }
@@ -164,10 +175,10 @@ struct PaywallSheet: View {
     // MARK: - Footer
 
     private var footer: some View {
-        VStack(spacing: 8) {
-            Text("One-time purchase. No subscription. Family Sharing supported.")
-                .font(Theme.body(12))
-                .foregroundStyle(Theme.ink3)
+        VStack(spacing: 10) {
+            Text("One-time purchase · No subscription · Family Sharing supported")
+                .font(Theme.body(12, weight: .medium))
+                .foregroundStyle(Theme.ink2)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
 
@@ -177,8 +188,28 @@ struct PaywallSheet: View {
                 Link("Privacy Policy", destination: Self.privacyURL)
             }
             .font(Theme.body(12))
-            .foregroundStyle(Theme.ink2)
+            .foregroundStyle(Theme.ink3)
         }
+    }
+}
+
+private struct ValueChip: View {
+    let symbol: String
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: symbol)
+                .font(.system(size: 10, weight: .semibold))
+            Text(text)
+                .font(Theme.body(11, weight: .semibold))
+                .tracking(0.3)
+        }
+        .foregroundStyle(Theme.accent)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Theme.accentSoft, in: .capsule)
+        .overlay(Capsule().stroke(Theme.accent.opacity(0.18), lineWidth: 0.5))
     }
 }
 

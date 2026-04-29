@@ -1,45 +1,88 @@
+# BeanBook
 
-# Bean Book Beta
+A quiet logbook for the coffee you brew at home.
 
-Hey there! Welcome to the beta testing page for **Bean Book**—your favorite new coffee bean companion.  
+> No streaks. No social. No scoring algorithm.
 
-## What is Bean Book?
+iOS app for tracking coffee bags and shots — built for the home espresso enthusiast pulling one or two shots a day, with first-class support for dialing in a new bag.
 
-Bean Book helps you track, rate, and explore coffee beans from around the world. Whether you’re a casual sipper or a total coffee geek, Bean Book's got your back.
+## What it does
 
-## Key Features
+- **Log a brew in three steps.** Method + bag → dose, yield, time, grind → rating + notes. Every value prefilled from your last shot — change only what you changed.
+- **Track your beans.** Origin, roast date, tasting notes, process. Linked to every shot.
+- **Brew it again.** Tap a recent shot to log it again with the same dose, yield, time, and grind.
+- **Dial in a new bag.** All four shot variables on one screen with "was 18 g" hints under any field that diverged from your last brew.
 
-- **Discover & Track**: Keep tabs on your favorite beans and blends.
-- **Ratings & Notes**: Jot down brew methods and personal tasting notes.
-- **Share & Compare**: Easily share recommendations with friends.
+## Pro
 
-## How to Join the Beta
+A one-time purchase. No subscription, ever.
 
-1. **Sign Up**: Head over to [TestFlight Link] to request access (if you haven’t already).
-2. **Install the App**: Open TestFlight on your iOS device, grab the Bean Book beta, and install.
-3. **Explore & Use**: Poke around the app, try different beans, and record your feedback.
+- Unlimited bags, brews, recipes (free-tier caps lifted).
+- Future Pro features included when they ship — stats, export, themes.
+- Family Sharing supported.
 
-## Feedback & Support
+## Stack
 
-- **Raise an Issue**: Found a bug? [Open an issue](https://github.com/yourusername/beanbook/issues) in this repo.
-- **Email Support**: Prefer to chat? Shoot us an email at [support@beanbookapp.com](mailto:support@beanbookapp.com).
-- **Roadmap**: Check out our [project board](https://github.com/yourusername/beanbook/projects) for what's next.
+- **iOS client** — Swift 6, SwiftUI, SwiftData. iOS 18+. Light mode only.
+- **Backend** — Firebase Cloud Functions (TypeScript / Node 18) under `functions/`. Currently a single FCM trigger; not yet wired to the iOS client.
 
-## Privacy & Data Handling
+## Build
 
-We value your privacy. During the beta, Bean Book temporarily stores:
-- Your basic profile info (if you sign in).
-- Log data (crashes, performance metrics).
+```bash
+xcodebuild -project BeanBook.xcodeproj -scheme BeanBook \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=26.0' build
+```
 
-All data is used exclusively for improving Bean Book. Once the beta ends, your personal data will be removed from our test environments.
+```bash
+xcodebuild test -project BeanBook.xcodeproj -scheme BeanBook \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=26.0'
+```
 
-## Beta Testing Requirements
+Cloud Functions:
 
-- iOS device running the latest iOS version or at least iOS X (whatever the minimum is).
-- TestFlight installed.
-- Please be prepared to share feedback or any bugs you encounter!
+```bash
+cd functions
+npm run build
+npm run serve   # firebase emulators:start --only functions
+npm run deploy
+```
 
----
+## Documentation
 
-_Cheers and happy brewing!_  
-_The Bean Book Team_
+- [`docs/branding.md`](docs/branding.md) — voice, tone, naming, Pro positioning. Read before writing copy.
+- [`docs/design.md`](docs/design.md) — design system: palette, type, spacing, components, motion, accessibility. Read before adding UI.
+- [`docs/architecture.md`](docs/architecture.md) — what lives where, current state. Read before adding features.
+- [`CLAUDE.md`](CLAUDE.md) — agent-facing project guide (build commands, conventions, sensitive files).
+
+## Website
+
+The marketing landing lives at `docs/index.html` and is served via **GitHub Pages from the `/docs` folder on `main`**. To preview locally:
+
+```bash
+cd docs && python3 -m http.server 8000
+# open http://localhost:8000
+```
+
+Enable Pages: GitHub repo → Settings → Pages → **Source: Deploy from a branch** → **Branch: main · Folder: /docs**.
+
+`.nojekyll` is included so the markdown docs aren't Jekyll-themed.
+
+## Sensitive files — do not commit
+
+- `functions/config/serviceAccountKey.json` — Firebase service account.
+- Anything under `functions/node_modules/`.
+
+## Repo layout
+
+```
+BeanBook/                 iOS target
+├── App/                  RootTabView, app entry
+├── Core/                 Models, Stores, Services
+├── Features/             Brews, Bags, Shop, Onboarding, Recipes, Settings
+├── Pro/                  ProEntitlement, PaywallSheet
+└── Shared/               Theme, palettes, primitives, extensions
+
+functions/                Firebase Cloud Functions (TypeScript)
+docs/                     Brand + design + architecture docs, GitHub Pages site
+                          (index.html, styles.css, logo.svg, wordmark.svg)
+```

@@ -119,34 +119,55 @@ struct ShopView: View {
 
     private func featuredCard(_ bean: CatalogBean) -> some View {
         ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 18)
+            RoundedRectangle(cornerRadius: 20)
                 .fill(Theme.accentSoft)
 
-            // Tilted color tile — anchored to the trailing edge so it scales with width
-            // rather than relying on a fixed pixel offset.
-            RoundedRectangle(cornerRadius: 8)
-                .fill(bean.roastLevel.swatch.opacity(0.85))
-                .frame(width: 110, height: 140)
-                .rotationEffect(.degrees(8))
+            // Hero: layered tilted "bag" tile with gradient depth, hairline, and a
+            // floating roast-level micro-label. Anchored to the trailing edge so it
+            // scales with the card width rather than relying on a fixed offset.
+            heroShape(for: bean)
                 .frame(maxWidth: .infinity, alignment: .topTrailing)
-                .padding(.top, -20)
-                .padding(.trailing, -30)
+                .padding(.top, -16)
+                .padding(.trailing, -22)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 0) {
-                Eyebrow(bean.roaster, color: Theme.accent)
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(Theme.accent)
+                    Eyebrow("Pick of the week", color: Theme.accent)
+                }
+                .padding(.bottom, 14)
+
+                Eyebrow(bean.roaster, color: Theme.ink3)
                 Text(bean.name)
                     .font(.system(size: 32, weight: .medium, design: .serif))
                     .tracking(-0.8)
                     .foregroundStyle(Theme.ink)
                     .padding(.top, 4)
+
+                if !bean.origin.isEmpty {
+                    HStack(spacing: 6) {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(Theme.ink3)
+                        Text(bean.origin)
+                            .font(Theme.body(12, weight: .medium))
+                            .foregroundStyle(Theme.ink2)
+                            .tracking(0.2)
+                            .lineLimit(1)
+                    }
+                    .padding(.top, 8)
+                }
+
                 Text(bean.description)
                     .font(Theme.body(13))
                     .foregroundStyle(Theme.ink2)
                     .lineSpacing(2)
                     .lineLimit(3)
-                    .frame(maxWidth: 200, alignment: .leading)
-                    .padding(.top, 10)
+                    .frame(maxWidth: 220, alignment: .leading)
+                    .padding(.top, 12)
 
                 FlowLayout(spacing: 6) {
                     ForEach(bean.tastingNotes.prefix(3), id: \.self) { note in
@@ -162,14 +183,58 @@ struct ShopView: View {
                 .padding(.top, 14)
 
                 Button("Add to beans") { addToBags(bean) }
-                    .buttonStyle(.primaryPill)
-                    .padding(.top, 18)
+                    .buttonStyle(.accentPill)
+                    .padding(.top, 20)
             }
             .padding(24)
             .frame(maxWidth: 260, alignment: .leading)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .padding(.horizontal, 24)
+    }
+
+    /// Layered hero "bag" tile — gradient swatch + hairline + floating roast chip.
+    private func heroShape(for bean: CatalogBean) -> some View {
+        let swatch = bean.roastLevel.swatch
+        return ZStack(alignment: .topTrailing) {
+            // Soft echo behind, slightly larger and more rotated, lower opacity.
+            RoundedRectangle(cornerRadius: 10)
+                .fill(swatch.opacity(0.18))
+                .frame(width: 116, height: 150)
+                .rotationEffect(.degrees(14))
+                .offset(x: -8, y: 6)
+
+            // Front block: gradient fill + inner hairline.
+            RoundedRectangle(cornerRadius: 10)
+                .fill(
+                    LinearGradient(
+                        colors: [swatch.opacity(0.95), swatch.opacity(0.78)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: 110, height: 140)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(.white.opacity(0.18), lineWidth: 0.5)
+                        .blendMode(.overlay)
+                )
+                .rotationEffect(.degrees(8))
+                .shadow(color: .black.opacity(0.08), radius: 12, y: 6)
+                .overlay(alignment: .topLeading) {
+                    Text(bean.roastLevel.displayName.uppercased())
+                        .font(Theme.body(9, weight: .bold))
+                        .tracking(1.2)
+                        .foregroundStyle(Theme.ink)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.white, in: .capsule)
+                        .overlay(Capsule().stroke(Theme.rule, lineWidth: 0.5))
+                        .rotationEffect(.degrees(8))
+                        .offset(x: 6, y: -6)
+                }
+        }
+        .frame(width: 140, height: 160, alignment: .topTrailing)
     }
 
     @ViewBuilder

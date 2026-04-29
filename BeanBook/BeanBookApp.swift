@@ -36,31 +36,34 @@ struct BeanBookApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootTabView()
-                .environment(catalog)
-                .environment(notifications)
-                .environment(pro)
-                .environment(location)
-                .environment(bagStore)
-                .environment(brewStore)
-                .environment(brewPresetStore)
-                .tint(Theme.accent)
-                .dynamicTypeSize(...DynamicTypeSize.accessibility2)
-                .task {
-                    if let id = PaletteID(rawValue: paletteIDRaw) {
-                        themeStore.palette = Palette.with(id: id)
-                    }
-                    await pro.start()
-                }
-                .onChange(of: paletteIDRaw) { _, newRaw in
-                    if let id = PaletteID(rawValue: newRaw) {
-                        themeStore.palette = Palette.with(id: id)
-                    }
-                }
-                .fullScreenCover(isPresented: .constant(!hasOnboarded)) {
+            Group {
+                if hasOnboarded {
+                    RootTabView()
+                } else {
                     OnboardingView { hasOnboarded = true }
-                        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
                 }
+            }
+            .environment(catalog)
+            .environment(notifications)
+            .environment(pro)
+            .environment(location)
+            .environment(bagStore)
+            .environment(brewStore)
+            .environment(brewPresetStore)
+            .tint(Theme.accent)
+            .preferredColorScheme(.light)
+            .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+            .task {
+                if let id = PaletteID(rawValue: paletteIDRaw) {
+                    themeStore.palette = Palette.with(id: id)
+                }
+                await pro.start()
+            }
+            .onChange(of: paletteIDRaw) { _, newRaw in
+                if let id = PaletteID(rawValue: newRaw) {
+                    themeStore.palette = Palette.with(id: id)
+                }
+            }
         }
         .modelContainer(container)
     }

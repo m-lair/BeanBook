@@ -1,25 +1,32 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code (claude.ai/code) when working in this repository.
 
 ## Project
 
-BeanBook — iOS app for tracking coffee bags and brews. SwiftUI + SwiftData on the client, Firebase Cloud Functions (TypeScript) on the backend.
+**BeanBook** — iOS app for tracking coffee bags and shots. SwiftUI + SwiftData on the client, Firebase Cloud Functions (TypeScript) on the backend.
 
-## Build & Run
+Read these before making non-trivial changes:
+
+- [`docs/branding.md`](docs/branding.md) — **read before writing or changing copy.** Voice, tone, naming, and Pro positioning are load-bearing brand decisions.
+- [`docs/design.md`](docs/design.md) — design tokens, type, spacing, components. Read before adding UI.
+- [`docs/architecture.md`](docs/architecture.md) — current architecture in detail.
+
+## Build & run
+
+Default simulator is **iPhone 16 Pro / iOS 26.0** (per workspace convention).
 
 ```bash
-# Build for simulator (default to iPhone 16 Pro per workspace convention)
 xcodebuild -project BeanBook.xcodeproj -scheme BeanBook \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=26.0' build
 
-# Tests (BeanBookTests uses Swift Testing; BeanBookUITests uses XCTest)
+# Tests (BeanBookTests = Swift Testing; BeanBookUITests = XCTest)
 xcodebuild test -project BeanBook.xcodeproj -scheme BeanBook \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=26.0'
 
-# Single test (Swift Testing)
+# Single Swift Testing test
 xcodebuild test -project BeanBook.xcodeproj -scheme BeanBook \
-  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=26.0' \
   -only-testing:BeanBookTests/<SuiteName>/<testName>
 ```
 
@@ -27,42 +34,56 @@ Cloud Functions (`functions/`, Node 18, TypeScript):
 
 ```bash
 cd functions
-npm run build         # tsc → lib/
-npm run serve         # build + firebase emulators:start --only functions
-npm run deploy        # firebase deploy --only functions
+npm run build      # tsc → lib/
+npm run serve      # build + firebase emulators:start --only functions
+npm run deploy
 npm run logs
 ```
 
 `functions/config/serviceAccountKey.json` is required at runtime and must not be committed.
 
-## Architecture
+## Architecture (summary)
 
-### iOS client — SwiftData is the source of truth
+Full detail in [`docs/architecture.md`](docs/architecture.md). The shape:
 
-`BeanBookApp.swift` constructs a single `ModelContainer` with the schema `[Bag, Brew, BrewPreset]` and injects it via `.modelContainer(...)`. There is **no Firebase SDK in the iOS target** today — the Cloud Functions code (Firestore triggers, FCM) is not yet wired to the client. Don't assume reads/writes propagate to Firestore.
+- **SwiftData is the source of truth.** `BeanBookApp.swift` builds one `ModelContainer` (`[Bag, Brew, BrewPreset]`) and injects it. The iOS target has no Firebase SDK today — Cloud Functions exist but aren't wired to the client.
+- **Stores are `@MainActor @Observable` wrappers** over `ModelContext`, injected via `.environment(...)`. No singletons. Stores enforce Pro quotas at `create(...)` and throw `QuotaExceededError`.
+- **Theme.** All color goes through `Theme.*`, which resolves through `themeStore.palette`. Three palettes: `forest` (free, default), `ocean` (Pro), `mocha` (Pro). Light mode only — locked at root via `.preferredColorScheme(.light)`.
+- **Three-tab `TabView`** (Brews, Bags, Shop) — center "+" presents `NewBrewSheet` rather than navigating.
 
-Layering (`BeanBook/`):
+### Brew log flow (recent rework)
 
-- `App/RootTabView.swift` — three-tab `TabView` (Brews, Bags, Shop) using iOS 18 `Tab` API, each wrapped in its own `NavigationStack`.
-- `Core/Models/` — `@Model` types: `Bag`, `Brew` (with `bag: Bag?` back-reference; `Bag.brews` declares the inverse via `@Relationship(deleteRule: .nullify, inverse: \Brew.bag)`), plus enums `BrewMethod`, `RoastLevel`, `ProcessMethod`, and `BrewPreset`. `CatalogBean` is a non-`@Model` Codable type used only for the bundled catalog.
-- `Core/Stores/` — `@MainActor @Observable` thin wrappers over `ModelContext` (`BagStore`, `BrewStore`). Stores are constructed from a `ModelContext` rather than injected as singletons.
-- `Core/Services/CatalogService.swift` — `@Observable` service that loads `Resources/beans_catalog.json` at init. Injected app-wide via `.environment(catalog)`. The Shop tab browses this static catalog and imports entries into SwiftData via `BagStore.import(from:)`.
-- `Features/{Bags,Brews,Settings,Shop}/` — feature views and sheets. `Features/Brews/Components/` holds composable brew-entry inputs (`MethodPicker`, `MethodParametersSection`, `TimerInputField`).
-- `Shared/Theme.swift` — single source for color palette, spacing, radius, shadow, and gradients. New UI should pull from `Theme.*` rather than hardcoding values. App is locked to `.preferredColorScheme(.light)` and `.tint(Theme.primary)` at the root.
-- `Shared/SharedViews/` — reusable UI primitives (`GlassCard`, `GradientButtonStyle`, `LabeledField`, `SectionHeader`, `StarRating`, `TastingNotesEditor`).
-- `Managers/NotificationManager.swift` — local notification handling.
+`NewBrewSheet` is a 3-step flow: **Context** (method + bag) → **Shot** (dose, yield, time, grind) → **Outcome** (rating, notes, save-as-recipe).
 
-### Backend — Cloud Functions (`functions/src/index.ts`)
-
-Single deployed function: `notifyBrewOwnerOnFavorite`, an `onDocumentUpdated` Firestore trigger on `coffeeBrews/{brewId}` that diffs `saveCount` and sends an FCM push to the brew creator's `fcmToken` from their `users/{uid}` doc. The collection names (`coffeeBrews`, `users`) and the `fcmToken` field are the contract for any future iOS sync work.
+- Cold start lands on Context. Hot start (`prefill: Brew?`) lands on Shot with values prefilled.
+- Hot-start surfaces: `RecentShotsStrip` on the Brews tab, `.contextMenu` on each brew row, `BrewDetailView`'s "Brew this again," and `RecipesView` preset-launch — all converge on the same `prefill:` parameter.
+- `prefillSnapshot` captures the prefill values; per-field `DeltaCaption` ("was 18 g") renders under any field that diverges.
+- Bag pinning: `Bag.isPinned` + `BagStore.pin(_:)` (single-pin invariant). Pinned bag wins over recency; a "Recent: [bag]" swap chip surfaces if pin and most-recent diverge.
 
 ## Conventions
 
-- Swift 6, strict concurrency. Stores/services are `@MainActor @Observable`.
-- iOS 18+ APIs: `Tab` initializer in `TabView`, `NavigationStack`, `.task()` over `.onAppear`.
-- `@Environment` injection (e.g. `CatalogService`) — no singletons.
-- SwiftData models give every stored property a default value (required for CloudKit-compatible schemas and lightweight migration); preserve that pattern when adding fields.
-- Swift Testing for unit tests (`BeanBookTests`), XCTest only for UI tests (`BeanBookUITests`).
+- **Swift 6**, strict concurrency. Stores/services are `@MainActor @Observable`.
+- **iOS 18+ APIs**: `Tab` initializer in `TabView`, `NavigationStack` with `NavigationLink(value:)`, `.task()` over `.onAppear`.
+- **`@Environment` injection** for shared state — never singletons.
+- **SwiftData defaults.** Every stored property gets a default value (CloudKit-compatible schemas + lightweight migration). Preserve this when adding fields.
+- **Light mode only.** Don't introduce dark-mode color variants. Theme tokens are intentionally light-only — see `branding.md`.
+- **Theme tokens, not hex literals.** If a value isn't in the palette, the design needs review, not a hardcoded color.
+- **Swift Testing** for unit tests (`BeanBookTests`); **XCTest** only for UI tests (`BeanBookUITests`).
+
+### List rows
+
+Both `BrewListView` and `BagListView` use `ScrollView` + `VStack` for editorial styling, **not `List`**. As a result `.swipeActions` is a no-op there — use `.contextMenu` for row-level actions instead. If you need actual swipe, that's a per-screen list-conversion conversation, not a one-line modifier.
+
+## Pro positioning
+
+The app's commercial model is a **one-time purchase**. This message must lead wherever Pro is mentioned:
+
+- "One-time purchase," "Pay once," "Yours forever."
+- Always pair price with "once" — `Unlock Pro · $X once`, not `Unlock for $X`.
+- Mention Family Sharing.
+- Future Pro features are included with the existing one-time purchase. There is no "premium plus" tier and there will not be.
+
+Don't add Pro mentions to onboarding — `branding.md` explains why.
 
 ## Sensitive files — do not commit
 

@@ -79,15 +79,16 @@ struct SettingsView: View {
                         .font(.system(size: 15))
                         .foregroundStyle(Theme.accent)
                         .frame(width: 22)
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 3) {
                         Text(pro.isPro ? "Pro unlocked" : "BeanBook Pro")
                             .font(Theme.body(15, weight: .semibold))
                             .foregroundStyle(Theme.ink)
                         Text(pro.isPro
                              ? "Thanks for supporting BeanBook."
-                             : "Unlimited bags, brews, recipes & full catalog.")
+                             : "One-time purchase · Unlimited everything · Future features included")
                             .font(Theme.body(12))
                             .foregroundStyle(Theme.ink2)
+                            .lineLimit(2)
                     }
                     Spacer()
                     Image(systemName: "chevron.right")

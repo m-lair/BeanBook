@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  BeanBook app mark — forest-green disc with a paper-cream serif "B"
+  bisected by a saucer rule. Designed to read at 1024×1024 (App Store icon)
+  down to 48×48 (favicon). All metrics are unitless; scale to whatever box.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="BeanBook logo">
+  <defs>
+    <!-- Soft inner highlight so the disc reads as paper-tinted, not flat -->
+    <radialGradient id="discFill" cx="36%" cy="32%" r="78%">
+      <stop offset="0%" stop-color="#345530"/>
+      <stop offset="100%" stop-color="#2D4A2B"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Disc -->
+  <circle cx="512" cy="512" r="464" fill="url(#discFill)"/>
+
+  <!-- Hairline rim (paper feel) -->
+  <circle cx="512" cy="512" r="464" fill="none" stroke="#FAFAF7" stroke-opacity="0.10" stroke-width="2"/>
+
+  <!-- Saucer rule (the bisecting hairline) -->
+  <line x1="148" y1="624" x2="876" y2="624"
+        stroke="#FAFAF7" stroke-opacity="0.42" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Wordmark "B" — serif, paper-cream, optically centered above the rule -->
+  <text x="512" y="582"
+        text-anchor="middle"
+        dominant-baseline="alphabetic"
+        font-family="'New York', 'Iowan Old Style', 'Charter', 'Georgia', serif"
+        font-weight="500"
+        font-size="640"
+        letter-spacing="-24"
+        fill="#FAFAF7">B</text>
+
+  <!-- Saucer dot (steam/bean accent under the rule, far right) -->
+  <circle cx="676" cy="688" r="14" fill="#FAFAF7" fill-opacity="0.55"/>
+</svg>
