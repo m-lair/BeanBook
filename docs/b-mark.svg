@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  BeanBook B mark — standalone serif "B" for use in Icon Composer or any
+  vector editor. Transparent background. Forest green fill (#2D4A2B).
+
+  The "B" is rendered as <text> using the macOS system serif stack
+  (New York → Iowan Old Style → Charter → Georgia). Convert text to
+  outlines in your tool of choice if you want to bake the glyph.
+
+  ViewBox is 1024×1024 with the glyph optically centered. Adjust the
+  font-size or letter-spacing if your composition needs a different feel.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="BeanBook B mark">
+  <text x="512" y="752"
+        text-anchor="middle"
+        dominant-baseline="alphabetic"
+        font-family="'New York', 'Iowan Old Style', 'Charter', 'Georgia', serif"
+        font-weight="500"
+        font-size="880"
+        letter-spacing="-32"
+        fill="#2D4A2B">B</text>
+</svg>

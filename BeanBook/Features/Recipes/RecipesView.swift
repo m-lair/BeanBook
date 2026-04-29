@@ -83,7 +83,7 @@ struct RecipesView: View {
         }
         .padding(.horizontal, 32)
         .padding(.top, 80)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 

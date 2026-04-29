@@ -143,7 +143,7 @@ struct BagListView: View {
         }
         .padding(.horizontal, 32)
         .padding(.top, 60)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 
