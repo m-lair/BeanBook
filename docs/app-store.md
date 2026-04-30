@@ -163,7 +163,7 @@ WHERE TO FIND THE PAYWALL
 3. The paywall is also reachable from Settings → "Unlock BeanBook Pro," which opens the same sheet on demand.
 
 HOW TO TEST THE PURCHASE
-- The product ID is com.beanbook.pro.lifetime (non-consumable, $9.99 USD, Family Sharing on).
+- The product ID is BeanBook.Pro (non-consumable, $9.99 USD, Family Sharing on).
 - Use a sandbox tester account. Tap "Unlock Pro · $9.99 once" on the paywall to trigger the StoreKit purchase flow.
 - After a successful purchase the paywall dismisses and Pro features become available immediately.
 

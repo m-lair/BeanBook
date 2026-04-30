@@ -21,7 +21,7 @@ protocol ProEntitlementProviding: AnyObject {
 @MainActor
 @Observable
 final class ProEntitlement: ProEntitlementProviding {
-    static let productID = "com.beanbook.pro.lifetime"
+    static let productID = "BeanBook.Pro"
     private static let cacheKey = "pro.isProCached"
 
     enum PurchaseState: Equatable {

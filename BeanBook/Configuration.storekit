@@ -13,8 +13,8 @@
           "locale" : "en_US"
         }
       ],
-      "productID" : "com.beanbook.pro.lifetime",
-      "referenceName" : "BeanBook Pro Lifetime",
+      "productID" : "BeanBook.Pro",
+      "referenceName" : "Pro",
       "type" : "NonConsumable"
     }
   ],
