@@ -47,7 +47,6 @@ struct BagListView: View {
         }
         .sheet(isPresented: $showAddSheet) {
             NewBagSheet()
-                .navigationTransition(.zoom(sourceID: "addBag", in: addSheetNamespace))
         }
         .sheet(isPresented: $showDiscover) {
             NavigationStack { ShopView() }

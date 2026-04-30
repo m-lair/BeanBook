@@ -22,6 +22,7 @@ struct NewBagSheet: View {
     @State private var notes = ""
     @State private var imageData: Data?
     @State private var photoItem: PhotosPickerItem?
+    @State private var showCamera = false
 
     @State private var didHydrate = false
     @State private var isDirty = false
@@ -40,7 +41,8 @@ struct NewBagSheet: View {
                         name: $name,
                         origin: $origin,
                         imageData: $imageData,
-                        photoItem: $photoItem
+                        photoItem: $photoItem,
+                        showCamera: $showCamera
                     )
                     CharacteristicsSection(
                         roastLevel: $roastLevel,
@@ -98,6 +100,10 @@ struct NewBagSheet: View {
                 NavigationStack {
                     PaywallSheet(headline: "You've reached the free limit of \(ProQuota.bags) bags. Unlock Pro for unlimited.")
                 }
+            }
+            .fullScreenCover(isPresented: $showCamera) {
+                CameraPicker(imageData: $imageData)
+                    .ignoresSafeArea()
             }
         }
     }
@@ -194,6 +200,7 @@ private struct IdentitySection: View {
     @Binding var origin: String
     @Binding var imageData: Data?
     @Binding var photoItem: PhotosPickerItem?
+    @Binding var showCamera: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -210,7 +217,11 @@ private struct IdentitySection: View {
                 .lineSpacing(2)
 
             HStack(alignment: .top, spacing: 18) {
-                BagPhotoTile(imageData: $imageData, photoItem: $photoItem)
+                BagPhotoTile(
+                    imageData: $imageData,
+                    photoItem: $photoItem,
+                    showCamera: $showCamera
+                )
                 VStack(alignment: .leading, spacing: 14) {
                     EditorialField(label: "Roaster", placeholder: "Onyx Coffee Lab", text: $brand, serif: false)
                     EditorialField(label: "Bean", placeholder: "Geometry", text: $name, serif: true)
@@ -230,14 +241,24 @@ private struct IdentitySection: View {
 private struct BagPhotoTile: View {
     @Binding var imageData: Data?
     @Binding var photoItem: PhotosPickerItem?
-
-    @State private var showSourceDialog = false
-    @State private var showLibraryPicker = false
-    @State private var showCamera = false
+    @Binding var showCamera: Bool
+    @State private var showLibrary = false
 
     var body: some View {
-        Button {
-            showSourceDialog = true
+        Menu {
+            if CameraPicker.isAvailable {
+                Button("Take Photo", systemImage: "camera") {
+                    showCamera = true
+                }
+            }
+            Button("Choose from Library", systemImage: "photo.on.rectangle") {
+                showLibrary = true
+            }
+            if imageData != nil {
+                Button("Remove Photo", systemImage: "trash", role: .destructive) {
+                    imageData = nil
+                }
+            }
         } label: {
             ZStack {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -262,23 +283,10 @@ private struct BagPhotoTile: View {
             .clipShape(.rect(cornerRadius: 18, style: .continuous))
             .contentShape(.rect(cornerRadius: 18, style: .continuous))
         }
+        .menuStyle(.button)
         .buttonStyle(.plain)
+        .photosPicker(isPresented: $showLibrary, selection: $photoItem, matching: .images)
         .accessibilityLabel(imageData == nil ? "Add bag photo" : "Replace bag photo")
-        .confirmationDialog("Bag photo", isPresented: $showSourceDialog, titleVisibility: .hidden) {
-            if CameraPicker.isAvailable {
-                Button("Take Photo") { showCamera = true }
-            }
-            Button("Choose from Library") { showLibraryPicker = true }
-            if imageData != nil {
-                Button("Remove Photo", role: .destructive) { imageData = nil }
-            }
-            Button("Cancel", role: .cancel) {}
-        }
-        .photosPicker(isPresented: $showLibraryPicker, selection: $photoItem, matching: .images)
-        .fullScreenCover(isPresented: $showCamera) {
-            CameraPicker(imageData: $imageData)
-                .ignoresSafeArea()
-        }
     }
 }
 
