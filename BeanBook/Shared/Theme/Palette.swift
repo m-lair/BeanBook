@@ -246,7 +246,7 @@ extension Palette {
         name: "Noir",
         isPro: true,
         background: Color(hex: "F4F2EE"),
-        card: Color(hex: "FFFFFF"),
+        card: Color.white,
         ink: Color(hex: "0A0A0A"),
         ink2: Color(hex: "4E4E4C"),
         ink3: Color(hex: "8F8E8B"),
@@ -295,6 +295,9 @@ extension Palette {
         success: Color(hex: "7A5A48")
     )
 
+    /// Display order for the picker. Grouped by hue family rather than by
+    /// the `PaletteID` declaration order — `mocha` and `ocean` are original
+    /// Pro palettes that flow into the warm and cool groups respectively.
     static let all: [Palette] = [
         // Free
         .forest,
