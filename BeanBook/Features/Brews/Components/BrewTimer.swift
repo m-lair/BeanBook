@@ -40,13 +40,10 @@ struct BrewTimer: View {
                 let elapsed = currentElapsed(at: context.date)
                 let remaining = max(0, target - elapsed)
                 let displayed = countsDown ? remaining : min(elapsed, target)
-                Text(format(displayed, isCountdown: countsDown))
-                    .font(.system(size: 84, weight: .ultraLight, design: .serif))
-                    .monospacedDigit()
-                    .tracking(-2)
-                    .foregroundStyle(displayColor)
-                    .contentTransition(.numericText())
-                    .animation(.snappy(duration: 0.3), value: phase)
+                TimerReadout(
+                    text: format(displayed, isCountdown: countsDown),
+                    color: displayColor
+                )
                     .padding(.top, 18)
                     .contentShape(.rect)
                     .onTapGesture {
@@ -372,6 +369,24 @@ private struct TimeEditSheet: View {
                 }
             }
         }
+    }
+}
+
+private struct TimerReadout: View {
+    let text: String
+    let color: Color
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 84, weight: .ultraLight, design: .serif))
+            .monospacedDigit()
+            .tracking(-2)
+            .foregroundStyle(color)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
+            .transaction { transaction in
+                transaction.animation = nil
+            }
     }
 }
 

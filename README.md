@@ -23,7 +23,7 @@ A one-time purchase. No subscription, ever.
 
 ## Stack
 
-- **iOS client** — Swift 6, SwiftUI, SwiftData. iOS 18+. Light mode only.
+- **iOS client** — Swift 6, SwiftUI, SwiftData. iOS 18+. Manual themes, including one dark palette.
 - **Backend** — Firebase Cloud Functions (TypeScript / Node 18) under `functions/`. Currently a single FCM trigger; not yet wired to the iOS client.
 
 ## Build

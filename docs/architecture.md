@@ -55,7 +55,7 @@ Pro quotas are enforced at the store level — `create(...)` throws `QuotaExceed
 
 - Constructs `ModelContainer`, `ProEntitlement`, all stores.
 - Injects everything via `.environment(...)`.
-- Locks `.preferredColorScheme(.light)` at root — see `branding.md`.
+- Locks `.preferredColorScheme(.light)` at root so the app does not follow system dark mode. The manual `Midnight` palette is the only dark appearance.
 - Branches on `hasOnboarded`: shows `OnboardingView` or `RootTabView`. Same environment chain applies to both branches.
 
 ### Root navigation (`App/RootTabView.swift`)
@@ -132,7 +132,7 @@ The Pro row leads with **"One-time purchase · Unlimited everything · Future fe
 ## Theme (`Shared/Theme/`)
 
 - `Theme.swift` — color/spacing/type accessors. All resolve through `themeStore.palette`.
-- `Theme/Palette.swift` — curated, distinct light-mode palettes. `forest` is free; all other palettes are Pro.
+- `Theme/Palette.swift` — curated, distinct manual palettes. `forest` is free; all other palettes are Pro. `midnight` is the only dark palette.
 - `themeStore` — process-wide `@Observable` source of truth. Mutating `palette` invalidates dependent views via Observation.
 
 See `design.md` for tokens and patterns.

@@ -11,7 +11,7 @@ Agent velocity is useful only if the repo stays legible. This file records the i
 | Functions build | TypeScript compiles without generated output drift. | `./scripts/agent-verify.sh functions` |
 | Catalog data | Bundled bean catalog has unique IDs, valid enum values, required fields, and valid URLs. | `./scripts/agent-verify.sh catalog`; also covered by preflight. |
 | Repo preflight | Agent-facing docs, sensitive-file rules, and core design guardrails are present. | `./scripts/agent-preflight.sh` |
-| Design consistency | UI uses `Theme.*`, shared components, and light-mode-only assumptions. | `./scripts/agent-preflight.sh` blocks hardcoded `Color(hex:)` outside approved theme/shared semantic files; deeper review remains manual. |
+| Design consistency | UI uses `Theme.*`, shared components, and manual theme assumptions. | `./scripts/agent-preflight.sh` blocks hardcoded `Color(hex:)` outside approved theme/shared semantic files; deeper review remains manual. |
 | Brand consistency | Product copy is restrained and Pro is one-time-purchase first. | Documented in `docs/branding.md`; manual review. |
 
 ## Verification ladder
@@ -37,7 +37,7 @@ If verification cannot run, report the exact blocker and the command that failed
 - The iOS target does not silently depend on Firebase SDKs.
 - Pro quotas are enforced at the store boundary.
 - Theme access goes through `Theme.*`; no new hex literals in feature views.
-- Light mode remains locked at the app root.
+- System color scheme remains locked at the app root; dark appearance is only available through the manual `Midnight` palette.
 - `BrewListView` and `BagListView` use `ScrollView` + `VStack`; row actions use context menus unless the screen is intentionally converted to `List`.
 
 ## Known harness gaps

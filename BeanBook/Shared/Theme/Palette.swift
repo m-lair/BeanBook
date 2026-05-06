@@ -4,7 +4,8 @@ import SwiftUI
 /// `themeStore.palette` so that mutating the store invalidates dependent
 /// views via the Observation framework.
 ///
-/// Palettes are intentionally light-mode only. Dark mode is out of scope.
+/// Palettes are manually selected appearances. The app does not follow the
+/// system color scheme; `midnight` is the single intentional dark option.
 struct Palette: Equatable, Sendable {
     let id: PaletteID
     let name: String
@@ -47,6 +48,7 @@ enum PaletteID: String, CaseIterable, Identifiable, Sendable {
 
     // Pro — new (darks)
     case graphite
+    case midnight
 
     // Pro — new (botanicals)
     case sage
@@ -209,6 +211,24 @@ extension Palette {
         success: Color(hex: "4A6A4A")
     )
 
+    static let midnight = Palette(
+        id: .midnight,
+        name: "Midnight",
+        isPro: true,
+        background: Color(hex: "111312"),
+        card: Color(hex: "1B1F1D"),
+        ink: Color(hex: "F5F1E8"),
+        ink2: Color(hex: "C7C0B3"),
+        ink3: Color(hex: "8F887C"),
+        ink4: Color(hex: "565146"),
+        rule: Color(hex: "2D322E"),
+        accent: Color(hex: "B8C7A5"),
+        accentSoft: Color(hex: "273124"),
+        accentGlow: Color(hex: "B8C7A5").opacity(0.22),
+        error: Color(hex: "E06A78"),
+        success: Color(hex: "B7C983")
+    )
+
     static let sage = Palette(
         id: .sage,
         name: "Sage",
@@ -256,7 +276,7 @@ extension Palette {
         // Cools
         .ocean,
         // Darks
-        .graphite,
+        .graphite, .midnight,
         // Botanicals
         .sage, .plum,
     ]
@@ -271,6 +291,7 @@ extension Palette {
         case .cascara:  .cascara
         case .espresso: .espresso
         case .graphite: .graphite
+        case .midnight: .midnight
         case .sage:     .sage
         case .plum:     .plum
         }

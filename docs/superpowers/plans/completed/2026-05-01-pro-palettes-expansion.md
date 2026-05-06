@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> Superseded note: this is historical implementation context. The shipped palette set was later consolidated for distinctness, and `Midnight` became the single intentional dark palette. Current theme rules live in `docs/design.md` and `BeanBook/Shared/Theme/Palette.swift`.
+
 **Goal:** Add 10 new Pro-gated color palettes to BeanBook, taking the catalog from 3 → 13.
 
 **Architecture:** Data-only change to one file (`BeanBook/Shared/Theme/Palette.swift`). Each palette is a `Palette` struct literal + a `PaletteID` enum case + a switch arm in `Palette.with(id:)` + an entry in `Palette.all`. `Theme.*` accessors already resolve through `themeStore.palette`, so no feature views change. Pro gating is data (`isPro: true`); existing `PalettePickerSheet` enforces the gate.

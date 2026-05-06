@@ -65,7 +65,7 @@ Full detail in [`docs/architecture.md`](docs/architecture.md). The shape:
 
 - **SwiftData is the source of truth.** `BeanBookApp.swift` builds one `ModelContainer` (`[Bag, Brew, BrewPreset]`) and injects it. The iOS target has no Firebase SDK today — Cloud Functions exist but aren't wired to the client.
 - **Stores are `@MainActor @Observable` wrappers** over `ModelContext`, injected via `.environment(...)`. No singletons. Stores enforce Pro quotas at `create(...)` and throw `QuotaExceededError`.
-- **Theme.** All color goes through `Theme.*`, which resolves through `themeStore.palette`. The palette set is curated for distinct light-mode themes; `forest` is free/default and the rest are Pro. Light mode only — locked at root via `.preferredColorScheme(.light)`.
+- **Theme.** All color goes through `Theme.*`, which resolves through `themeStore.palette`. The palette set is curated for distinct manual themes; `forest` is free/default and the rest are Pro. The app does not follow system dark mode — `.preferredColorScheme(.light)` stays locked — but `midnight` is the single intentional dark palette.
 - **Three-tab `TabView`** (Brews, Bags, Shop) — center "+" presents `NewBrewSheet` rather than navigating.
 
 ### Brew log flow (recent rework)
@@ -83,7 +83,7 @@ Full detail in [`docs/architecture.md`](docs/architecture.md). The shape:
 - **iOS 18+ APIs**: `Tab` initializer in `TabView`, `NavigationStack` with `NavigationLink(value:)`, `.task()` over `.onAppear`.
 - **`@Environment` injection** for shared state — never singletons.
 - **SwiftData defaults.** Every stored property gets a default value (CloudKit-compatible schemas + lightweight migration). Preserve this when adding fields.
-- **Light mode only.** Don't introduce dark-mode color variants. Theme tokens are intentionally light-only — see `branding.md`.
+- **Manual theme only.** Don't add system dark-mode variants. `midnight` is the one intentional dark palette, while the app remains locked to `.preferredColorScheme(.light)` — see `branding.md`.
 - **Theme tokens, not hex literals.** If a value isn't in the palette, the design needs review, not a hardcoded color.
 - **Swift Testing** for unit tests (`BeanBookTests`); **XCTest** only for UI tests (`BeanBookUITests`).
 - Treat repo docs as the system of record. If a task changes architecture, brand rules, design patterns, commands, or recurring workflow, update the relevant doc in the same change.

@@ -3,13 +3,15 @@
 **Date:** 2026-05-01
 **Scope:** Add 10 new Pro-gated color palettes to BeanBook.
 
+> Superseded note: the final shipped palette set was later consolidated for distinctness, and `Midnight` became the single intentional dark palette. Current theme rules live in `docs/design.md` and `BeanBook/Shared/Theme/Palette.swift`.
+
 ## Goal
 
 Expand the palette catalog from 3 (Forest free, Ocean Pro, Mocha Pro) to 13 (Forest free + 12 Pro). Give Pro users meaningful aesthetic variety while keeping the editorial light-mode brand intact.
 
 ## Non-goals
 
-- No dark mode. Light-mode-only is a load-bearing brand decision.
+- Originally avoided dark palettes; this was superseded by the later `Midnight` manual palette.
 - No changes to feature views — `Theme.*` accessors already resolve through `themeStore.palette`.
 - No changes to `PalettePickerSheet` layout. Single-column vertical scroll handles 13 entries fine.
 - No new tokens on the `Palette` struct. Existing token shape is sufficient.
@@ -17,7 +19,7 @@ Expand the palette catalog from 3 (Forest free, Ocean Pro, Mocha Pro) to 13 (For
 
 ## The 10 new palettes
 
-All `isPro: true`. All light-mode. Names are short, single-word, editorial.
+All `isPro: true`. Names are short, single-word, editorial.
 
 | # | ID | Name | Vibe |
 |---|----|----|------|
