@@ -12,6 +12,7 @@ iOS app for tracking coffee bags and shots — built for the home espresso enthu
 - **Track your beans.** Origin, roast date, tasting notes, process. Linked to every shot.
 - **Brew it again.** Tap a recent shot to log it again with the same dose, yield, time, and grind.
 - **Dial in a new bag.** All four shot variables on one screen with "was 18 g" hints under any field that diverged from your last brew.
+- **See what is working.** BeanBook Pro adds local stats for overview, by-bag patterns, and dial-in history.
 
 ## Pro
 
@@ -95,7 +96,7 @@ Enable Pages: GitHub repo → Settings → Pages → **Source: Deploy from a bra
 BeanBook/                 iOS target
 ├── App/                  RootTabView, app entry
 ├── Core/                 Models, Stores, Services
-├── Features/             Brews, Bags, Shop, Onboarding, Recipes, Settings
+├── Features/             Brews, Bags, Stats, Shop, Onboarding, Recipes, Settings
 ├── Pro/                  ProEntitlement, PaywallSheet
 └── Shared/               Theme, palettes, primitives, extensions
 

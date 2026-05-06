@@ -1,6 +1,6 @@
 # BeanBook — Architecture
 
-What lives where, and why. Reflects the app's current state (3-step brew log, prefill snapshot, bag pinning, recent-shots strip).
+What lives where, and why. Reflects the app's current state (3-step brew log, prefill snapshot, bag pinning, recent-shots strip, Pro stats).
 
 ## Targets
 
@@ -60,7 +60,7 @@ Pro quotas are enforced at the store level — `create(...)` throws `QuotaExceed
 
 ### Root navigation (`App/RootTabView.swift`)
 
-Three-tab `TabView` using iOS 18's `Tab` initializer: **Brews**, **Bags**, **Shop**. Each tab wraps in its own `NavigationStack` with `.navigationDestination(for:)` for `Brew` and `Bag`. The center "+" tab triggers `NewBrewSheet` rather than navigating.
+Top-level `TabView` using iOS 18's `Tab` initializer: **Today**, **Beans**, **Stats**, and **Shop**. Each content tab wraps in its own `NavigationStack`. The center "+" tab triggers `NewBrewSheet` rather than navigating.
 
 ## Feature layer
 
@@ -72,7 +72,7 @@ The dominant feature. Recent rework collapsed a 5-step wizard into 3 steps with 
 
 | File | Role |
 |---|---|
-| `BrewListView.swift` | The Brews tab. Renders the `RecentShotsStrip` above the list and a `.contextMenu` "Brew again" on each row. Hot-start uses `.sheet(item: $hotStartBrew)`. |
+| `BrewListView.swift` | The all-brews destination. Renders the `RecentShotsStrip`, a `Saved recipes` entry when presets exist, and a `.contextMenu` "Brew again" on each row. Hot-start uses `.sheet(item: $hotStartBrew)`. |
 | `BrewDetailView.swift` | Single-brew detail; "Brew this again" enters `NewBrewSheet(prefill:)`. |
 | `NewBrewSheet.swift` | The 3-step flow: **Context** (method + bag) → **Shot** (dose, yield, time, grind, all visible) → **Outcome** (rating, notes, save-as-recipe). |
 | `Components/MethodPicker.swift` | Method chip row used in step 0. |
@@ -99,11 +99,20 @@ The dominant feature. Recent rework collapsed a 5-step wizard into 3 steps with 
 |---|---|
 | `ShopView.swift` | Browses `CatalogService.beans`. Featured card at top (forest-on-sage editorial card with a layered tilted swatch), "Near you" section if location is granted, then filtered list. `.accentPill` "Add to beans" imports a catalog entry into SwiftData via `BagStore`. |
 
+### Stats (`Features/Stats/`)
+
+Stats are a BeanBook Pro feature, but the tab is visible to everyone. Non-Pro users see a locked state that leads with one-time-purchase positioning and routes to `PaywallSheet`.
+
+| File | Role |
+|---|---|
+| `StatsView.swift` | The Stats tab. Renders locked, empty, sparse, and populated states from local SwiftData data. Presents `NewBrewSheet` from the empty state and `PaywallSheet` from the locked state. |
+| `StatsSummary.swift` | Pure aggregation builder over `[Brew]`, `[Bag]`, and `[BrewPreset]`. Derives 30-day totals, active bags, favorite method, average rating, daily brew counts, working brews, by-bag summaries, and dial-in rows. |
+
 ### Recipes (`Features/Recipes/`)
 
 | File | Role |
 |---|---|
-| `RecipesView.swift` | Lists `BrewPreset`s. Tapping a preset constructs a temp `Brew` and presents `NewBrewSheet(prefill:)`. Inherits the hot-start "skip to Step 2" behavior for free. |
+| `RecipesView.swift` | Lists `BrewPreset`s. Tapping a preset constructs a temp `Brew` and presents `NewBrewSheet(prefill:)`. Recipes are no longer a top-level tab; they are surfaced from Brews because they primarily support repeating what worked. |
 
 ### Onboarding (`Features/Onboarding/`)
 
@@ -128,6 +137,8 @@ The Pro row leads with **"One-time purchase · Unlimited everything · Future fe
 | `PaywallSheet.swift` | The full paywall. One-time-purchase positioning is non-negotiable (hero "One purchase. / Yours forever.", value-prop chip strip, CTA reads "Unlock Pro · $X once"). |
 
 `ProQuota` defines the free-tier ceilings (`bags`, `brews`, `recipes`). Stores enforce. Views surface `PaywallSheet` on `QuotaExceededError`.
+
+Stats are Pro-only but read from existing local data. They do not change the free core logging flow and do not introduce sync or backend dependencies.
 
 ## Theme (`Shared/Theme/`)
 
