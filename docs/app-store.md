@@ -80,7 +80,7 @@ The free tier is real and generous. Pro lifts the quotas and unlocks themes; it 
 
 Not a social app. Not a streak app. Not a scoring algorithm. Not a subscription. Not a journal-blog hybrid with rich text and tags. We say no to those on purpose.
 
-Light mode only — the paper-like, editorial feel is half the point.
+Manual themes only. BeanBook keeps its editorial feel and includes one intentional dark palette.
 ```
 
 (~1,750 chars) ✓ well under 4,000

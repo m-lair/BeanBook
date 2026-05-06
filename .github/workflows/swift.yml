@@ -1,7 +1,4 @@
-# This workflow will build a Swift project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-swift
-
-name: Swift
+name: iOS Build
 
 on:
   push:
@@ -10,11 +7,26 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-
+  build-ios:
     runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build
-      run: swift build -v
+    - name: Build BeanBook
+      run: ./scripts/agent-verify.sh build
+
+  build-functions:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: npm
+        cache-dependency-path: functions/package-lock.json
+    - name: Install functions dependencies
+      run: npm ci
+      working-directory: functions
+    - name: Build functions
+      run: ./scripts/agent-verify.sh functions

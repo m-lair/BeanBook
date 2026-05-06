@@ -4,7 +4,7 @@ How tokens, type, and components fit together. Source of truth for color is `Bea
 
 ## Color tokens
 
-All color access goes through `Theme.*`, which resolves through `themeStore.palette`. The active palette is one of three (`forest`, `ocean`, `mocha`) — `forest` is default and free, the others are Pro.
+All color access goes through `Theme.*`, which resolves through `themeStore.palette`. The active palette is selected from a curated set of distinct manual themes. `forest` is default and free; the others are Pro. `midnight` is the single intentional dark palette; BeanBook still does not follow system dark mode.
 
 ### Surfaces
 
@@ -185,9 +185,9 @@ Or branch the `withAnimation` block. Test with **Settings → Accessibility → 
 - Combine accessibility for tightly-coupled visual groups (`.accessibilityElement(children: .combine)`) — see `RecentShotCard`.
 - VoiceOver gets a "Brew this shot again" hint on each recent-shot card.
 
-## Color scheme
+## Color Scheme
 
-The app is locked to `.preferredColorScheme(.light)` at the root in `BeanBookApp.swift`. This is intentional — see `branding.md`. If a future feature requires dark mode, that's a brand-level conversation, not a per-screen toggle.
+The app is locked to `.preferredColorScheme(.light)` at the root in `BeanBookApp.swift`. This prevents automatic system dark-mode variants. Dark appearance exists only through the curated `Midnight` palette.
 
 ## Surface defaults
 

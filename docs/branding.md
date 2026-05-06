@@ -79,7 +79,7 @@ Do **not**:
 
 See `design.md` for tokens. The brand-level rules:
 
-- **Light mode only.** Always. Dark mode is out of scope on purpose — the editorial, paper-like feel is half the brand.
+- **Manual themes only.** BeanBook does not follow system dark mode. Most palettes keep the editorial paper feel; `Midnight` is the single intentional dark palette for users who want a quieter low-light surface.
 - **Forest green is the primary accent.** Cream/off-white is the surface. Black-ink is for type.
 - **Serif headlines, system body.** No display-fancy fonts. The serif does the editorial work; the rest gets out of the way.
 - **Hairline rules over boxes.** When you need to separate things, use a 0.5pt rule, not a card border.

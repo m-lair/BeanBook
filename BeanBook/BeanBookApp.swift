@@ -54,13 +54,16 @@ struct BeanBookApp: App {
             .preferredColorScheme(.light)
             .dynamicTypeSize(...DynamicTypeSize.accessibility2)
             .task {
-                if let id = PaletteID(rawValue: paletteIDRaw) {
+                if let id = PaletteID.canonical(rawValue: paletteIDRaw) {
                     themeStore.palette = Palette.with(id: id)
+                    if id.rawValue != paletteIDRaw {
+                        paletteIDRaw = id.rawValue
+                    }
                 }
                 await pro.start()
             }
             .onChange(of: paletteIDRaw) { _, newRaw in
-                if let id = PaletteID(rawValue: newRaw) {
+                if let id = PaletteID.canonical(rawValue: newRaw) {
                     themeStore.palette = Palette.with(id: id)
                 }
             }

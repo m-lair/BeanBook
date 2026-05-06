@@ -65,7 +65,7 @@ struct SettingsView: View {
     }
 
     private var currentPaletteName: String {
-        let id = PaletteID(rawValue: paletteIDRaw) ?? .forest
+        let id = PaletteID.canonical(rawValue: paletteIDRaw) ?? .forest
         return Palette.with(id: id).name
     }
 

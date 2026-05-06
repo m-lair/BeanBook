@@ -23,7 +23,7 @@ A one-time purchase. No subscription, ever.
 
 ## Stack
 
-- **iOS client** — Swift 6, SwiftUI, SwiftData. iOS 18+. Light mode only.
+- **iOS client** — Swift 6, SwiftUI, SwiftData. iOS 18+. Manual themes, including one dark palette.
 - **Backend** — Firebase Cloud Functions (TypeScript / Node 18) under `functions/`. Currently a single FCM trigger; not yet wired to the iOS client.
 
 ## Build
@@ -52,7 +52,24 @@ npm run deploy
 - [`docs/branding.md`](docs/branding.md) — voice, tone, naming, Pro positioning. Read before writing copy.
 - [`docs/design.md`](docs/design.md) — design system: palette, type, spacing, components, motion, accessibility. Read before adding UI.
 - [`docs/architecture.md`](docs/architecture.md) — what lives where, current state. Read before adding features.
+- [`docs/agent-workflow.md`](docs/agent-workflow.md) — agent-first task loop, plans, reviews, feedback capture.
+- [`docs/quality.md`](docs/quality.md) — verification ladder, structural invariants, known harness gaps.
 - [`CLAUDE.md`](CLAUDE.md) — agent-facing project guide (build commands, conventions, sensitive files).
+
+Quick agent preflight:
+
+```bash
+./scripts/agent-preflight.sh
+```
+
+Agent verification:
+
+```bash
+./scripts/agent-verify.sh build
+./scripts/agent-verify.sh test
+./scripts/agent-verify.sh catalog
+./scripts/agent-verify.sh functions
+```
 
 ## Website
 
