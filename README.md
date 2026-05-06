@@ -62,6 +62,14 @@ Quick agent preflight:
 ./scripts/agent-preflight.sh
 ```
 
+Agent verification:
+
+```bash
+./scripts/agent-verify.sh build
+./scripts/agent-verify.sh test
+./scripts/agent-verify.sh functions
+```
+
 ## Website
 
 The marketing landing lives at `docs/index.html` and is served via **GitHub Pages from the `/docs` folder on `main`**. To preview locally:

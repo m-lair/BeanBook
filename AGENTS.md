@@ -50,6 +50,14 @@ Agent preflight:
 ./scripts/agent-preflight.sh
 ```
 
+Agent verification:
+
+```bash
+./scripts/agent-verify.sh build
+./scripts/agent-verify.sh test
+./scripts/agent-verify.sh functions
+```
+
 ## Architecture (summary)
 
 Full detail in [`docs/architecture.md`](docs/architecture.md). The shape:

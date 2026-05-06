@@ -12,10 +12,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Agent preflight
-      run: ./scripts/agent-preflight.sh
     - name: Build BeanBook
-      run: xcodebuild -project BeanBook.xcodeproj -scheme BeanBook -destination 'generic/platform=iOS Simulator' build
+      run: ./scripts/agent-verify.sh build
 
   build-functions:
     runs-on: ubuntu-latest
@@ -31,5 +29,4 @@ jobs:
       run: npm ci
       working-directory: functions
     - name: Build functions
-      run: npm run build
-      working-directory: functions
+      run: ./scripts/agent-verify.sh functions

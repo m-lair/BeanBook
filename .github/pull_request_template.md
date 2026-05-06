@@ -4,7 +4,7 @@
 
 ## Verification
 
-- [ ] `./scripts/agent-preflight.sh`
+- [ ] `./scripts/agent-verify.sh preflight`
 - [ ] Build/test command:
 
 ## Docs
@@ -13,4 +13,3 @@
 - [ ] Docs not needed because:
 
 ## Notes
-
