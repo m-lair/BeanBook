@@ -8,6 +8,7 @@ What lives where, and why. Reflects the app's current state (3-step brew log, pr
 - **`BeanBookTests`** — Swift Testing.
 - **`BeanBookUITests`** — XCTest only.
 - **`functions/`** — Firebase Cloud Functions (TypeScript / Node 18). Currently only `notifyBrewOwnerOnFavorite`. Not yet wired to the iOS client.
+- **`scripts/`** — agent-facing verification harness. `agent-preflight.sh` checks repo invariants; `validate-catalog.js` validates bundled catalog data.
 
 ## Data layer
 
@@ -131,7 +132,7 @@ The Pro row leads with **"One-time purchase · Unlimited everything · Future fe
 ## Theme (`Shared/Theme/`)
 
 - `Theme.swift` — color/spacing/type accessors. All resolve through `themeStore.palette`.
-- `Theme/Palette.swift` — three palettes (`forest`, `ocean`, `mocha`). `forest` is free; the other two are Pro.
+- `Theme/Palette.swift` — curated, distinct light-mode palettes. `forest` is free; all other palettes are Pro.
 - `themeStore` — process-wide `@Observable` source of truth. Mutating `palette` invalidates dependent views via Observation.
 
 See `design.md` for tokens and patterns.

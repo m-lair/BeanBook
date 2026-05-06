@@ -4,7 +4,7 @@ How tokens, type, and components fit together. Source of truth for color is `Bea
 
 ## Color tokens
 
-All color access goes through `Theme.*`, which resolves through `themeStore.palette`. The active palette is one of three (`forest`, `ocean`, `mocha`) — `forest` is default and free, the others are Pro.
+All color access goes through `Theme.*`, which resolves through `themeStore.palette`. The active palette is selected from a curated set of distinct light-mode themes. `forest` is default and free; the others are Pro.
 
 ### Surfaces
 

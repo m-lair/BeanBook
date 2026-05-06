@@ -67,6 +67,7 @@ Agent verification:
 ```bash
 ./scripts/agent-verify.sh build
 ./scripts/agent-verify.sh test
+./scripts/agent-verify.sh catalog
 ./scripts/agent-verify.sh functions
 ```
 

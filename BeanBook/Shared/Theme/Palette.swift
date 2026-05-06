@@ -43,21 +43,25 @@ enum PaletteID: String, CaseIterable, Identifiable, Sendable {
     case latte
     case honey
     case cascara
-    case cocoa
     case espresso
-
-    // Pro — new (cools)
-    case slate
 
     // Pro — new (darks)
     case graphite
-    case noir
 
     // Pro — new (botanicals)
     case sage
     case plum
 
     var id: String { rawValue }
+
+    static func canonical(rawValue: String) -> PaletteID? {
+        switch rawValue {
+        case "cocoa": .mocha
+        case "slate": .ocean
+        case "noir": .graphite
+        default: PaletteID(rawValue: rawValue)
+        }
+    }
 }
 
 extension Palette {
@@ -187,24 +191,6 @@ extension Palette {
         success: Color(hex: "7A5E1A")
     )
 
-    static let cocoa = Palette(
-        id: .cocoa,
-        name: "Cocoa",
-        isPro: true,
-        background: Color(hex: "F8F1E8"),
-        card: Color(hex: "FFFAF2"),
-        ink: Color(hex: "241712"),
-        ink2: Color(hex: "6A5040"),
-        ink3: Color(hex: "A38978"),
-        ink4: Color(hex: "D2BCA8"),
-        rule: Color(hex: "E5D2BC"),
-        accent: Color(hex: "6E3F22"),
-        accentSoft: Color(hex: "EAD3BC"),
-        accentGlow: Color(hex: "6E3F22").opacity(0.22),
-        error: Color(hex: "B5293A"),
-        success: Color(hex: "8A5A2A")
-    )
-
     static let graphite = Palette(
         id: .graphite,
         name: "Graphite",
@@ -216,47 +202,11 @@ extension Palette {
         ink3: Color(hex: "8A8E94"),
         ink4: Color(hex: "BCBFC4"),
         rule: Color(hex: "D2D4D8"),
-        accent: Color(hex: "2A2E33"),
-        accentSoft: Color(hex: "D6D8DC"),
-        accentGlow: Color(hex: "2A2E33").opacity(0.22),
+        accent: Color(hex: "3E4148"),
+        accentSoft: Color(hex: "D9DCE1"),
+        accentGlow: Color(hex: "3E4148").opacity(0.22),
         error: Color(hex: "B5293A"),
         success: Color(hex: "4A6A4A")
-    )
-
-    static let slate = Palette(
-        id: .slate,
-        name: "Slate",
-        isPro: true,
-        background: Color(hex: "F1F4F6"),
-        card: Color(hex: "FAFCFD"),
-        ink: Color(hex: "0F1820"),
-        ink2: Color(hex: "56666F"),
-        ink3: Color(hex: "909AA2"),
-        ink4: Color(hex: "C4CBD0"),
-        rule: Color(hex: "DBE1E5"),
-        accent: Color(hex: "36586E"),
-        accentSoft: Color(hex: "D8E2E8"),
-        accentGlow: Color(hex: "36586E").opacity(0.22),
-        error: Color(hex: "B5293A"),
-        success: Color(hex: "3F7E84")
-    )
-
-    static let noir = Palette(
-        id: .noir,
-        name: "Noir",
-        isPro: true,
-        background: Color(hex: "F4F2EE"),
-        card: Color.white,
-        ink: Color(hex: "0A0A0A"),
-        ink2: Color(hex: "4E4E4C"),
-        ink3: Color(hex: "8F8E8B"),
-        ink4: Color(hex: "C2C1BE"),
-        rule: Color(hex: "DCDAD6"),
-        accent: Color(hex: "1A1A1A"),
-        accentSoft: Color(hex: "DCD9D2"),
-        accentGlow: Color(hex: "1A1A1A").opacity(0.22),
-        error: Color(hex: "B5293A"),
-        success: Color(hex: "4A6A2A")
     )
 
     static let sage = Palette(
@@ -302,11 +252,11 @@ extension Palette {
         // Free
         .forest,
         // Warms
-        .latte, .honey, .cascara, .mocha, .cocoa, .espresso,
+        .latte, .honey, .cascara, .mocha, .espresso,
         // Cools
-        .ocean, .slate,
+        .ocean,
         // Darks
-        .graphite, .noir,
+        .graphite,
         // Botanicals
         .sage, .plum,
     ]
@@ -319,11 +269,8 @@ extension Palette {
         case .latte:    .latte
         case .honey:    .honey
         case .cascara:  .cascara
-        case .cocoa:    .cocoa
         case .espresso: .espresso
-        case .slate:    .slate
         case .graphite: .graphite
-        case .noir:     .noir
         case .sage:     .sage
         case .plum:     .plum
         }

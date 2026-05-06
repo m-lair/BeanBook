@@ -55,6 +55,7 @@ Agent verification:
 ```bash
 ./scripts/agent-verify.sh build
 ./scripts/agent-verify.sh test
+./scripts/agent-verify.sh catalog
 ./scripts/agent-verify.sh functions
 ```
 
@@ -64,7 +65,7 @@ Full detail in [`docs/architecture.md`](docs/architecture.md). The shape:
 
 - **SwiftData is the source of truth.** `BeanBookApp.swift` builds one `ModelContainer` (`[Bag, Brew, BrewPreset]`) and injects it. The iOS target has no Firebase SDK today — Cloud Functions exist but aren't wired to the client.
 - **Stores are `@MainActor @Observable` wrappers** over `ModelContext`, injected via `.environment(...)`. No singletons. Stores enforce Pro quotas at `create(...)` and throw `QuotaExceededError`.
-- **Theme.** All color goes through `Theme.*`, which resolves through `themeStore.palette`. Three palettes: `forest` (free, default), `ocean` (Pro), `mocha` (Pro). Light mode only — locked at root via `.preferredColorScheme(.light)`.
+- **Theme.** All color goes through `Theme.*`, which resolves through `themeStore.palette`. The palette set is curated for distinct light-mode themes; `forest` is free/default and the rest are Pro. Light mode only — locked at root via `.preferredColorScheme(.light)`.
 - **Three-tab `TabView`** (Brews, Bags, Shop) — center "+" presents `NewBrewSheet` rather than navigating.
 
 ### Brew log flow (recent rework)

@@ -49,7 +49,10 @@ struct PalettePickerSheet: View {
             }
         }
         .task {
-            originalID = PaletteID(rawValue: paletteIDRaw) ?? .forest
+            originalID = PaletteID.canonical(rawValue: paletteIDRaw) ?? .forest
+            if originalID.rawValue != paletteIDRaw {
+                paletteIDRaw = originalID.rawValue
+            }
             selectedID = originalID
         }
         .sheet(isPresented: $showingPaywall) {

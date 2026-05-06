@@ -9,6 +9,7 @@ Agent velocity is useful only if the repo stays legible. This file records the i
 | Swift build | The app target builds from a clean checkout. | `./scripts/agent-verify.sh build` |
 | Swift tests | Unit tests use Swift Testing; UI tests use XCTest only. | `./scripts/agent-verify.sh test` |
 | Functions build | TypeScript compiles without generated output drift. | `./scripts/agent-verify.sh functions` |
+| Catalog data | Bundled bean catalog has unique IDs, valid enum values, required fields, and valid URLs. | `./scripts/agent-verify.sh catalog`; also covered by preflight. |
 | Repo preflight | Agent-facing docs, sensitive-file rules, and core design guardrails are present. | `./scripts/agent-preflight.sh` |
 | Design consistency | UI uses `Theme.*`, shared components, and light-mode-only assumptions. | `./scripts/agent-preflight.sh` blocks hardcoded `Color(hex:)` outside approved theme/shared semantic files; deeper review remains manual. |
 | Brand consistency | Product copy is restrained and Pro is one-time-purchase first. | Documented in `docs/branding.md`; manual review. |
@@ -20,9 +21,10 @@ Pick the lowest rung that meaningfully covers the change. Move up when touching 
 1. **Docs-only:** `./scripts/agent-verify.sh preflight`
 2. **Swift compile:** `./scripts/agent-verify.sh build`
 3. **Swift tests:** `./scripts/agent-verify.sh test`
-4. **Functions:** `./scripts/agent-verify.sh functions`
-5. **Manual app smoke:** launch on the default simulator and exercise the changed flow.
-6. **Release-sensitive:** include StoreKit, onboarding, data persistence, and App Store copy checks as applicable.
+4. **Catalog:** `./scripts/agent-verify.sh catalog`
+5. **Functions:** `./scripts/agent-verify.sh functions`
+6. **Manual app smoke:** launch on the default simulator and exercise the changed flow.
+7. **Release-sensitive:** include StoreKit, onboarding, data persistence, and App Store copy checks as applicable.
 
 If verification cannot run, report the exact blocker and the command that failed.
 
@@ -43,7 +45,7 @@ If verification cannot run, report the exact blocker and the command that failed
 - There is no Swift formatter or linter committed yet.
 - There is no broad SwiftUI style linter for feature-view layout patterns.
 - There is no simulator UI smoke script for the core brew-log path.
-- CI runs preflight, app build, and functions build through `scripts/agent-verify.sh`; local test runs remain the stronger signal.
+- CI runs preflight, catalog validation, app build, and functions build through `scripts/agent-verify.sh`; local test runs remain the stronger signal.
 - Documentation freshness is manual except for `scripts/agent-preflight.sh`.
 
 Promote a gap into tooling when it causes a real miss or repeated review comment.

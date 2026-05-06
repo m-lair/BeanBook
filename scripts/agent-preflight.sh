@@ -23,6 +23,7 @@ require_file "docs/quality.md"
 require_file "docs/agent-workflow.md"
 require_file "BeanBook.xcodeproj/project.pbxproj"
 require_file "functions/package.json"
+require_file "scripts/validate-catalog.js"
 
 if ! grep -q "docs/agent-workflow.md" AGENTS.md; then
   fail "AGENTS.md does not link docs/agent-workflow.md"
@@ -58,6 +59,10 @@ color_violations="$(
 if [[ -n "$color_violations" ]]; then
   echo "$color_violations" >&2
   fail "hardcoded Color(hex:) found outside approved theme/shared semantic files"
+fi
+
+if ! node scripts/validate-catalog.js; then
+  fail "catalog validation failed"
 fi
 
 if [[ "$missing" -ne 0 ]]; then
