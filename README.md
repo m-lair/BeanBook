@@ -52,7 +52,15 @@ npm run deploy
 - [`docs/branding.md`](docs/branding.md) — voice, tone, naming, Pro positioning. Read before writing copy.
 - [`docs/design.md`](docs/design.md) — design system: palette, type, spacing, components, motion, accessibility. Read before adding UI.
 - [`docs/architecture.md`](docs/architecture.md) — what lives where, current state. Read before adding features.
+- [`docs/agent-workflow.md`](docs/agent-workflow.md) — agent-first task loop, plans, reviews, feedback capture.
+- [`docs/quality.md`](docs/quality.md) — verification ladder, structural invariants, known harness gaps.
 - [`CLAUDE.md`](CLAUDE.md) — agent-facing project guide (build commands, conventions, sensitive files).
+
+Quick agent preflight:
+
+```bash
+./scripts/agent-preflight.sh
+```
 
 ## Website
 
