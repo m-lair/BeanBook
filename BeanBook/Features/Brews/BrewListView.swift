@@ -7,8 +7,10 @@ struct BrewListView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Brew.createdAt, order: .reverse) private var brews: [Brew]
+    @Query(sort: \BrewPreset.createdAt, order: .reverse) private var presets: [BrewPreset]
 
     @State private var showAddSheet = false
+    @State private var showRecipes = false
     @State private var hotStartBrew: Brew?
     @Namespace private var addSheetNamespace
 
@@ -29,6 +31,11 @@ struct BrewListView: View {
                                 hotStartBrew = brew
                             }
                             .padding(.top, 24)
+                        }
+                        if !presets.isEmpty {
+                            savedRecipesEntry
+                                .padding(.horizontal, 24)
+                                .padding(.top, recentBrews.count > 1 ? 22 : 24)
                         }
                         list
                         Spacer().frame(height: 80)
@@ -59,6 +66,9 @@ struct BrewListView: View {
             NewBrewSheet()
                 .navigationTransition(.zoom(sourceID: "addBrew", in: addSheetNamespace))
         }
+        .sheet(isPresented: $showRecipes) {
+            NavigationStack { RecipesView() }
+        }
         .sheet(item: $hotStartBrew) { brew in
             NewBrewSheet(prefill: brew)
         }
@@ -75,6 +85,36 @@ struct BrewListView: View {
                 .foregroundStyle(Theme.ink)
         }
         .padding(.horizontal, 24)
+    }
+
+    private var savedRecipesEntry: some View {
+        Button {
+            showRecipes = true
+        } label: {
+            VStack(spacing: 0) {
+                HairRule()
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Eyebrow("\(presets.count) saved")
+                        Text("Saved recipes")
+                            .font(.system(size: 22, weight: .medium, design: .serif))
+                            .tracking(-0.4)
+                            .foregroundStyle(Theme.ink)
+                        Text("Repeat what worked.")
+                            .font(Theme.body(12))
+                            .foregroundStyle(Theme.ink2)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.ink3)
+                }
+                .padding(.vertical, 16)
+                HairRule()
+            }
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
     }
 
     private var list: some View {

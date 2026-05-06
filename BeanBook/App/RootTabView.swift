@@ -7,7 +7,7 @@ struct RootTabView: View {
     @State private var showAddBrew = false
 
     enum TabSelection: Hashable {
-        case today, beans, recipes, add
+        case today, beans, stats, shop, add
     }
 
     var body: some View {
@@ -18,8 +18,11 @@ struct RootTabView: View {
             Tab("Beans", systemImage: "bag.fill", value: TabSelection.beans) {
                 NavigationStack { BagListView() }
             }
-            Tab("Recipes", systemImage: "list.bullet", value: TabSelection.recipes) {
-                NavigationStack { RecipesView() }
+            Tab("Stats", systemImage: "waveform.path.ecg", value: TabSelection.stats) {
+                NavigationStack { StatsView() }
+            }
+            Tab("Shop", systemImage: "sparkles", value: TabSelection.shop) {
+                NavigationStack { ShopView() }
             }
             Tab(value: TabSelection.add, role: .search) {
                 Color.clear
