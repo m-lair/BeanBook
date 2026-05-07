@@ -517,31 +517,34 @@ private struct StatsProFeatureRow: View {
     let detail: String
     var showsRule = true
 
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(alignment: .top, spacing: 22) {
-                Text(number)
-                    .font(Theme.body(11, weight: .bold))
-                    .foregroundStyle(Theme.accent)
-                    .frame(width: 20, alignment: .leading)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.system(size: 18, weight: .medium, design: .serif))
-                        .tracking(-0.2)
-                        .foregroundStyle(Theme.ink)
+	    var body: some View {
+	        VStack(spacing: 0) {
+	            HStack(alignment: .top, spacing: 22) {
+	                Text(number)
+	                    .font(Theme.body(11, weight: .bold))
+	                    .foregroundStyle(Theme.accent)
+	                    .monospacedDigit()
+	                    .frame(width: 28, alignment: .trailing)
+	                VStack(alignment: .leading, spacing: 4) {
+	                    Text(title)
+	                        .font(.system(size: 18, weight: .medium, design: .serif))
+	                        .tracking(-0.2)
+	                        .foregroundStyle(Theme.ink)
                     Text(detail)
                         .font(Theme.body(13))
-                        .foregroundStyle(Theme.ink2)
-                        .lineSpacing(2)
-                }
-            }
-            .padding(.vertical, 16)
-            if showsRule {
-                HairRule()
-                    .padding(.leading, 42)
-            }
-        }
-    }
+	                        .foregroundStyle(Theme.ink2)
+	                        .lineSpacing(2)
+	                }
+	                .frame(maxWidth: .infinity, alignment: .leading)
+	            }
+	            .frame(maxWidth: .infinity, alignment: .leading)
+	            .padding(.vertical, 16)
+	            if showsRule {
+	                HairRule()
+	                    .padding(.leading, 50)
+	            }
+	        }
+	    }
 }
 
 private struct StatsEmptyCard: View {

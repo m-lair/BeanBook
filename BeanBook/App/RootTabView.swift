@@ -5,6 +5,7 @@ struct RootTabView: View {
     @State private var selection: TabSelection = .today
     @State private var previous: TabSelection = .today
     @State private var showAddBrew = false
+    @State private var showSettings = false
 
     enum TabSelection: Hashable {
         case today, beans, stats, shop, add
@@ -13,7 +14,7 @@ struct RootTabView: View {
     var body: some View {
         TabView(selection: $selection) {
             Tab("Today", systemImage: "cup.and.saucer.fill", value: TabSelection.today) {
-                NavigationStack { TodayView() }
+                NavigationStack { TodayView { showSettings = true } }
             }
             Tab("Beans", systemImage: "bag.fill", value: TabSelection.beans) {
                 NavigationStack { BagListView() }
@@ -43,6 +44,9 @@ struct RootTabView: View {
         }
         .sheet(isPresented: $showAddBrew) {
             NewBrewSheet()
+        }
+        .sheet(isPresented: $showSettings) {
+            NavigationStack { SettingsView() }
         }
     }
 }

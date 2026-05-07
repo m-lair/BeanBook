@@ -315,8 +315,6 @@ extension SettingsRow where Trailing == SettingsValueTrailing {
     }
 }
 
-/// Navigable row variant — shows a chevron and wraps the entire row in a
-/// Button so the whole surface is tappable.
 private struct NavigableSettingsRow: View {
     let label: String
     let value: String

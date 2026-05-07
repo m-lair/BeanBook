@@ -1,18 +1,13 @@
 import SwiftUI
 
-/// Palette picker. Tapping a palette previews it live across the entire app
-/// by mutating `themeStore.palette`. Confirming persists to AppStorage.
-/// Pro-only palettes route a non-Pro user to the paywall on confirm.
+/// Palette picker. Tapping an available palette applies it live and persists
+/// it. Pro-only palettes route a non-Pro user to the paywall on save.
 struct PalettePickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(ProEntitlement.self) private var pro
 
     @AppStorage("paletteID") private var paletteIDRaw: String = PaletteID.forest.rawValue
 
-    /// The palette ID stored in AppStorage when the sheet opened. Used to
-    /// revert if the user dismisses without confirming, or backs out of the
-    /// paywall after previewing a Pro palette.
-    @State private var originalID: PaletteID = .forest
     @State private var selectedID: PaletteID = .forest
     @State private var showingPaywall = false
 
@@ -35,25 +30,21 @@ struct PalettePickerSheet: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    revertPreview()
-                    dismiss()
-                }
+                Button("Close") { dismiss() }
                 .foregroundStyle(Theme.ink2)
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Done") { confirm() }
+                Button("Save") { confirm() }
                     .font(Theme.body(15, weight: .semibold))
                     .foregroundStyle(Theme.accent)
-                    .disabled(selectedID.rawValue == paletteIDRaw)
             }
         }
         .task {
-            originalID = PaletteID.canonical(rawValue: paletteIDRaw) ?? .forest
-            if originalID.rawValue != paletteIDRaw {
-                paletteIDRaw = originalID.rawValue
+            let storedID = PaletteID.canonical(rawValue: paletteIDRaw) ?? .forest
+            if storedID.rawValue != paletteIDRaw {
+                paletteIDRaw = storedID.rawValue
             }
-            selectedID = originalID
+            selectedID = storedID
         }
         .sheet(isPresented: $showingPaywall) {
             NavigationStack {
@@ -61,19 +52,14 @@ struct PalettePickerSheet: View {
             }
         }
         .onChange(of: showingPaywall) { _, presenting in
-            // If the paywall was presented and dismissed without buying, revert.
             if !presenting && !pro.isPro {
-                preview(originalID)
-                selectedID = originalID
+                selectedID = PaletteID.canonical(rawValue: paletteIDRaw) ?? .forest
             }
         }
         .onChange(of: pro.isPro) { _, nowPro in
-            // If user buys Pro from the paywall while previewing, persist the
-            // selection automatically and close.
             if nowPro && showingPaywall {
                 showingPaywall = false
-                paletteIDRaw = selectedID.rawValue
-                dismiss()
+                persistSelection(dismissAfterSave: true)
             }
         }
     }
@@ -109,16 +95,8 @@ struct PalettePickerSheet: View {
 
     private func select(_ palette: Palette) {
         selectedID = palette.id
-        preview(palette.id)
-    }
-
-    private func preview(_ id: PaletteID) {
-        themeStore.palette = Palette.with(id: id)
-    }
-
-    private func revertPreview() {
-        if themeStore.palette.id != originalID {
-            themeStore.palette = Palette.with(id: originalID)
+        if !palette.isPro || pro.isPro {
+            persistSelection(dismissAfterSave: false)
         }
     }
 
@@ -128,8 +106,15 @@ struct PalettePickerSheet: View {
             showingPaywall = true
             return
         }
+        persistSelection(dismissAfterSave: true)
+    }
+
+    private func persistSelection(dismissAfterSave: Bool) {
         paletteIDRaw = selectedID.rawValue
-        dismiss()
+        themeStore.palette = Palette.with(id: selectedID)
+        if dismissAfterSave {
+            dismiss()
+        }
     }
 }
 

@@ -7,8 +7,9 @@ struct TodayView: View {
     @Query(sort: \Brew.createdAt, order: .reverse) private var brews: [Brew]
     @Query(sort: \Bag.createdAt, order: .reverse) private var bags: [Bag]
 
+    let openSettings: () -> Void
+
     @State private var showAddSheet = false
-    @State private var showSettings = false
     @State private var showAllBrews = false
 
     private var openBags: [Bag] { bags }
@@ -42,7 +43,7 @@ struct TodayView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    showSettings = true
+                    openSettings()
                 } label: {
                     Image(systemName: "gearshape")
                 }
@@ -52,9 +53,6 @@ struct TodayView: View {
         }
         .sheet(isPresented: $showAddSheet) {
             NewBrewSheet()
-        }
-        .sheet(isPresented: $showSettings) {
-            NavigationStack { SettingsView() }
         }
         .sheet(isPresented: $showAllBrews) {
             NavigationStack { BrewListView() }
@@ -322,4 +320,3 @@ struct TodayEmptyView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
-
