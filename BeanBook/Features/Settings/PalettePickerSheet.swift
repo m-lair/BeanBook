@@ -1,13 +1,14 @@
 import SwiftUI
 
-/// Palette picker. Tapping an available palette applies it live and persists
-/// it. Pro-only palettes route a non-Pro user to the paywall on save.
+/// Palette picker. Tapping a palette previews it live across the entire app.
+/// Saving persists it; closing without saving reverts to the stored palette.
 struct PalettePickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(ProEntitlement.self) private var pro
 
     @AppStorage("paletteID") private var paletteIDRaw: String = PaletteID.forest.rawValue
 
+    @State private var originalID: PaletteID = .forest
     @State private var selectedID: PaletteID = .forest
     @State private var showingPaywall = false
 
@@ -30,13 +31,17 @@ struct PalettePickerSheet: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Close") { dismiss() }
+                Button("Close") {
+                    revertPreview()
+                    dismiss()
+                }
                 .foregroundStyle(Theme.ink2)
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") { confirm() }
                     .font(Theme.body(15, weight: .semibold))
                     .foregroundStyle(Theme.accent)
+                    .disabled(selectedID.rawValue == paletteIDRaw)
             }
         }
         .task {
@@ -44,6 +49,7 @@ struct PalettePickerSheet: View {
             if storedID.rawValue != paletteIDRaw {
                 paletteIDRaw = storedID.rawValue
             }
+            originalID = storedID
             selectedID = storedID
         }
         .sheet(isPresented: $showingPaywall) {
@@ -53,7 +59,8 @@ struct PalettePickerSheet: View {
         }
         .onChange(of: showingPaywall) { _, presenting in
             if !presenting && !pro.isPro {
-                selectedID = PaletteID.canonical(rawValue: paletteIDRaw) ?? .forest
+                revertPreview()
+                selectedID = originalID
             }
         }
         .onChange(of: pro.isPro) { _, nowPro in
@@ -96,7 +103,7 @@ struct PalettePickerSheet: View {
     private func select(_ palette: Palette) {
         selectedID = palette.id
         if !palette.isPro || pro.isPro {
-            persistSelection(dismissAfterSave: false)
+            preview(palette.id)
         }
     }
 
@@ -114,6 +121,16 @@ struct PalettePickerSheet: View {
         themeStore.palette = Palette.with(id: selectedID)
         if dismissAfterSave {
             dismiss()
+        }
+    }
+
+    private func preview(_ id: PaletteID) {
+        themeStore.palette = Palette.with(id: id)
+    }
+
+    private func revertPreview() {
+        if themeStore.palette.id != originalID {
+            themeStore.palette = Palette.with(id: originalID)
         }
     }
 }
