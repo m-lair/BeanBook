@@ -282,7 +282,7 @@ private struct StatsOverviewGrid: View {
 
     var body: some View {
         LazyVGrid(columns: columns, alignment: .leading, spacing: 22) {
-            StatsMetric(value: "\(summary.totalBrews)", label: "Total brews", caption: "this month")
+            StatsMetric(value: "\(summary.totalBrews)", label: "Total brews", caption: "last 30 days")
             StatsMetric(value: "\(summary.activeBagCount)", label: "Active bags")
             StatsMetric(
                 value: summary.favoriteMethod?.displayName ?? "-",
