@@ -32,49 +32,112 @@
   </header>
 
   <main id="top">
-    <!-- HERO -->
+    <!-- HERO — editorial split -->
     <section class="hero">
-      <p class="eyebrow">For the coffee you brew at home</p>
-      <h1>
-        A quiet
-        <span class="serif-accent">logbook.</span>
-      </h1>
-      <p class="lede">
-        Track your bags, log your shots, repeat what worked. No streaks.
-        No social. No scoring algorithm.
-      </p>
-      <div class="hero-cta">
-        <a class="pill pill-accent" href="#download">Download on the App&nbsp;Store</a>
-        <a class="pill pill-outline" href="#features">See how it works</a>
+      <div class="hero-copy">
+        <p class="eyebrow">For the coffee you brew at home</p>
+        <h1>
+          A quiet
+          <span class="serif-accent">logbook.</span>
+        </h1>
+        <p class="lede">
+          Log a bag, log a shot, repeat what worked. No streaks. No social. No scoring algorithm.
+        </p>
+        <div class="hero-cta">
+          <a class="pill pill-accent" href="#download">Download on the App&nbsp;Store</a>
+          <a class="pill pill-outline" href="#features">See how it works</a>
+        </div>
+        <p class="hero-meta">iPhone · iOS 18+ · Light&nbsp;mode by design</p>
       </div>
-      <a class="product-hunt-badge" href="https://www.producthunt.com/products/beanbook-2?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-beanbook-9a8ea916-6360-47ae-8fdc-9f5b3bac4d44" target="_blank" rel="noopener noreferrer">
-        <img alt="BeanBook - No streaks. No social. Just your coffee log. | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1141908&amp;theme=neutral&amp;t=1778219614667">
-      </a>
-      <p class="hero-meta">iPhone · iOS 18+ · Light&nbsp;mode by design</p>
+
+      <!-- LIVE RECENT-SHOT CARD — mimics the app's Today screen, tappable -->
+      <aside class="hero-card" aria-label="Live demo of a recent brew">
+        <div class="card-head">
+          <p class="eyebrow card-date" id="card-date">WEDNESDAY · 1 BREW</p>
+          <span class="card-cog" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19.4 13a7.7 7.7 0 0 0 0-2l2-1.6-2-3.4-2.4.8a7.7 7.7 0 0 0-1.7-1L14.8 3h-3.6l-.5 2.5a7.7 7.7 0 0 0-1.7 1l-2.4-.8-2 3.4 2 1.6a7.7 7.7 0 0 0 0 2l-2 1.6 2 3.4 2.4-.8a7.7 7.7 0 0 0 1.7 1L11.2 21h3.6l.5-2.5a7.7 7.7 0 0 0 1.7-1l2.4.8 2-3.4-2-1.6zM13 15a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
+          </span>
+        </div>
+
+        <p class="card-headline">
+          Espresso, like yesterday — but a touch <em>finer.</em>
+        </p>
+
+        <div class="ratio-block" id="ratio-block">
+          <p class="ratio">1:2.00</p>
+          <p class="ratio-meta"><span>18G</span> · <span>36G</span> · <span id="ratio-time">30S</span></p>
+          <div class="ratio-bar"><span id="ratio-bar-fill"></span></div>
+        </div>
+
+        <button class="card-action pill pill-ink" id="brew-btn" type="button">
+          <span class="brew-label">Begin</span>
+          <span class="brew-arrow" aria-hidden="true">→</span>
+        </button>
+
+        <div class="card-divider"></div>
+
+        <div class="card-foot">
+          <div class="foot-row">
+            <p class="eyebrow eyebrow-tight">Last logged</p>
+            <p class="eyebrow eyebrow-tight muted">All</p>
+          </div>
+          <div class="foot-shot">
+            <div>
+              <p class="shot-method">Espresso</p>
+              <p class="shot-meta">Verve · 2 hours ago</p>
+            </div>
+            <div class="shot-right">
+              <p class="shot-ratio">1:2.00</p>
+              <p class="dots" aria-label="5 of 5 stars">●●●●●</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="card-hint" id="card-hint">Tap "Begin" to log this shot again</p>
+      </aside>
     </section>
 
     <!-- SCREENSHOTS -->
     <section class="screenshots" aria-label="BeanBook screenshots">
-      <div class="screenshot-strip">
-        <img src="screenshots/dashboard.jpg" alt="BeanBook dashboard showing a recent espresso log and open coffee bags" width="387" height="840" loading="eager">
-        <img src="screenshots/bags.jpg" alt="BeanBook bags screen showing open bags and roast filters" width="387" height="840" loading="lazy">
-        <img src="screenshots/stats.jpg" alt="BeanBook stats screen showing monthly brews, active bags, and working recipes" width="387" height="840" loading="lazy">
-        <img src="screenshots/brew-options.jpg" alt="BeanBook brew flow with method choices and selected bag" width="387" height="840" loading="lazy">
-        <img src="screenshots/shops.jpg" alt="BeanBook curated roaster discovery screen" width="387" height="840" loading="lazy">
-        <img src="screenshots/palettes.jpg" alt="BeanBook palette picker with visual theme options" width="387" height="840" loading="lazy">
+      <div class="screenshot-strip" role="list">
+        <figure role="listitem">
+          <img src="screenshots/dashboard.jpg" alt="BeanBook dashboard with recent espresso log and open coffee bags" width="387" height="840" loading="eager">
+          <figcaption>Today — the morning case in two taps</figcaption>
+        </figure>
+        <figure role="listitem">
+          <img src="screenshots/bags.jpg" alt="BeanBook bags screen with open bags and roast filters" width="387" height="840" loading="lazy">
+          <figcaption>Beans — roast, origin, and what's open</figcaption>
+        </figure>
+        <figure role="listitem">
+          <img src="screenshots/stats.jpg" alt="BeanBook stats screen with monthly brews, active bags, and working recipes" width="387" height="840" loading="lazy">
+          <figcaption>Stats — a quiet ledger of what's working</figcaption>
+        </figure>
+        <figure role="listitem">
+          <img src="screenshots/brew-options.jpg" alt="BeanBook brew flow with method choices and selected bag" width="387" height="840" loading="lazy">
+          <figcaption>Log — every dial visible, prefilled from last shot</figcaption>
+        </figure>
+        <figure role="listitem">
+          <img src="screenshots/shops.jpg" alt="BeanBook curated roaster discovery screen" width="387" height="840" loading="lazy">
+          <figcaption>Shop — a small, curated roaster list</figcaption>
+        </figure>
+        <figure role="listitem">
+          <img src="screenshots/palettes.jpg" alt="BeanBook palette picker with visual theme options" width="387" height="840" loading="lazy">
+          <figcaption>Palettes — manual themes, no system dark mode</figcaption>
+        </figure>
       </div>
     </section>
 
     <!-- FEATURES -->
     <section id="features" class="features">
       <p class="eyebrow eyebrow-accent">What it does</p>
+      <h2>Four things, <span class="serif-accent">done well.</span></h2>
       <div class="feature-grid">
         <article class="feature">
           <div class="feature-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M3 10h14a4 4 0 0 1 0 8h-1.05A6.5 6.5 0 0 1 9.5 22h-1A6.5 6.5 0 0 1 2 15.5V10h1zm14 2v4a2 2 0 0 0 0-4z"/></svg>
           </div>
           <h3>Log a brew in 20 seconds</h3>
-          <p>Three steps. Method, ratio, rating. Every value prefilled from your last shot — change only what you changed.</p>
+          <p>Method, ratio, rating. Every value prefilled from your last shot — change only what you changed.</p>
         </article>
         <article class="feature">
           <div class="feature-icon" aria-hidden="true">
@@ -95,7 +158,7 @@
             <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12 2 9.2 8.5 2 9.5l5.4 5.1L6 22l6-3.5 6 3.5-1.4-7.4L22 9.5l-7.2-1L12 2z"/></svg>
           </div>
           <h3>Dial in a new bag</h3>
-          <p>Every variable visible at once on the Shot screen — dose, yield, time, grind. "Was 18 g" hints under fields you've changed.</p>
+          <p>Every dial on one screen. "Was 18 g" hints under fields you've changed.</p>
         </article>
       </div>
     </section>
@@ -108,28 +171,36 @@
           Built for the
           <span class="serif-accent">repeat&nbsp;case.</span>
         </h2>
-        <p>
-          Most apps treat every entry like a new event. BeanBook prefills from
-          your last shot so the morning case is "tap, tap, save," and the
-          dial-in case is one screen with every dial visible.
+        <p class="lede">
+          Most apps treat every entry like a new event. BeanBook prefills from your last shot, so the morning case is "tap, tap, save." The dial-in case is one screen with every dial in front of you.
         </p>
         <ul class="proof-list">
-          <li>Pin the bag you're working through.</li>
-          <li>Recent-shots strip on the home screen — one tap to repeat.</li>
-          <li>Save any shot as a recipe, replay it later in one tap.</li>
+          <li><strong>Pin the bag</strong> you're working through.</li>
+          <li><strong>Recent-shots strip</strong> on the home screen — one tap to repeat.</li>
+          <li><strong>Save any shot as a recipe</strong>, replay it later in one tap.</li>
         </ul>
       </div>
-      <div class="proof-card">
-        <p class="card-eyebrow">RECENT</p>
-        <p class="card-ratio">1:2.00</p>
-        <div class="card-meta">
-          <span>30s</span>
-          <span class="dots">●●●●○</span>
+      <div class="proof-strip" aria-hidden="true">
+        <div class="strip-card">
+          <p class="card-eyebrow">Mon</p>
+          <p class="strip-ratio">1:2.00</p>
+          <p class="strip-meta">30s · ●●●●○</p>
         </div>
-        <p class="card-bag">Onyx Coffee Lab · Geometry</p>
-        <button class="card-cta" type="button" aria-label="Brew this again — demo only" disabled>
-          Brew again
-        </button>
+        <div class="strip-card">
+          <p class="card-eyebrow">Tue</p>
+          <p class="strip-ratio">1:2.05</p>
+          <p class="strip-meta">31s · ●●●●●</p>
+        </div>
+        <div class="strip-card highlight">
+          <p class="card-eyebrow">Wed</p>
+          <p class="strip-ratio">1:2.00</p>
+          <p class="strip-meta">29s · ●●●●●</p>
+        </div>
+        <div class="strip-card faded">
+          <p class="card-eyebrow">Thu</p>
+          <p class="strip-ratio">—</p>
+          <p class="strip-meta">today</p>
+        </div>
       </div>
     </section>
 
@@ -140,10 +211,12 @@
         One purchase.
         <span class="serif-accent">Yours forever.</span>
       </h2>
+      <p class="lede">No subscription, ever. Pay once, own the app.</p>
       <ul class="pro-chips" aria-label="Pro value props">
-        <li>✓ Pay once</li>
-        <li>✕ No subscription</li>
-        <li>✦ Future features included</li>
+        <li>✓&nbsp;Pay once</li>
+        <li>✕&nbsp;No subscription</li>
+        <li>✦&nbsp;Future features included</li>
+        <li>⌂&nbsp;Family Sharing</li>
       </ul>
       <div class="pro-grid">
         <div class="pro-row">
@@ -168,6 +241,7 @@
     <!-- FAQ -->
     <section id="faq" class="faq">
       <p class="eyebrow eyebrow-accent">Frequently asked</p>
+      <h2>The honest answers.</h2>
       <div class="faq-list">
         <details>
           <summary>Is there a subscription?</summary>
@@ -175,7 +249,7 @@
         </details>
         <details>
           <summary>Does my data sync to a cloud?</summary>
-          <p>Not yet — your log lives in SwiftData on-device. iCloud sync is on the roadmap and will be free for everyone, not gated to Pro.</p>
+          <p>Not yet — your log lives on-device. iCloud sync is on the roadmap and will be free for everyone, not gated to Pro.</p>
         </details>
         <details>
           <summary>Is there a streak feature?</summary>
@@ -187,19 +261,22 @@
         </details>
         <details>
           <summary>Does BeanBook have dark mode?</summary>
-          <p>BeanBook does not follow system dark mode, but Pro includes one intentional dark palette for low-light brewing.</p>
+          <p>BeanBook does not follow system dark mode. Pro includes one intentional dark palette for low-light brewing.</p>
         </details>
       </div>
     </section>
 
     <!-- DOWNLOAD -->
     <section id="download" class="download">
-      <h2>Get BeanBook</h2>
-      <p class="lede">Free to start. Pro is a one-time purchase.</p>
+      <p class="eyebrow eyebrow-accent">Get BeanBook</p>
+      <h2>Free to start. <span class="serif-accent">Pro is one-time.</span></h2>
       <a class="pill pill-accent" href="#" aria-label="Download on the App Store (link to be set)">
         Download on the App&nbsp;Store
       </a>
       <p class="hero-meta">iPhone · iOS 18+</p>
+      <a class="ph-badge" href="https://www.producthunt.com/products/beanbook-2?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-beanbook-9a8ea916-6360-47ae-8fdc-9f5b3bac4d44" target="_blank" rel="noopener noreferrer" aria-label="Featured on Product Hunt">
+        <img alt="BeanBook on Product Hunt" width="225" height="49" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1141908&amp;theme=neutral&amp;t=1778219614667">
+      </a>
     </section>
   </main>
 
@@ -218,5 +295,7 @@
       <p class="footer-meta">© BeanBook · A quiet logbook</p>
     </div>
   </footer>
+
+  <script src="site.js"></script>
 </body>
 </html>
