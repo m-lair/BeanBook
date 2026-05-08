@@ -49,7 +49,7 @@ struct BagListView: View {
             NewBagSheet()
         }
         .sheet(isPresented: $showDiscover) {
-            NavigationStack { ShopView() }
+            NavigationStack { ShopView(showsDoneButton: true) }
         }
         .navigationDestination(for: Bag.self) { BagDetailView(bag: $0) }
         .navigationDestination(for: Brew.self) { BrewDetailView(brew: $0) }

@@ -9,11 +9,17 @@ struct ShopView: View {
     @Environment(BagStore.self) private var bagStore
     @Environment(\.dismiss) private var dismiss
 
+    let showsDoneButton: Bool
+
     @State private var roastFilter: RoastLevel? = nil
     @State private var toastMessage: String? = nil
     @State private var toastTrigger = 0
     @State private var toastTask: Task<Void, Never>?
     @State private var showingPaywall = false
+
+    init(showsDoneButton: Bool = false) {
+        self.showsDoneButton = showsDoneButton
+    }
 
     /// Beans within this radius of the user are surfaced in "Near you".
     private static let nearbyRadiusMiles: Double = 250
@@ -72,9 +78,11 @@ struct ShopView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Done") { dismiss() }
-                    .foregroundStyle(Theme.accent)
+            if showsDoneButton {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                        .foregroundStyle(Theme.accent)
+                }
             }
         }
         .sensoryFeedback(.success, trigger: toastTrigger)

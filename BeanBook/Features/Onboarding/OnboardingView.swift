@@ -54,7 +54,7 @@ struct OnboardingView: View {
             NewBagSheet()
         }
         .sheet(isPresented: $showShop) {
-            NavigationStack { ShopView() }
+            NavigationStack { ShopView(showsDoneButton: true) }
         }
     }
 
