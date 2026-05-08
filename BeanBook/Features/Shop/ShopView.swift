@@ -348,10 +348,10 @@ private struct NearbyRosterRow: View {
                             Text(loc)
                                 .font(Theme.body(11.5))
                                 .foregroundStyle(Theme.ink2)
+                            Text("·")
+                                .font(Theme.body(11.5))
+                                .foregroundStyle(Theme.ink3)
                         }
-                        Text("·")
-                            .font(Theme.body(11.5))
-                            .foregroundStyle(Theme.ink3)
                         Text(distanceLabel)
                             .font(Theme.body(11.5, weight: .semibold))
                             .foregroundStyle(Theme.accent)
