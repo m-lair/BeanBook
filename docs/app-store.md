@@ -130,7 +130,7 @@ Small fixes throughout the brew flow.
 
 ## App Privacy
 
-BeanBook does not collect personal data. The iOS target ships without any analytics or third-party SDKs at the time of writing. Cloud Functions exist in `functions/` but are not wired to the client.
+BeanBook does not collect personal data. The iOS target ships without any analytics or third-party SDKs at the time of writing, and there is no backend.
 
 Answer the App Privacy questionnaire as **"Data Not Collected"** unless / until that changes. If a future build adds analytics or sync, this section needs to be revised *before* submission, and the privacy policy must be updated first.
 

@@ -9,7 +9,7 @@ test_destination="${IOS_TEST_DESTINATION:-platform=iOS Simulator,name=iPhone 16 
 
 usage() {
   cat <<EOF
-Usage: ./scripts/agent-verify.sh [preflight|build|test|functions|catalog|all]
+Usage: ./scripts/agent-verify.sh [preflight|build|test|catalog|all]
 
 Environment overrides:
   IOS_BUILD_DESTINATION   Destination for xcodebuild build.
@@ -29,10 +29,6 @@ run_tests() {
   xcodebuild test -project "$project" -scheme "$scheme" -destination "$test_destination"
 }
 
-run_functions() {
-  npm --prefix functions run build
-}
-
 run_catalog() {
   node scripts/validate-catalog.js
 }
@@ -49,17 +45,12 @@ case "$mode" in
     run_preflight
     run_tests
     ;;
-  functions)
-    run_preflight
-    run_functions
-    ;;
   catalog)
     run_catalog
     ;;
   all)
     run_preflight
     run_build
-    run_functions
     ;;
   -h|--help|help)
     usage

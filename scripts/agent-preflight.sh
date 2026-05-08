@@ -22,7 +22,6 @@ require_file "docs/design.md"
 require_file "docs/quality.md"
 require_file "docs/agent-workflow.md"
 require_file "BeanBook.xcodeproj/project.pbxproj"
-require_file "functions/package.json"
 require_file "scripts/validate-catalog.js"
 
 if ! grep -q "docs/agent-workflow.md" AGENTS.md; then
@@ -31,23 +30,6 @@ fi
 
 if ! grep -q "docs/quality.md" AGENTS.md; then
   fail "AGENTS.md does not link docs/quality.md"
-fi
-
-if [[ -f "functions/config/serviceAccountKey.json" ]]; then
-  if ! git check-ignore -q "functions/config/serviceAccountKey.json"; then
-    fail "serviceAccountKey.json exists but is not ignored"
-  fi
-fi
-
-if [[ -d "functions/node_modules" ]]; then
-  if ! git check-ignore -q "functions/node_modules"; then
-    fail "functions/node_modules exists but is not ignored"
-  fi
-fi
-
-staged_sensitive_files="$(git diff --cached --name-only -- functions/config/serviceAccountKey.json functions/node_modules || true)"
-if [[ -n "$staged_sensitive_files" ]]; then
-  fail "sensitive files are staged: $staged_sensitive_files"
 fi
 
 color_violations="$(

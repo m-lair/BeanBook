@@ -230,4 +230,4 @@ Common symbols in use and what they mean:
 | `sparkles` | Pro / curated / featured |
 | `location.fill` | Origin / "Near you" |
 | `scalemass.fill` | Brew logging |
-| `bag.fill` | Bags tab / catalog |
+| `bag.fill` | Beans tab / catalog |

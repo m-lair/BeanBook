@@ -4,7 +4,7 @@ Guidance for Codex (Codex.ai/code) when working in this repository.
 
 ## Project
 
-**BeanBook** — iOS app for tracking coffee bags and shots. SwiftUI + SwiftData on the client, Firebase Cloud Functions (TypeScript) on the backend.
+**BeanBook** — iOS app for tracking coffee bags and shots. SwiftUI + SwiftData. The iOS target is fully local; there is no backend.
 
 Read these before making non-trivial changes:
 
@@ -32,18 +32,6 @@ xcodebuild test -project BeanBook.xcodeproj -scheme BeanBook \
   -only-testing:BeanBookTests/<SuiteName>/<testName>
 ```
 
-Cloud Functions (`functions/`, Node 18, TypeScript):
-
-```bash
-cd functions
-npm run build      # tsc → lib/
-npm run serve      # build + firebase emulators:start --only functions
-npm run deploy
-npm run logs
-```
-
-`functions/config/serviceAccountKey.json` is required at runtime and must not be committed.
-
 Agent preflight:
 
 ```bash
@@ -56,24 +44,23 @@ Agent verification:
 ./scripts/agent-verify.sh build
 ./scripts/agent-verify.sh test
 ./scripts/agent-verify.sh catalog
-./scripts/agent-verify.sh functions
 ```
 
 ## Architecture (summary)
 
 Full detail in [`docs/architecture.md`](docs/architecture.md). The shape:
 
-- **SwiftData is the source of truth.** `BeanBookApp.swift` builds one `ModelContainer` (`[Bag, Brew, BrewPreset]`) and injects it. The iOS target has no Firebase SDK today — Cloud Functions exist but aren't wired to the client.
+- **SwiftData is the source of truth.** `BeanBookApp.swift` builds one `ModelContainer` (`[Bag, Brew, BrewPreset]`) and injects it. The iOS target is fully local — no Firebase SDK, no backend.
 - **Stores are `@MainActor @Observable` wrappers** over `ModelContext`, injected via `.environment(...)`. No singletons. Stores enforce Pro quotas at `create(...)` and throw `QuotaExceededError`.
 - **Theme.** All color goes through `Theme.*`, which resolves through `themeStore.palette`. The palette set is curated for distinct manual themes; `forest` is free/default and the rest are Pro. The app does not follow system dark mode — `.preferredColorScheme(.light)` stays locked — but `midnight` is the single intentional dark palette.
-- **Three-tab `TabView`** (Brews, Bags, Shop) — center "+" presents `NewBrewSheet` rather than navigating.
+- **Four-tab `TabView`** (Today, Beans, Stats, Shop) plus a center "+" tab (`role: .search`) that presents `NewBrewSheet` rather than navigating. Defined in `BeanBook/App/RootTabView.swift`. Today is the editorial home (`TodayView`); the full chronological brew list (`BrewListView`) and `RecipesView` are reached as sheets from there.
 
 ### Brew log flow (recent rework)
 
 `NewBrewSheet` is a 3-step flow: **Context** (method + bag) → **Shot** (dose, yield, time, grind) → **Outcome** (rating, notes, save-as-recipe).
 
 - Cold start lands on Context. Hot start (`prefill: Brew?`) lands on Shot with values prefilled.
-- Hot-start surfaces: `RecentShotsStrip` on the Brews tab, `.contextMenu` on each brew row, `BrewDetailView`'s "Brew this again," and `RecipesView` preset-launch — all converge on the same `prefill:` parameter.
+- Hot-start surfaces: `RecentShotsStrip` in `BrewListView` (the "show all brews" sheet from Today), `.contextMenu` on each brew row, `BrewDetailView`'s "Brew this again," and `RecipesView` preset-launch — all converge on the same `prefill:` parameter.
 - `prefillSnapshot` captures the prefill values; per-field `DeltaCaption` ("was 18 g") renders under any field that diverges.
 - Bag pinning: `Bag.isPinned` + `BagStore.pin(_:)` (single-pin invariant). Pinned bag wins over recency; a "Recent: [bag]" swap chip surfaces if pin and most-recent diverge.
 
@@ -105,5 +92,4 @@ Don't add Pro mentions to onboarding — `branding.md` explains why.
 
 ## Sensitive files — do not commit
 
-- `functions/config/serviceAccountKey.json`
-- Anything under `functions/node_modules/`
+No sensitive files in the repo today. The iOS target is fully local with no API keys or service accounts.

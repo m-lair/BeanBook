@@ -7,14 +7,13 @@ What lives where, and why. Reflects the app's current state (3-step brew log, pr
 - **`BeanBook`** — the iOS app. SwiftUI + SwiftData, Swift 6 strict concurrency.
 - **`BeanBookTests`** — Swift Testing.
 - **`BeanBookUITests`** — XCTest only.
-- **`functions/`** — Firebase Cloud Functions (TypeScript / Node 18). Currently only `notifyBrewOwnerOnFavorite`. Not yet wired to the iOS client.
 - **`scripts/`** — agent-facing verification harness. `agent-preflight.sh` checks repo invariants; `validate-catalog.js` validates bundled catalog data.
 
 ## Data layer
 
 ### SwiftData is the source of truth
 
-`BeanBookApp.swift` constructs a single `ModelContainer` with the schema `[Bag, Brew, BrewPreset]` and injects via `.modelContainer(...)`. There is **no Firebase SDK in the iOS target today** — Cloud Functions exist but aren't wired. Don't assume reads/writes propagate to Firestore.
+`BeanBookApp.swift` constructs a single `ModelContainer` with the schema `[Bag, Brew, BrewPreset]` and injects via `.modelContainer(...)`. The iOS target is **fully local** — no Firebase SDK, no backend. All reads and writes are on-device.
 
 ### Models (`Core/Models/`)
 
@@ -89,7 +88,7 @@ The dominant feature. Recent rework collapsed a 5-step wizard into 3 steps with 
 
 | File | Role |
 |---|---|
-| `BagListView.swift` | The Bags tab. Pinned bag floats to top with a `pin.fill` glyph. Long-press → "Pin as default" / "Unpin" via `BagStore.pin(_:)`. |
+| `BagListView.swift` | The Beans tab (the user-facing label for bags). Pinned bag floats to top with a `pin.fill` glyph. Long-press → "Pin as default" / "Unpin" via `BagStore.pin(_:)`. |
 | `BagDetailView.swift` | Detail. Lists the bag's brews. |
 | `NewBagSheet.swift` | Add/edit bag. Includes `RoastDatePickerSheet` (graphical `DatePicker` in a custom-headered sheet). |
 
@@ -148,14 +147,6 @@ Stats are Pro-only but read from existing local data. They do not change the fre
 
 See `design.md` for tokens and patterns.
 
-## Cloud Functions (backend)
-
-`functions/src/index.ts` — single function:
-
-`notifyBrewOwnerOnFavorite` — `onDocumentUpdated` Firestore trigger on `coffeeBrews/{brewId}`. Diffs `saveCount`; sends an FCM push to the brew creator's `fcmToken` from `users/{uid}`. The collection names (`coffeeBrews`, `users`) and the `fcmToken` field are the contract for any future iOS sync work — don't change them silently.
-
-Not yet wired to the iOS app. The iOS target has no Firebase SDK dependency at the time of writing.
-
 ## Testing
 
 - **Swift Testing** for unit tests (`BeanBookTests`).
@@ -170,5 +161,4 @@ xcodebuild test -project BeanBook.xcodeproj -scheme BeanBook \
 
 ## Sensitive files — do not commit
 
-- `functions/config/serviceAccountKey.json`
-- Anything under `functions/node_modules/`
+No sensitive files in the repo today. The iOS target is fully local with no API keys or service accounts.

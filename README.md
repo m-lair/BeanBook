@@ -25,7 +25,7 @@ A one-time purchase. No subscription, ever.
 ## Stack
 
 - **iOS client** — Swift 6, SwiftUI, SwiftData. iOS 18+. Manual themes, including one dark palette.
-- **Backend** — Firebase Cloud Functions (TypeScript / Node 18) under `functions/`. Currently a single FCM trigger; not yet wired to the iOS client.
+- **No backend.** Fully local app; data lives on device.
 
 ## Build
 
@@ -37,15 +37,6 @@ xcodebuild -project BeanBook.xcodeproj -scheme BeanBook \
 ```bash
 xcodebuild test -project BeanBook.xcodeproj -scheme BeanBook \
   -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=26.0'
-```
-
-Cloud Functions:
-
-```bash
-cd functions
-npm run build
-npm run serve   # firebase emulators:start --only functions
-npm run deploy
 ```
 
 ## Documentation
@@ -69,7 +60,6 @@ Agent verification:
 ./scripts/agent-verify.sh build
 ./scripts/agent-verify.sh test
 ./scripts/agent-verify.sh catalog
-./scripts/agent-verify.sh functions
 ```
 
 ## Website
@@ -85,11 +75,6 @@ Enable Pages: GitHub repo → Settings → Pages → **Source: Deploy from a bra
 
 `.nojekyll` is included so the markdown docs aren't Jekyll-themed.
 
-## Sensitive files — do not commit
-
-- `functions/config/serviceAccountKey.json` — Firebase service account.
-- Anything under `functions/node_modules/`.
-
 ## Repo layout
 
 ```
@@ -100,7 +85,6 @@ BeanBook/                 iOS target
 ├── Pro/                  ProEntitlement, PaywallSheet
 └── Shared/               Theme, palettes, primitives, extensions
 
-functions/                Firebase Cloud Functions (TypeScript)
 docs/                     Brand + design + architecture docs, GitHub Pages site
                           (index.html, styles.css, logo.svg, wordmark.svg)
 ```
