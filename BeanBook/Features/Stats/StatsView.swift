@@ -14,6 +14,10 @@ struct StatsView: View {
         StatsSummary.build(brews: brews, bags: bags, presets: presets)
     }
 
+    private var brewsByID: [PersistentIdentifier: Brew] {
+        Dictionary(uniqueKeysWithValues: brews.map { ($0.persistentModelID, $0) })
+    }
+
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
@@ -36,6 +40,7 @@ struct StatsView: View {
         .sheet(isPresented: $showAddBrew) {
             NewBrewSheet()
         }
+        .navigationDestination(for: Brew.self) { BrewDetailView(brew: $0) }
     }
 
     private var lockedState: some View {
@@ -147,7 +152,7 @@ struct StatsView: View {
                         .padding(.top, 28)
                     VStack(spacing: 0) {
                         ForEach(summary.loggedSoFar) { row in
-                            StatsBrewRow(row: row)
+                            brewRowLink(for: row)
                         }
                     }
                 }
@@ -175,7 +180,7 @@ struct StatsView: View {
                         .padding(.top, 30)
                     VStack(spacing: 0) {
                         ForEach(summary.workingBrews) { row in
-                            StatsBrewRow(row: row)
+                            brewRowLink(for: row)
                         }
                         if let bestBag = summary.bestBag {
                             StatsBagRow(summary: bestBag, label: "Best bag")
@@ -269,6 +274,18 @@ struct StatsView: View {
     private func statsSectionHeader(_ title: String) -> some View {
         Eyebrow(title, color: Theme.accent)
             .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func brewRowLink(for row: StatsSummary.BrewRow) -> some View {
+        if let brew = brewsByID[row.brewID] {
+            NavigationLink(value: brew) {
+                StatsBrewRow(row: row)
+            }
+            .buttonStyle(.plain)
+        } else {
+            StatsBrewRow(row: row)
+        }
     }
 }
 
