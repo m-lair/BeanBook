@@ -12,9 +12,37 @@ struct BrewListView: View {
     @State private var showAddSheet = false
     @State private var showRecipes = false
     @State private var hotStartBrew: Brew?
+    @State private var methodFilter: BrewMethod? = nil
+    @State private var bagFilter: Bag? = nil
     @Namespace private var addSheetNamespace
 
     private var recentBrews: [Brew] { Array(brews.prefix(5)) }
+
+    private var filteredBrews: [Brew] {
+        brews.filter { brew in
+            if let methodFilter, brew.method != methodFilter { return false }
+            if let bagFilter, brew.bag?.persistentModelID != bagFilter.persistentModelID { return false }
+            return true
+        }
+    }
+
+    /// Distinct bags referenced by any brew, in most-recent-brew order.
+    /// Used to populate the bag-filter chip row — filtering by a bag with
+    /// no logged brews would always yield zero matches.
+    private var bagsInBrews: [Bag] {
+        var seen = Set<PersistentIdentifier>()
+        var result: [Bag] = []
+        for brew in brews {
+            guard let bag = brew.bag else { continue }
+            if seen.insert(bag.persistentModelID).inserted {
+                result.append(bag)
+            }
+        }
+        return result
+    }
+
+    private var hasActiveFilter: Bool { methodFilter != nil || bagFilter != nil }
+    private var showsFilters: Bool { brews.count >= 5 }
 
     var body: some View {
         ZStack {
@@ -37,7 +65,15 @@ struct BrewListView: View {
                                 .padding(.horizontal, 24)
                                 .padding(.top, recentBrews.count > 1 ? 22 : 24)
                         }
-                        list
+                        if showsFilters {
+                            filterChips
+                                .padding(.top, 28)
+                        }
+                        if filteredBrews.isEmpty {
+                            filteredEmptyState
+                        } else {
+                            list
+                        }
                         Spacer().frame(height: 80)
                     }
                     .padding(.top, 12)
@@ -78,13 +114,20 @@ struct BrewListView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Eyebrow("\(brews.count) logged")
+            Eyebrow(headerCountLabel)
             Text("Brews")
                 .font(.system(size: 36, weight: .medium, design: .serif))
                 .tracking(-1)
                 .foregroundStyle(Theme.ink)
         }
         .padding(.horizontal, 24)
+    }
+
+    private var headerCountLabel: String {
+        if hasActiveFilter {
+            return "\(filteredBrews.count) of \(brews.count)"
+        }
+        return "\(brews.count) logged"
     }
 
     private var savedRecipesEntry: some View {
@@ -119,7 +162,7 @@ struct BrewListView: View {
 
     private var list: some View {
         VStack(spacing: 0) {
-            ForEach(Array(brews.enumerated()), id: \.element.id) { _, brew in
+            ForEach(Array(filteredBrews.enumerated()), id: \.element.id) { _, brew in
                 NavigationLink(value: brew) {
                     BrewListRow(brew: brew)
                 }
@@ -134,7 +177,81 @@ struct BrewListView: View {
             }
         }
         .padding(.horizontal, 24)
-        .padding(.top, 28)
+        .padding(.top, showsFilters ? 16 : 28)
+    }
+
+    private var filterChips: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            ScrollView(.horizontal) {
+                HStack(spacing: 8) {
+                    FilterChip(
+                        label: "All methods",
+                        symbol: nil,
+                        selected: methodFilter == nil
+                    ) { methodFilter = nil }
+
+                    ForEach(BrewMethod.allCases) { method in
+                        FilterChip(
+                            label: method.displayName,
+                            symbol: method.symbol,
+                            selected: methodFilter == method
+                        ) {
+                            methodFilter = (methodFilter == method) ? nil : method
+                        }
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+            .scrollIndicators(.hidden)
+
+            if bagsInBrews.count >= 2 {
+                ScrollView(.horizontal) {
+                    HStack(spacing: 8) {
+                        FilterChip(
+                            label: "All bags",
+                            symbol: nil,
+                            selected: bagFilter == nil
+                        ) { bagFilter = nil }
+
+                        ForEach(bagsInBrews, id: \.persistentModelID) { bag in
+                            FilterChip(
+                                label: bagChipLabel(for: bag),
+                                symbol: nil,
+                                selected: bagFilter?.persistentModelID == bag.persistentModelID
+                            ) {
+                                bagFilter = (bagFilter?.persistentModelID == bag.persistentModelID) ? nil : bag
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                }
+                .scrollIndicators(.hidden)
+            }
+        }
+    }
+
+    /// Compact bag chip label — prefer brand, fall back to name, then "Untitled".
+    private func bagChipLabel(for bag: Bag) -> String {
+        if !bag.brand.isEmpty { return bag.brand }
+        if !bag.name.isEmpty { return bag.name }
+        return "Untitled bag"
+    }
+
+    private var filteredEmptyState: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("No brews match.")
+                .font(.system(size: 22, weight: .medium, design: .serif))
+                .tracking(-0.4)
+                .foregroundStyle(Theme.ink)
+            Button("Clear filters") {
+                methodFilter = nil
+                bagFilter = nil
+            }
+            .buttonStyle(.outlinePill)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 32)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var emptyState: some View {
@@ -154,6 +271,37 @@ struct BrewListView: View {
         .padding(.horizontal, 32)
         .padding(.top, 80)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Filter chip styled to match `RoastChip` (the catalog filter row).
+/// Optional leading SF Symbol used by the BrewMethod filter row.
+private struct FilterChip: View {
+    let label: String
+    let symbol: String?
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                if let symbol {
+                    Image(systemName: symbol)
+                        .font(.system(size: 10, weight: .semibold))
+                }
+                Text(label)
+                    .font(Theme.body(11, weight: .semibold))
+                    .tracking(0.6)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .foregroundStyle(selected ? .white : Theme.ink2)
+            .background(selected ? Theme.accent : Theme.card, in: .capsule)
+            .overlay(Capsule().stroke(selected ? .clear : Theme.rule, lineWidth: 0.5))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 
