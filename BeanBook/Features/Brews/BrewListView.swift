@@ -179,7 +179,7 @@ private struct BrewListRow: View {
                     RatioText(brew.ratio)
                         .font(.system(size: 16, weight: .medium, design: .serif))
                         .monospacedDigit()
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(Theme.accent)
                     if let r = brew.rating, r > 0 {
                         RatingDots(value: r, size: 5)
                     }
