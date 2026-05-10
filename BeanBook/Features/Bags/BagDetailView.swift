@@ -114,16 +114,15 @@ struct BagDetailView: View {
     }
 
     private var tastingNotes: some View {
-        let parts = Array(bag.tastingNotes.enumerated())
-        return parts.reduce(into: Text("")) { acc, pair in
-            let (i, n) = pair
-            if i > 0 {
-                acc = acc + Text(" · ").foregroundStyle(Theme.accent)
-            }
-            acc = acc + Text(n).foregroundStyle(Theme.ink)
+        var acc = Text("")
+        for (i, n) in bag.tastingNotes.enumerated() {
+            let separator = i > 0 ? Text(" · ").foregroundStyle(Theme.accent) : Text("")
+            let note = Text(n).foregroundStyle(Theme.ink)
+            acc = Text("\(acc)\(separator)\(note)")
         }
-        .font(.system(size: 24, weight: .regular, design: .serif))
-        .tracking(-0.4)
+        return acc
+            .font(.system(size: 24, weight: .regular, design: .serif))
+            .tracking(-0.4)
     }
 
     private func descriptionBlock(_ notes: String) -> some View {
