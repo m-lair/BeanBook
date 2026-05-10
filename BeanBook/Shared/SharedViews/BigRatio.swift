@@ -81,9 +81,8 @@ struct RatioBar: View {
 @MainActor
 func RatioText(_ ratio: Double) -> Text {
     let val = ratio.formatted(.number.precision(.fractionLength(2)))
-    return Text("1")
-        + Text(":").fontWeight(.bold).foregroundStyle(Theme.accent)
-        + Text(val)
+    let colon = Text(":").fontWeight(.bold).foregroundStyle(Theme.accent)
+    return Text("1\(colon)\(val)")
 }
 
 private extension HorizontalAlignment {

@@ -206,13 +206,10 @@ private struct IdentitySection: View {
         VStack(alignment: .leading, spacing: 20) {
             Eyebrow("Identity", color: Theme.ink2)
 
-            (Text("What did you ")
-                .foregroundStyle(Theme.ink)
-             + Text("open")
-                .foregroundStyle(Theme.accent)
-                .italic()
-             + Text("?")
-                .foregroundStyle(Theme.accent))
+            let prefix = Text("What did you ").foregroundStyle(Theme.ink)
+            let verb = Text("open").foregroundStyle(Theme.accent).italic()
+            let punct = Text("?").foregroundStyle(Theme.accent)
+            Text("\(prefix)\(verb)\(punct)")
                 .font(Theme.display(34, weight: .semibold))
                 .lineSpacing(2)
 
