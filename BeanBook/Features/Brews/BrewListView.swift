@@ -14,16 +14,41 @@ struct BrewListView: View {
     @State private var hotStartBrew: Brew?
     @State private var methodFilter: BrewMethod? = nil
     @State private var bagFilter: Bag? = nil
+    @State private var searchText = ""
     @Namespace private var addSheetNamespace
 
     private var recentBrews: [Brew] { Array(brews.prefix(5)) }
 
+    private var trimmedSearch: String {
+        searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isSearching: Bool { !trimmedSearch.isEmpty }
+
     private var filteredBrews: [Brew] {
-        brews.filter { brew in
+        let needle = trimmedSearch.lowercased()
+        return brews.filter { brew in
             if let methodFilter, brew.method != methodFilter { return false }
             if let bagFilter, brew.bag?.persistentModelID != bagFilter.persistentModelID { return false }
+            if !needle.isEmpty, !matches(brew, needle: needle) { return false }
             return true
         }
+    }
+
+    /// Case-insensitive substring match across the fields a user is most likely
+    /// to remember a brew by: notes, the bag's brand/name/tasting-notes, the
+    /// method's display name, and the grind setting.
+    private func matches(_ brew: Brew, needle: String) -> Bool {
+        if let notes = brew.notes, notes.lowercased().contains(needle) { return true }
+        if brew.method.displayName.lowercased().contains(needle) { return true }
+        if let grind = brew.grindSetting, grind.lowercased().contains(needle) { return true }
+        if let bag = brew.bag {
+            if bag.brand.lowercased().contains(needle) { return true }
+            if bag.name.lowercased().contains(needle) { return true }
+            if bag.origin.lowercased().contains(needle) { return true }
+            if bag.tastingNotes.contains(where: { $0.lowercased().contains(needle) }) { return true }
+        }
+        return false
     }
 
     /// Distinct bags referenced by any brew, in most-recent-brew order.
@@ -41,7 +66,7 @@ struct BrewListView: View {
         return result
     }
 
-    private var hasActiveFilter: Bool { methodFilter != nil || bagFilter != nil }
+    private var hasActiveFilter: Bool { methodFilter != nil || bagFilter != nil || isSearching }
     private var showsFilters: Bool { brews.count >= 5 }
 
     var body: some View {
@@ -54,18 +79,18 @@ struct BrewListView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         header
-                        if recentBrews.count > 1 {
+                        if !isSearching, recentBrews.count > 1 {
                             RecentShotsStrip(brews: recentBrews) { brew in
                                 hotStartBrew = brew
                             }
                             .padding(.top, 24)
                         }
-                        if !presets.isEmpty {
+                        if !isSearching, !presets.isEmpty {
                             savedRecipesEntry
                                 .padding(.horizontal, 24)
                                 .padding(.top, recentBrews.count > 1 ? 22 : 24)
                         }
-                        if showsFilters {
+                        if !isSearching, showsFilters {
                             filterChips
                                 .padding(.top, 28)
                         }
@@ -83,6 +108,11 @@ struct BrewListView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
+        .searchable(
+            text: $searchText,
+            placement: .navigationBarDrawer(displayMode: .automatic),
+            prompt: "Search notes, bag, method, grind"
+        )
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Done") { dismiss() }
@@ -245,13 +275,14 @@ struct BrewListView: View {
 
     private var filteredEmptyState: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("No brews match.")
+            Text(isSearching ? "No matches for \u{201C}\(trimmedSearch)\u{201D}." : "No brews match.")
                 .font(.system(size: 22, weight: .medium, design: .serif))
                 .tracking(-0.4)
                 .foregroundStyle(Theme.ink)
-            Button("Clear filters") {
+            Button(isSearching && (methodFilter == nil && bagFilter == nil) ? "Clear search" : "Clear filters") {
                 methodFilter = nil
                 bagFilter = nil
+                searchText = ""
             }
             .buttonStyle(.outlinePill)
         }
