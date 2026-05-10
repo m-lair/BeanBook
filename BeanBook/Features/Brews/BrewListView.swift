@@ -110,6 +110,12 @@ struct BrewListView: View {
         }
         .navigationDestination(for: Brew.self) { BrewDetailView(brew: $0) }
         .navigationDestination(for: Bag.self) { BagDetailView(bag: $0) }
+        .onChange(of: brews.count) { _, newCount in
+            if newCount < 5 {
+                methodFilter = nil
+                bagFilter = nil
+            }
+        }
     }
 
     private var header: some View {

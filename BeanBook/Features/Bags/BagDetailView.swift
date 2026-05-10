@@ -228,7 +228,7 @@ private struct BagBrewRow: View {
                     RatioText(brew.ratio)
                         .font(.system(size: 17, weight: .medium, design: .serif))
                         .monospacedDigit()
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(Theme.accent)
                 }
             }
             .padding(.vertical, 14)
