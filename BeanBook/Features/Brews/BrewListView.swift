@@ -28,8 +28,12 @@ struct BrewListView: View {
     private var filteredBrews: [Brew] {
         let needle = trimmedSearch.lowercased()
         return brews.filter { brew in
-            if let methodFilter, brew.method != methodFilter { return false }
-            if let bagFilter, brew.bag?.persistentModelID != bagFilter.persistentModelID { return false }
+            // Chip filters are hidden while the search bar is active, so skip
+            // them here — search always scans the full brew list.
+            if !isSearching {
+                if let methodFilter, brew.method != methodFilter { return false }
+                if let bagFilter, brew.bag?.persistentModelID != bagFilter.persistentModelID { return false }
+            }
             if !needle.isEmpty, !matches(brew, needle: needle) { return false }
             return true
         }
@@ -279,7 +283,7 @@ struct BrewListView: View {
                 .font(.system(size: 22, weight: .medium, design: .serif))
                 .tracking(-0.4)
                 .foregroundStyle(Theme.ink)
-            Button(isSearching && (methodFilter == nil && bagFilter == nil) ? "Clear search" : "Clear filters") {
+            Button(isSearching ? "Clear search" : "Clear filters") {
                 methodFilter = nil
                 bagFilter = nil
                 searchText = ""
@@ -376,7 +380,7 @@ private struct BrewListRow: View {
     }
 
     private var detail: String {
-        let bag = brew.bag?.brand ?? "—"
+        let bag = brew.bag?.brand ?? "\u{2014}"
         let date = brew.createdAt.formatted(.relative(presentation: .numeric))
         return "\(bag) · \(date)"
     }
