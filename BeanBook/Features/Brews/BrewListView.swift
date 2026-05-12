@@ -279,7 +279,7 @@ struct BrewListView: View {
                 .font(.system(size: 22, weight: .medium, design: .serif))
                 .tracking(-0.4)
                 .foregroundStyle(Theme.ink)
-            Button(isSearching && (methodFilter == nil && bagFilter == nil) ? "Clear search" : "Clear filters") {
+            Button(isSearching && methodFilter == nil && bagFilter == nil ? "Clear search" : (isSearching ? "Clear all" : "Clear filters")) {
                 methodFilter = nil
                 bagFilter = nil
                 searchText = ""
