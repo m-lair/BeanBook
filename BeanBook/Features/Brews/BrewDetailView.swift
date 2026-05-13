@@ -72,7 +72,7 @@ struct BrewDetailView: View {
             if let bag = brew.bag {
                 NavigationLink(value: bag) {
                     HStack(spacing: 4) {
-                        Text("\(bag.brand) · \(bag.name)")
+                        Text(bag.displayTitle)
                             .font(Theme.body(13.5, weight: .medium))
                             .foregroundStyle(Theme.accent)
                         Image(systemName: "arrow.up.right")
