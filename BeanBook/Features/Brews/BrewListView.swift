@@ -13,7 +13,7 @@ struct BrewListView: View {
     @State private var showRecipes = false
     @State private var hotStartBrew: Brew?
     @State private var methodFilter: BrewMethod? = nil
-    @State private var bagFilter: Bag? = nil
+    @State private var bagFilterID: PersistentIdentifier? = nil
     @State private var searchText = ""
     @Namespace private var addSheetNamespace
 
@@ -29,7 +29,7 @@ struct BrewListView: View {
         let needle = trimmedSearch.lowercased()
         return brews.filter { brew in
             if let methodFilter, brew.method != methodFilter { return false }
-            if let bagFilter, brew.bag?.persistentModelID != bagFilter.persistentModelID { return false }
+            if let bagFilterID, brew.bag?.persistentModelID != bagFilterID { return false }
             if !needle.isEmpty, !matches(brew, needle: needle) { return false }
             return true
         }
@@ -66,7 +66,7 @@ struct BrewListView: View {
         return result
     }
 
-    private var hasActiveFilter: Bool { methodFilter != nil || bagFilter != nil || isSearching }
+    private var hasActiveFilter: Bool { methodFilter != nil || bagFilterID != nil || isSearching }
     private var showsFilters: Bool { brews.count >= 5 }
 
     var body: some View {
@@ -143,7 +143,18 @@ struct BrewListView: View {
         .onChange(of: brews.count) { _, newCount in
             if newCount < 5 {
                 methodFilter = nil
-                bagFilter = nil
+                bagFilterID = nil
+            }
+        }
+        .onChange(of: bagsInBrews) { _, newBags in
+            if let bagFilterID, !newBags.contains(where: { $0.persistentModelID == bagFilterID }) {
+                self.bagFilterID = nil
+            }
+        }
+        .onChange(of: isSearching) { _, nowSearching in
+            if nowSearching {
+                methodFilter = nil
+                bagFilterID = nil
             }
         }
     }
@@ -246,16 +257,16 @@ struct BrewListView: View {
                         FilterChip(
                             label: "All bags",
                             symbol: nil,
-                            selected: bagFilter == nil
-                        ) { bagFilter = nil }
+                            selected: bagFilterID == nil
+                        ) { bagFilterID = nil }
 
                         ForEach(bagsInBrews, id: \.persistentModelID) { bag in
                             FilterChip(
                                 label: bagChipLabel(for: bag),
                                 symbol: nil,
-                                selected: bagFilter?.persistentModelID == bag.persistentModelID
+                                selected: bagFilterID == bag.persistentModelID
                             ) {
-                                bagFilter = (bagFilter?.persistentModelID == bag.persistentModelID) ? nil : bag
+                                bagFilterID = (bagFilterID == bag.persistentModelID) ? nil : bag.persistentModelID
                             }
                         }
                     }
@@ -279,9 +290,9 @@ struct BrewListView: View {
                 .font(.system(size: 22, weight: .medium, design: .serif))
                 .tracking(-0.4)
                 .foregroundStyle(Theme.ink)
-            Button(isSearching && (methodFilter == nil && bagFilter == nil) ? "Clear search" : "Clear filters") {
+            Button(isSearching && (methodFilter == nil && bagFilterID == nil) ? "Clear search" : "Clear filters") {
                 methodFilter = nil
-                bagFilter = nil
+                bagFilterID = nil
                 searchText = ""
             }
             .buttonStyle(.outlinePill)

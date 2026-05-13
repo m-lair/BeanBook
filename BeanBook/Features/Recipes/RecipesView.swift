@@ -8,8 +8,6 @@ struct RecipesView: View {
 
     @State private var prefillBrew: Brew?
 
-    private var totalUses: Int { presets.count }
-
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
@@ -38,7 +36,7 @@ struct RecipesView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Eyebrow("\(presets.count) saved · used \(totalUses) times")
+            Eyebrow("\(presets.count) saved")
             Text("Recipes")
                 .font(.system(size: 36, weight: .medium, design: .serif))
                 .tracking(-1)
