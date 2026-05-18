@@ -22,6 +22,7 @@ struct BrewTimer: View {
     @State private var isEditingTime = false
     @State private var editMinutes: Int = 0
     @State private var editSeconds: Int = 30
+    @State private var didHydrate = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -108,7 +109,11 @@ struct BrewTimer: View {
         .frame(maxWidth: .infinity)
         .sensoryFeedback(.success, trigger: hasFinished)
         .animation(.snappy(duration: 0.3), value: phase)
-        .onAppear { hydrateFromBinding() }
+        .onAppear {
+            guard !didHydrate else { return }
+            didHydrate = true
+            hydrateFromBinding()
+        }
         .onDisappear { commitElapsed() }
         .sheet(isPresented: $isEditingTime) {
             TimeEditSheet(
@@ -246,7 +251,7 @@ struct BrewTimer: View {
                 accumulated += Date().timeIntervalSince(start)
             }
             startDate = nil
-            seconds = max(lowerBound, Int(accumulated.rounded()))
+            seconds = Int(accumulated.rounded())
             phase = .paused
         case .paused:
             startDate = Date()
@@ -298,7 +303,7 @@ struct BrewTimer: View {
         // Save whichever is meaningful: elapsed time if they ran the timer,
         // otherwise the target they planned for.
         if accumulated > 0 {
-            seconds = max(lowerBound, Int(accumulated.rounded()))
+            seconds = Int(accumulated.rounded())
         } else {
             seconds = max(lowerBound, Int(target.rounded()))
         }

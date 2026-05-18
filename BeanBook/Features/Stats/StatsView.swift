@@ -368,16 +368,13 @@ private struct BrewActivityStrip: View {
 
             HStack(alignment: .bottom, spacing: 4) {
                 ForEach(days) { day in
+                    let isToday = day.id == days.last?.id
                     RoundedRectangle(cornerRadius: 1.5)
-                        .fill(day.count > 0 ? Theme.ink.opacity(0.82) : Theme.rule)
+                        .fill(isToday ? Theme.accent : (day.count > 0 ? Theme.ink.opacity(0.82) : Theme.rule))
                         .frame(maxWidth: .infinity)
                         .frame(height: height(for: day.count))
                         .accessibilityLabel("\(day.count) brews")
                 }
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(Theme.accent)
-                    .frame(width: 6, height: 12)
-                    .accessibilityHidden(true)
             }
             .frame(height: 44, alignment: .bottom)
 
