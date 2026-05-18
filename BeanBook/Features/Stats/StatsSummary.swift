@@ -176,9 +176,7 @@ extension StatsSummary {
     private static func dialInRows(from brews: [Brew], bag: Bag?) -> [DialInRow] {
         guard let bag else { return [] }
         return brews
-            .filter { brew in
-                brew.method == .espresso && brew.bag?.persistentModelID == bag.persistentModelID
-            }
+            .filter { $0.bag?.persistentModelID == bag.persistentModelID }
             .prefix(5)
             .map(DialInRow.init)
     }
