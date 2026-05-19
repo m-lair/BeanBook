@@ -59,13 +59,12 @@ final class ProEntitlement: ProEntitlementProviding {
     }
 
     func purchase() async {
-        guard let product else {
+        // Load the product on demand if it wasn't fetched at startup (e.g. offline launch).
+        if product == nil {
             await loadProduct()
-            guard product != nil else {
-                purchaseState = .failed("Product unavailable.")
-                return
-            }
-            await purchase()
+        }
+        guard let product else {
+            purchaseState = .failed("Product unavailable.")
             return
         }
         purchaseState = .purchasing
