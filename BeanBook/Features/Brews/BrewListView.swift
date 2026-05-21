@@ -387,7 +387,7 @@ private struct BrewListRow: View {
     }
 
     private var detail: String {
-        let bag = brew.bag?.brand ?? "—"
+        let bag = brew.bag?.displayTitle ?? "—"
         let date = brew.createdAt.formatted(.relative(presentation: .numeric))
         return "\(bag) · \(date)"
     }

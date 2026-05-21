@@ -240,8 +240,9 @@ private struct TodayBrewRow: View {
 
     private var rowDetail: String {
         let when = brew.createdAt.formatted(.relative(presentation: .numeric))
-        if let bag = brew.bag?.brand, !bag.isEmpty {
-            return "\(bag) · \(when)"
+        if let bag = brew.bag {
+            let label = bag.brand.isEmpty ? bag.name : bag.brand
+            if !label.isEmpty { return "\(label) · \(when)" }
         }
         return when
     }
@@ -253,7 +254,7 @@ private struct TodayBagRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
-                Text(bag.name.isEmpty ? bag.brand : bag.name)
+                Text(bag.name.isEmpty ? (bag.brand.isEmpty ? "Untitled bag" : bag.brand) : bag.name)
                     .font(.system(size: 19, weight: .medium, design: .serif))
                     .tracking(-0.3)
                     .foregroundStyle(Theme.ink)
