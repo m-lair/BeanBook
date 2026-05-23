@@ -137,7 +137,7 @@ struct BrewDetailView: View {
             if let temp = brew.waterTempC {
                 RuleRow("Water", value: "\(Int(temp))°C")
             }
-            RuleRow("Grind", value: brew.grindSetting?.isEmpty == false ? brew.grindSetting! : "—")
+            RuleRow("Grind", value: brew.grindSetting.flatMap { $0.isEmpty ? nil : $0 } ?? "—")
         }
         .padding(.horizontal, 28)
         .padding(.top, Theme.p(36))
