@@ -6,7 +6,7 @@ struct RecipesView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \BrewPreset.createdAt, order: .reverse) private var presets: [BrewPreset]
 
-    @State private var prefillBrew: Brew?
+    @State private var selectedPreset: BrewPreset?
 
     var body: some View {
         ZStack {
@@ -27,8 +27,8 @@ struct RecipesView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
-        .sheet(item: $prefillBrew) { brew in
-            NewBrewSheet(prefill: brew)
+        .sheet(item: $selectedPreset) { preset in
+            NewBrewSheet(prefillPreset: preset)
         }
     }
 
@@ -49,15 +49,7 @@ struct RecipesView: View {
         VStack(spacing: 0) {
             ForEach(Array(presets.enumerated()), id: \.element.id) { _, preset in
                 Button {
-                    let scratch = Brew(
-                        method: preset.method,
-                        doseGrams: preset.doseGrams,
-                        yieldGrams: preset.yieldGrams,
-                        brewTimeSeconds: preset.brewTimeSeconds,
-                        grindSetting: preset.grindSetting,
-                        waterTempC: preset.waterTempC
-                    )
-                    prefillBrew = scratch
+                    selectedPreset = preset
                 } label: {
                     PresetRow(preset: preset)
                 }

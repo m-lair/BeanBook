@@ -17,8 +17,10 @@ struct NewBrewSheet: View {
 
     /// Optional bag to pre-link.
     var initialBag: Bag? = nil
-    /// Optional brew to pre-fill from (for "Brew this again" / Recipe launch).
+    /// Optional brew to pre-fill from (for “Brew this again” / hot-start from recent shots).
     var prefill: Brew? = nil
+    /// Optional preset to pre-fill from (for recipe launch via RecipesView).
+    var prefillPreset: BrewPreset? = nil
 
     @State private var step: Int = 0
     @State private var method: BrewMethod = .espresso
@@ -571,6 +573,11 @@ struct NewBrewSheet: View {
         guard !didHydrate else { return }
         defer { didHydrate = true }
 
+        if let prefillPreset {
+            applyPrefill(from: prefillPreset)
+            return
+        }
+
         if let prefill {
             applyPrefill(from: prefill, jumpToShot: true)
             return
@@ -601,6 +608,23 @@ struct NewBrewSheet: View {
         if let pinned = bagStore.pinnedBag {
             bag = pinned
         }
+    }
+
+    private func applyPrefill(from preset: BrewPreset) {
+        method = preset.method
+        dose = preset.doseGrams
+        yield = preset.yieldGrams
+        brewTimeSeconds = preset.brewTimeSeconds
+        grindSetting = preset.grindSetting ?? ""
+        waterTempC = preset.waterTempC
+        bag = bagStore.pinnedBag
+        prefillSnapshot = PrefillSnapshot(
+            dose: preset.doseGrams,
+            yield: preset.yieldGrams,
+            brewTimeSeconds: preset.brewTimeSeconds,
+            grindSetting: preset.grindSetting ?? ""
+        )
+        step = 1
     }
 
     private func applyPrefill(from source: Brew, jumpToShot: Bool) {
