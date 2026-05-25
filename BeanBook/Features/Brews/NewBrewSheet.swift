@@ -590,8 +590,23 @@ struct NewBrewSheet: View {
 
         if let initialBag {
             bag = initialBag
-            method = BrewMethod(rawValue: defaultBrewMethodRaw) ?? .espresso
-            applyMethodDefaultsIfFresh(method)
+            if autoPrefillFromLast, let recent = brewStore.mostRecent() {
+                method = recent.method
+                dose = recent.doseGrams
+                yield = recent.yieldGrams
+                brewTimeSeconds = recent.brewTimeSeconds
+                grindSetting = recent.grindSetting ?? ""
+                waterTempC = recent.waterTempC
+                prefillSnapshot = PrefillSnapshot(
+                    dose: recent.doseGrams,
+                    yield: recent.yieldGrams,
+                    brewTimeSeconds: recent.brewTimeSeconds,
+                    grindSetting: recent.grindSetting ?? ""
+                )
+            } else {
+                method = BrewMethod(rawValue: defaultBrewMethodRaw) ?? .espresso
+                applyMethodDefaultsIfFresh(method)
+            }
             return
         }
 
