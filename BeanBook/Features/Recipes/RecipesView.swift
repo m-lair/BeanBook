@@ -3,10 +3,9 @@ import SwiftData
 
 /// Saved-brew presets surfaced as a primary tab. Mirrors `C2Presets`.
 struct RecipesView: View {
-    @Environment(\.modelContext) private var context
     @Query(sort: \BrewPreset.createdAt, order: .reverse) private var presets: [BrewPreset]
 
-    @State private var prefillBrew: Brew?
+    @State private var prefillPreset: BrewPreset?
 
     var body: some View {
         ZStack {
@@ -27,8 +26,8 @@ struct RecipesView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
-        .sheet(item: $prefillBrew) { brew in
-            NewBrewSheet(prefill: brew)
+        .sheet(item: $prefillPreset) { preset in
+            NewBrewSheet(prefillPreset: preset)
         }
     }
 
@@ -49,15 +48,7 @@ struct RecipesView: View {
         VStack(spacing: 0) {
             ForEach(Array(presets.enumerated()), id: \.element.id) { _, preset in
                 Button {
-                    let scratch = Brew(
-                        method: preset.method,
-                        doseGrams: preset.doseGrams,
-                        yieldGrams: preset.yieldGrams,
-                        brewTimeSeconds: preset.brewTimeSeconds,
-                        grindSetting: preset.grindSetting,
-                        waterTempC: preset.waterTempC
-                    )
-                    prefillBrew = scratch
+                    prefillPreset = preset
                 } label: {
                     PresetRow(preset: preset)
                 }
@@ -127,7 +118,7 @@ private struct PresetRow: View {
     }
 
     private var formattedRatio: String {
-        guard ratio > 0 else { return "—" }
+        guard ratio > 0 else { return "\u{2014}" }
         return "1:\(ratio.formatted(.number.precision(.fractionLength(2))))"
     }
 

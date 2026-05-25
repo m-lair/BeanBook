@@ -19,6 +19,8 @@ struct NewBrewSheet: View {
     var initialBag: Bag? = nil
     /// Optional brew to pre-fill from (for "Brew this again" / Recipe launch).
     var prefill: Brew? = nil
+    /// Optional preset to pre-fill from (for Recipe-tab launch; avoids creating a throwaway @Model).
+    var prefillPreset: BrewPreset? = nil
 
     @State private var step: Int = 0
     @State private var method: BrewMethod = .espresso
@@ -64,7 +66,7 @@ struct NewBrewSheet: View {
         case 3: "Good"
         case 4: "Great"
         case 5: "Outstanding"
-        default: "—"
+        default: "\u{2014}"
         }
     }
 
@@ -284,7 +286,7 @@ struct NewBrewSheet: View {
                     VStack(spacing: 0) {
                         HairRule()
                         HStack {
-                            Text("Skip — no bag")
+                            Text("Skip \u{2014} no bag")
                                 .font(Theme.body(14))
                                 .foregroundStyle(bag == nil ? Theme.accent : Theme.ink2)
                             Spacer()
@@ -501,7 +503,7 @@ struct NewBrewSheet: View {
     }
 
     private var formattedRatio: String {
-        ratio > 0 ? "1:\(ratio.formatted(.number.precision(.fractionLength(2))))" : "—"
+        ratio > 0 ? "1:\(ratio.formatted(.number.precision(.fractionLength(2))))" : "\u{2014}"
     }
 
     private var formattedTime: String {
@@ -542,6 +544,8 @@ struct NewBrewSheet: View {
             return
         }
 
+        withAnimation(.easeOut(duration: 0.25)) { showSaved = true }
+
         if saveAsPreset {
             let trimmed = presetName.trimmingCharacters(in: .whitespaces)
             let name = trimmed.isEmpty ? "\(method.displayName) recipe" : trimmed
@@ -558,18 +562,26 @@ struct NewBrewSheet: View {
             } catch is QuotaExceededError {
                 paywallHeadline = "You've reached the free limit of \(ProQuota.recipes) saved recipes. Unlock Pro for unlimited."
                 showingPaywall = true
-                return
             } catch {
                 // Same fall-through as above.
             }
         }
-
-        withAnimation(.easeOut(duration: 0.25)) { showSaved = true }
     }
 
     private func hydrate() {
         guard !didHydrate else { return }
         defer { didHydrate = true }
+
+        if let prefillPreset {
+            method = prefillPreset.method
+            dose = prefillPreset.doseGrams
+            yield = prefillPreset.yieldGrams
+            brewTimeSeconds = prefillPreset.brewTimeSeconds
+            grindSetting = prefillPreset.grindSetting ?? ""
+            waterTempC = prefillPreset.waterTempC
+            step = 1
+            return
+        }
 
         if let prefill {
             applyPrefill(from: prefill, jumpToShot: true)
@@ -685,7 +697,7 @@ private struct StepperRow: View {
 
     private var stepper: some View {
         HStack(spacing: 14) {
-            StepperButton(symbol: "−") {
+            StepperButton(symbol: "\u{2212}") {
                 withAnimation(.snappy(duration: 0.25)) {
                     value = max(range.lowerBound, value - stepValue)
                 }
@@ -735,7 +747,7 @@ private struct StepperIntRow: View {
                     .foregroundStyle(Theme.ink2)
                 Spacer()
                 HStack(spacing: 14) {
-                    StepperButton(symbol: "−") {
+                    StepperButton(symbol: "\u{2212}") {
                         withAnimation(.snappy(duration: 0.25)) {
                             value = max(range.lowerBound, value - 1)
                         }

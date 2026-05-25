@@ -186,7 +186,7 @@ struct StatsView: View {
                             StatsBagRow(summary: bestBag, label: "Best bag")
                         }
                         if let bestRecipeName = summary.bestRecipeName {
-                            StatsInfoRow(title: "Best recipe", detail: bestRecipeName, value: "Saved")
+                            StatsInfoRow(title: "Latest recipe", detail: bestRecipeName, value: "Saved")
                         }
                     }
                 }
