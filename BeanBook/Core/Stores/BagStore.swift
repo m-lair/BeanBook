@@ -43,7 +43,12 @@ final class BagStore {
             notes: notes
         )
         context.insert(bag)
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            context.delete(bag)
+            throw error
+        }
         return bag
     }
 

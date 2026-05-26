@@ -43,7 +43,12 @@ final class BrewStore {
             bag: bag
         )
         context.insert(brew)
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            context.delete(brew)
+            throw error
+        }
         return brew
     }
 

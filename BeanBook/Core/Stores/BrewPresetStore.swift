@@ -39,7 +39,12 @@ final class BrewPresetStore {
             waterTempC: waterTempC
         )
         context.insert(preset)
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            context.delete(preset)
+            throw error
+        }
         return preset
     }
 }
