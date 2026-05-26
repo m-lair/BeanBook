@@ -1,0 +1,104 @@
+name: Detect Duplicate PRs
+
+# Surfaces file-overlap with existing open PRs when the bug-hunter routine opens
+# a new PR. Only runs on auto-generated branches (claude/* and audit/*) so
+# manual PRs are unaffected. Comments + labels rather than auto-closing — leaves
+# the call to a human.
+#
+# Security note: this workflow has no `run:` steps and never interpolates
+# user-controlled strings (PR title, branch name, etc.) into shell. All such
+# values are fetched via the GitHub API and used as JavaScript data inside
+# actions/github-script.
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+jobs:
+  detect-overlap:
+    if: startsWith(github.head_ref, 'claude/') || startsWith(github.head_ref, 'audit/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for file overlap with other open PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const thisPR = context.payload.pull_request.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Files this PR touches
+            const { data: thisFiles } = await github.rest.pulls.listFiles({
+              owner, repo, pull_number: thisPR, per_page: 300,
+            });
+            const thisPaths = new Set(thisFiles.map(f => f.filename));
+            if (thisPaths.size === 0) {
+              core.info('PR touches no files — skipping');
+              return;
+            }
+
+            // All other open PRs
+            const allOpen = await github.paginate(github.rest.pulls.list, {
+              owner, repo, state: 'open', per_page: 100,
+            });
+            const others = allOpen.filter(p => p.number !== thisPR);
+
+            const overlaps = [];
+            for (const pr of others) {
+              const { data: files } = await github.rest.pulls.listFiles({
+                owner, repo, pull_number: pr.number, per_page: 300,
+              });
+              const otherPaths = new Set(files.map(f => f.filename));
+              const shared = [...thisPaths].filter(p => otherPaths.has(p));
+              if (shared.length > 0) {
+                overlaps.push({ number: pr.number, title: pr.title, url: pr.html_url, shared });
+              }
+            }
+
+            if (overlaps.length === 0) {
+              core.info('No file overlap with open PRs');
+              return;
+            }
+
+            const lines = overlaps.map(o => {
+              const fileList = o.shared.map(f => '`' + f + '`').join(', ');
+              return `- [#${o.number}](${o.url}) — ${o.title}\n  Shared: ${fileList}`;
+            });
+
+            const body = [
+              '⚠️ **This PR touches files that are also modified by other open PRs.**',
+              '',
+              'When the bug-hunter routine finds the same issue across runs, it can open overlapping or duplicate PRs. Review the list below before merging — the unique fixes here may already be in main, or another PR may need to be closed/rebased.',
+              '',
+              ...lines,
+              '',
+              '_Posted automatically by `.github/workflows/detect-duplicate-prs.yml`._',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner, repo, issue_number: thisPR, body,
+            });
+
+            try {
+              await github.rest.issues.addLabels({
+                owner, repo, issue_number: thisPR,
+                labels: ['overlaps-open-pr'],
+              });
+            } catch (e) {
+              // Label may not exist yet — create it then retry.
+              await github.rest.issues.createLabel({
+                owner, repo,
+                name: 'overlaps-open-pr',
+                color: 'fbca04',
+                description: 'Touches files already changed by another open PR',
+              }).catch(() => {});
+              await github.rest.issues.addLabels({
+                owner, repo, issue_number: thisPR,
+                labels: ['overlaps-open-pr'],
+              }).catch(() => {});
+            }
