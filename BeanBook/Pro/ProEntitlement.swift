@@ -116,14 +116,21 @@ final class ProEntitlement: ProEntitlementProviding {
 
     private func refreshEntitlements() async {
         var found = false
+        var didIterate = false
         for await result in Transaction.currentEntitlements {
+            didIterate = true
             if let txn = try? checkVerified(result),
                txn.productID == Self.productID,
                txn.revocationDate == nil {
                 found = true
             }
         }
-        setPro(found)
+        // Only update the cache when StoreKit returned at least one transaction.
+        // An empty sequence (e.g. fresh device before iCloud sync) is ambiguous —
+        // writing false here would incorrectly lock out users with a valid purchase.
+        if didIterate {
+            setPro(found)
+        }
     }
 
     private func handle(_ result: VerificationResult<Transaction>) async {

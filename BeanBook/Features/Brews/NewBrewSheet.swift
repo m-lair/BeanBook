@@ -621,6 +621,7 @@ struct NewBrewSheet: View {
     }
 
     private func applyMethodDefaultsIfFresh(_ method: BrewMethod) {
+        guard prefillSnapshot == nil else { return }
         dose = method.defaultDose
         yield = method.defaultYield
         brewTimeSeconds = method.defaultTimeSeconds
