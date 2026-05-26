@@ -66,6 +66,15 @@ struct BrewListView: View {
         return result
     }
 
+    /// Value-typed mirror of bagsInBrews used for onChange observation.
+    /// SwiftData @Model arrays use object-identity equality, which can miss
+    /// deletions if the model graph updates after SwiftUI's change-detection
+    /// pass. PersistentIdentifier is value-typed with correct Equatable
+    /// semantics and always reflects live store state.
+    private var bagsInBrewsIDs: Set<PersistentIdentifier> {
+        Set(bagsInBrews.map(\.persistentModelID))
+    }
+
     private var hasActiveFilter: Bool { methodFilter != nil || bagFilterID != nil || isSearching }
     private var showsFilters: Bool { brews.count >= 5 }
 
@@ -146,8 +155,8 @@ struct BrewListView: View {
                 bagFilterID = nil
             }
         }
-        .onChange(of: bagsInBrews) { _, newBags in
-            if let bagFilterID, !newBags.contains(where: { $0.persistentModelID == bagFilterID }) {
+        .onChange(of: bagsInBrewsIDs) { _, newIDs in
+            if let bagFilterID, !newIDs.contains(bagFilterID) {
                 self.bagFilterID = nil
             }
         }
@@ -290,7 +299,7 @@ struct BrewListView: View {
                 .font(.system(size: 22, weight: .medium, design: .serif))
                 .tracking(-0.4)
                 .foregroundStyle(Theme.ink)
-            Button(isSearching && (methodFilter == nil && bagFilterID == nil) ? "Clear search" : "Clear filters") {
+            Button(isSearching ? "Clear search" : "Clear filters") {
                 methodFilter = nil
                 bagFilterID = nil
                 searchText = ""
