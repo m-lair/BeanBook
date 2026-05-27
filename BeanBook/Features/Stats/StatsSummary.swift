@@ -236,8 +236,8 @@ extension StatsSummary.BrewRow {
 
     private static func detail(for brew: Brew) -> String {
         let date = brew.createdAt.formatted(date: .abbreviated, time: .omitted)
-        if let bag = brew.bag?.brand, !bag.isEmpty {
-            return "\(bag) / \(date)"
+        if let bag = brew.bag {
+            return "\(bag.displayTitle) / \(date)"
         }
         return date
     }
