@@ -44,6 +44,7 @@ struct NewBrewSheet: View {
     @State private var showSaved = false
     @State private var savedScale: CGFloat = 0
     @State private var didHydrate = false
+    @State private var brewCommitted = false
 
     @AppStorage("timerCountsDown") private var timerCountsDown = true
     @AppStorage("defaultBrewMethod") private var defaultBrewMethodRaw: String = BrewMethod.espresso.rawValue
@@ -521,6 +522,7 @@ struct NewBrewSheet: View {
     }
 
     private func save() {
+        guard !brewCommitted else { return }
         let resolvedGrind = grindSetting.isEmpty ? nil : grindSetting
         let resolvedNotes = notes.isEmpty ? nil : notes
 
@@ -536,6 +538,7 @@ struct NewBrewSheet: View {
                 notes: resolvedNotes,
                 bag: bag
             )
+            brewCommitted = true
         } catch is QuotaExceededError {
             paywallHeadline = "You've reached the free limit of \(ProQuota.brews) brews. Unlock Pro for unlimited."
             showingPaywall = true
@@ -634,6 +637,7 @@ struct NewBrewSheet: View {
         brewTimeSeconds = preset.brewTimeSeconds
         grindSetting = preset.grindSetting ?? ""
         waterTempC = preset.waterTempC
+        bag = bagStore.pinnedBag
         prefillSnapshot = PrefillSnapshot(
             dose: preset.doseGrams,
             yield: preset.yieldGrams,
