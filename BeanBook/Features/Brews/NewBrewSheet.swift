@@ -561,6 +561,7 @@ struct NewBrewSheet: View {
                     waterTempC: waterTempC
                 )
             } catch is QuotaExceededError {
+                withAnimation(.easeOut(duration: 0.25)) { showSaved = true }
                 paywallHeadline = "You've reached the free limit of \(ProQuota.recipes) saved recipes. Unlock Pro for unlimited."
                 showingPaywall = true
                 return
