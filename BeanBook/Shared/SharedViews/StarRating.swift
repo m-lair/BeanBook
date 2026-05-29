@@ -16,7 +16,7 @@ struct StarRating: View {
                     Circle()
                         .fill((rating ?? 0) >= star ? Theme.accent : Theme.rule)
                         .frame(width: dotSize, height: dotSize)
-                        .animation(.easeOut(duration: 0.2), value: rating)
+                        .motion(Motion.control, value: rating)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Rate \(star) out of \(maxRating)")
