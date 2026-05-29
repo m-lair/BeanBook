@@ -44,12 +44,9 @@ struct OnboardingView: View {
                 }
             }
             .id(step)
-            .transition(reduceMotion ? .identity : .asymmetric(
-                insertion: .opacity.combined(with: .move(edge: .trailing)),
-                removal: .opacity.combined(with: .move(edge: .leading))
-            ))
+            .transition(.stepForward)
         }
-        .animation(.snappy(duration: 0.32), value: step)
+        .motion(Motion.transition, value: step)
         .sheet(isPresented: $showAddBag) {
             NewBagSheet()
         }
@@ -125,7 +122,7 @@ struct OnboardingView: View {
 
             VStack(spacing: 14) {
                 Button {
-                    withAnimation(.snappy(duration: 0.32)) { step = 1 }
+                    withMotion(Motion.transition, reduceMotion: reduceMotion) { step = 1 }
                 } label: {
                     Text("Get started")
                         .frame(maxWidth: .infinity)
