@@ -116,15 +116,12 @@ struct NewBrewSheet: View {
                         }
                     }
                     .id(step)
-                    .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .move(edge: .trailing)),
-                        removal: .opacity.combined(with: .move(edge: .leading))
-                    ))
+                    .transition(.stepForward)
                 }
                 .padding(.bottom, 140)
             }
             .scrollIndicators(.hidden)
-            .animation(.snappy(duration: 0.32), value: step)
+            .motion(Motion.transition, value: step)
 
             VStack {
                 Spacer()
@@ -145,7 +142,7 @@ struct NewBrewSheet: View {
                     .frame(width: i == step ? 26 : 16, height: 2)
             }
         }
-        .animation(.snappy(duration: 0.32), value: step)
+        .motion(Motion.transition, value: step)
         .accessibilityElement()
         .accessibilityLabel("Step \(step + 1) of \(Self.totalSteps)")
     }
@@ -164,7 +161,7 @@ struct NewBrewSheet: View {
         .padding(.horizontal, 28)
         .padding(.top, 36)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .animation(.snappy(duration: 0.3), value: step)
+        .motion(Motion.transition, value: step)
     }
 
     private var stepTitle: String {
@@ -187,7 +184,7 @@ struct NewBrewSheet: View {
 
             if step > 0 {
                 Button {
-                    withAnimation(.snappy(duration: 0.3)) { step -= 1 }
+                    withMotion(Motion.transition, reduceMotion: reduceMotion) { step -= 1 }
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "chevron.left")
@@ -216,7 +213,7 @@ struct NewBrewSheet: View {
             .offset(y: 40),
             alignment: .top
         )
-        .animation(.snappy(duration: 0.3), value: step)
+        .motion(Motion.transition, value: step)
     }
 
     // MARK: - Step 0: Context (method + bag)
@@ -373,7 +370,7 @@ struct NewBrewSheet: View {
             VStack(spacing: 18) {
                 BrewTimer(seconds: $brewTimeSeconds, countsDown: timerCountsDown)
                 if let cap = timeCaption {
-                    DeltaCaption(text: cap, reduceMotion: reduceMotion)
+                    DeltaCaption(text: cap)
                 }
             }
             .padding(.top, 28)
@@ -478,13 +475,7 @@ struct NewBrewSheet: View {
                 }
                 .scaleEffect(savedScale)
                 .onAppear {
-                    if reduceMotion {
-                        savedScale = 1
-                    } else {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
-                            savedScale = 1
-                        }
-                    }
+                    withMotion(Motion.confirm, reduceMotion: reduceMotion) { savedScale = 1 }
                 }
 
                 VStack(spacing: 6) {
@@ -515,7 +506,7 @@ struct NewBrewSheet: View {
 
     private func advance() {
         if step < Self.totalSteps - 1 {
-            withAnimation(.snappy(duration: 0.32)) { step += 1 }
+            withMotion(Motion.transition, reduceMotion: reduceMotion) { step += 1 }
         } else {
             save()
         }
@@ -569,7 +560,7 @@ struct NewBrewSheet: View {
             }
         }
 
-        withAnimation(.easeOut(duration: 0.25)) { showSaved = true }
+        withMotion(Motion.fade, reduceMotion: reduceMotion) { showSaved = true }
     }
 
     private func hydrate() {
@@ -669,14 +660,13 @@ private struct PrefillSnapshot: Equatable {
 
 private struct DeltaCaption: View {
     let text: String
-    let reduceMotion: Bool
 
     var body: some View {
         Text(text)
             .font(Theme.body(11))
             .tracking(0.3)
             .foregroundStyle(Theme.ink3)
-            .transition(reduceMotion ? .identity : .opacity)
+            .transition(.opacity)
     }
 }
 
@@ -701,7 +691,7 @@ private struct StepperRow: View {
                         .font(Theme.body(14.5))
                         .foregroundStyle(Theme.ink2)
                     if let caption {
-                        DeltaCaption(text: caption, reduceMotion: reduceMotion)
+                        DeltaCaption(text: caption)
                     }
                 }
                 Spacer()
@@ -714,7 +704,7 @@ private struct StepperRow: View {
     private var stepper: some View {
         HStack(spacing: 14) {
             StepperButton(symbol: "−") {
-                withAnimation(.snappy(duration: 0.25)) {
+                withMotion(Motion.control, reduceMotion: reduceMotion) {
                     value = max(range.lowerBound, value - stepValue)
                 }
             }
@@ -734,7 +724,7 @@ private struct StepperRow: View {
             .sensoryFeedback(.selection, trigger: value)
 
             StepperButton(symbol: "+") {
-                withAnimation(.snappy(duration: 0.25)) {
+                withMotion(Motion.control, reduceMotion: reduceMotion) {
                     value = min(range.upperBound, value + stepValue)
                 }
             }
@@ -754,6 +744,8 @@ private struct StepperIntRow: View {
     let unit: String
     let range: ClosedRange<Int>
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         VStack(spacing: 0) {
             HairRule()
@@ -764,7 +756,7 @@ private struct StepperIntRow: View {
                 Spacer()
                 HStack(spacing: 14) {
                     StepperButton(symbol: "−") {
-                        withAnimation(.snappy(duration: 0.25)) {
+                        withMotion(Motion.control, reduceMotion: reduceMotion) {
                             value = max(range.lowerBound, value - 1)
                         }
                     }
@@ -784,7 +776,7 @@ private struct StepperIntRow: View {
                     .sensoryFeedback(.selection, trigger: value)
 
                     StepperButton(symbol: "+") {
-                        withAnimation(.snappy(duration: 0.25)) {
+                        withMotion(Motion.control, reduceMotion: reduceMotion) {
                             value = min(range.upperBound, value + 1)
                         }
                     }
@@ -802,7 +794,6 @@ private struct GrindRow: View {
     var caption: String?
 
     @FocusState private var focused: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 0) {
@@ -813,7 +804,7 @@ private struct GrindRow: View {
                         .font(Theme.body(14.5))
                         .foregroundStyle(Theme.ink2)
                     if let caption {
-                        DeltaCaption(text: caption, reduceMotion: reduceMotion)
+                        DeltaCaption(text: caption)
                     }
                 }
                 Spacer()
@@ -856,6 +847,6 @@ private struct StepperPressStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.88 : 1)
             .opacity(configuration.isPressed ? 0.7 : 1)
-            .animation(.snappy(duration: 0.18), value: configuration.isPressed)
+            .motion(Motion.control, value: configuration.isPressed)
     }
 }
