@@ -41,11 +41,7 @@ struct BigRatio: View {
             displayRatio = ratio
         }
         .onChange(of: ratio) { _, newValue in
-            if reduceMotion {
-                displayRatio = newValue
-            } else {
-                withAnimation(.snappy(duration: 0.35)) { displayRatio = newValue }
-            }
+            withMotion(Motion.transition, reduceMotion: reduceMotion) { displayRatio = newValue }
         }
     }
 }
@@ -54,8 +50,6 @@ struct BigRatio: View {
 struct RatioBar: View {
     let ratio: Double
     var height: CGFloat = 4
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         GeometryReader { geo in
@@ -68,7 +62,7 @@ struct RatioBar: View {
                     .fill(Theme.ink4)
             }
             .clipShape(.rect(cornerRadius: height / 2))
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.5), value: ratio)
+            .motion(Motion.fill, value: ratio)
         }
         .frame(height: height)
         .background(Theme.rule, in: .rect(cornerRadius: height / 2))

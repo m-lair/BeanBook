@@ -16,6 +16,7 @@ struct ShopView: View {
     @State private var toastTrigger = 0
     @State private var toastTask: Task<Void, Never>?
     @State private var showingPaywall = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(showsDoneButton: Bool = false) {
         self.showsDoneButton = showsDoneButton
@@ -72,7 +73,7 @@ struct ShopView: View {
             if let toastMessage {
                 ToastView(message: toastMessage)
                     .padding(.bottom, 30)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .transition(.toastRise)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -303,7 +304,7 @@ struct ShopView: View {
             return
         }
 
-        withAnimation(.easeOut(duration: 0.25)) {
+        withMotion(Motion.fade, reduceMotion: reduceMotion) {
             toastMessage = "Added \(bean.name) to Beans"
         }
         toastTrigger &+= 1
@@ -311,7 +312,7 @@ struct ShopView: View {
         toastTask = Task {
             try? await Task.sleep(for: .seconds(2))
             guard !Task.isCancelled else { return }
-            withAnimation(.easeOut(duration: 0.25)) { toastMessage = nil }
+            withMotion(Motion.fade, reduceMotion: reduceMotion) { toastMessage = nil }
         }
     }
 }

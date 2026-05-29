@@ -35,6 +35,7 @@ If verification cannot run, report the exact blocker and the command that failed
 - The iOS target does not silently depend on Firebase SDKs.
 - Pro quotas are enforced at the store boundary.
 - Theme access goes through `Theme.*`; no new hex literals in feature views.
+- Animation curves go through `Motion.*`, applied via `.motion`/`withMotion`; no raw curve literals in views except the documented `BrewTimer` rail exemption.
 - System color scheme remains locked at the app root; dark appearance is only available through the manual `Midnight` palette.
 - `BrewListView` and `BagListView` use `ScrollView` + `VStack`; row actions use context menus unless the screen is intentionally converted to `List`.
 

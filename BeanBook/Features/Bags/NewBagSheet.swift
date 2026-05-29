@@ -403,7 +403,7 @@ private struct RoastPillControl: View {
             Capsule(style: .continuous)
                 .stroke(Theme.rule, lineWidth: 0.5)
         )
-        .animation(.snappy(duration: 0.2), value: level)
+        .motion(Motion.control, value: level)
     }
 
     private func isActive(_ anchor: Anchor) -> Bool {
@@ -455,7 +455,7 @@ private struct ProcessPillControl: View {
                     .stroke(Theme.rule, lineWidth: 0.5)
             )
         }
-        .animation(.snappy(duration: 0.2), value: process)
+        .motion(Motion.control, value: process)
     }
 }
 

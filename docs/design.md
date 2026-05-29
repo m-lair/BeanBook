@@ -164,19 +164,34 @@ Cards do not use drop shadows except for the featured discovery card's tilted he
 
 ## Motion
 
-- **Snappy.** `withAnimation(.snappy(duration: 0.32))` for step transitions and interactive controls.
-- **Spring for confirmation.** `.spring(response: 0.4, dampingFraction: 0.6)` for the save-success checkmark scale-in.
-- **No motion for type.** Text doesn't bounce or scale-in. The exception is `.contentTransition(.numericText(value:))` for stepper values, which animates digit changes character-by-character.
+All animation curves are tokens on `Motion` (`BeanBook/Shared/Theme/Motion.swift`) — the animation analogue of `Theme`. There are five, grouped by intent, not duration:
+
+| Token | Curve | Use |
+|---|---|---|
+| `Motion.transition` | `.snappy(0.32)` | Spatial moves between steps / screens / states, and the hero numeric count-up |
+| `Motion.control` | `.snappy(0.2)` | Direct-manipulation feedback — steppers, pickers, selection pills, stars, press states |
+| `Motion.fade` | `.easeOut(0.25)` | Pure opacity appear/disappear (toast, save overlay) |
+| `Motion.fill` | `.easeOut(0.5)` | Discrete value-bar fill to a target (the dose↔yield ratio bar) |
+| `Motion.confirm` | `.spring(0.4 / 0.6)` | The one celebratory curve — the save-success checkmark |
+
+**Rule:** never hardcode an animation curve. Apply a token through `.motion(_:value:)` (declarative) or `withMotion(_:reduceMotion:)` (imperative). If a motion doesn't fit one of the five, the design needs review, not a new literal — same discipline as color.
+
+- **No motion for type.** Text doesn't bounce or scale-in. The exception is `.contentTransition(.numericText(value:))` for stepper and ratio values, which animates digit changes character-by-character.
+- **One sanctioned exception to the token rule:** `BrewTimer`'s progress rail uses a local `.linear(0.1)` synced to its `TimelineView` tick. It's a continuous live-tracking fill, not a discrete state animation — tokenizing it would make the bar lag behind each tick.
 
 ### Reduce Motion
 
-Every animation must respect `@Environment(\.accessibilityReduceMotion)`:
+Reduce-motion is handled **centrally**, not per-site. `.motion`/`withMotion` read `@Environment(\.accessibilityReduceMotion)` and pass `nil` to the underlying animation when it's on — so you never write `reduceMotion ? …` branches in views, and a transition driven by a nil'd animation simply applies instantly (which is the desired reduce-motion behavior). The timer rail is the lone site that gates its own curve, by construction.
 
 ```swift
-.transition(reduceMotion ? .identity : .opacity)
+// Declarative — animates normally, instant under Reduce Motion:
+.motion(Motion.transition, value: step)
+
+// Imperative — caller passes its own reduceMotion env value:
+withMotion(Motion.control, reduceMotion: reduceMotion) { value += 1 }
 ```
 
-Or branch the `withAnimation` block. Test with **Settings → Accessibility → Motion → Reduce Motion** before shipping any new transition.
+Test with **Settings → Accessibility → Motion → Reduce Motion** before shipping any new transition — every step transition, toast, count-up, and overlay should go instant.
 
 ## Accessibility
 

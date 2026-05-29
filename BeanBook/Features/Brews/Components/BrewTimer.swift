@@ -35,7 +35,7 @@ struct BrewTimer: View {
         VStack(spacing: 0) {
             Eyebrow(eyebrowLabel, color: eyebrowColor)
                 .contentTransition(.opacity)
-                .animation(.snappy(duration: 0.25), value: phase)
+                .motion(Motion.transition, value: phase)
 
             TimelineView(.animation(minimumInterval: 0.05, paused: phase != .running)) { context in
                 let elapsed = currentElapsed(at: context.date)
@@ -104,11 +104,11 @@ struct BrewTimer: View {
             .padding(.top, 8)
             .opacity(canReset ? 1 : 0)
             .allowsHitTesting(canReset)
-            .animation(.snappy(duration: 0.25), value: canReset)
+            .motion(Motion.control, value: canReset)
         }
         .frame(maxWidth: .infinity)
         .sensoryFeedback(.success, trigger: hasFinished)
-        .animation(.snappy(duration: 0.3), value: phase)
+        .motion(Motion.transition, value: phase)
         .onAppear {
             guard !didHydrate else { return }
             didHydrate = true
