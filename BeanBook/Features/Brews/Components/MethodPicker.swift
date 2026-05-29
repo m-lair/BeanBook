@@ -3,12 +3,13 @@ import SwiftUI
 /// Vertical method list — matches the C2 NewBrew step 1 layout.
 struct MethodPicker: View {
     @Binding var selection: BrewMethod
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 0) {
             ForEach(BrewMethod.allCases) { method in
                 MethodRow(method: method, isSelected: selection == method) {
-                    withAnimation(.snappy) { selection = method }
+                    withMotion(Motion.control, reduceMotion: reduceMotion) { selection = method }
                 }
             }
         }
