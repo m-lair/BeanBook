@@ -53,7 +53,7 @@ Built from a direct grep of `BeanBook/` (not a summary). This is the authoritati
 
 ## Motion token set
 
-A new namespace mirroring `Theme`. Curves are constant (they don't theme), so they are `nonisolated static let`, the same pattern `Theme` uses for spacing/type. Five semantic tokens, grouped by the motion's *intent* (not by raw duration):
+A new namespace mirroring `Theme`. Curves are constant (they don't theme), so they are plain `static let` on a non-`@MainActor` `enum Motion` (`Animation` is `Sendable`, so no isolation is needed — unlike `Theme`, which is `@MainActor` and uses `nonisolated static let` for its constants). Five semantic tokens, grouped by the motion's *intent* (not by raw duration):
 
 | Token | Curve | Used for | Replaces |
 |---|---|---|---|

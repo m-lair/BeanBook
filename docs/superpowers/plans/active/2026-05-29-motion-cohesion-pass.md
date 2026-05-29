@@ -421,6 +421,7 @@ with:
 ```
 
 - [ ] **Step 6: Steppers (P2).** The four `withAnimation(.snappy(duration: 0.25)) { … }` blocks in `StepperRow` (lines ~717, ~737) and `StepperIntRow` (lines ~767, ~787) → `withMotion(Motion.control, reduceMotion: reduceMotion) { … }`. `StepperRow` already reads `reduceMotion` (line 693); **`StepperIntRow` does NOT** — add `@Environment(\.accessibilityReduceMotion) private var reduceMotion` to `StepperIntRow`.
+  - Note: `StepperIntRow` has **no call site** in the repo today (pre-existing dead code). Migrate it anyway to keep the grep gate clean, but be aware the Task 10 manual pass won't render it. Deleting the dead struct is out of scope for this motion change.
 
 - [ ] **Step 7: Button-press style (P1).** Line ~859 in `StepperPressStyle`: `.animation(.snappy(duration: 0.18), value: configuration.isPressed)` → `.motion(Motion.control, value: configuration.isPressed)`.
 
