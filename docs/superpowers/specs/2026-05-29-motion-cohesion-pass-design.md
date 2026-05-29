@@ -40,7 +40,7 @@ Built from a direct grep of `BeanBook/` (not a summary). This is the authoritati
 | `NewBrewSheet:518` | `.snappy(0.32)` | `step += 1` (advance) | ✗ |
 | `NewBrewSheet:484` | `.spring(0.4/0.6)` | save checkmark scale-in | ✓ via `if reduceMotion` branch |
 | `NewBrewSheet:572` | `.easeOut(0.25)` | `showSaved = true` (overlay) | ✗ |
-| `NewBrewSheet:717/737/767/787` | `.snappy(0.25)` | stepper value changes (dose/yield/grind) | ✗ |
+| `NewBrewSheet:717/737/767/787` | `.snappy(0.25)` | dose/yield stepper value changes (grind is a `TextField`, no animation) | ✗ |
 | `OnboardingView:128` | `.snappy(0.32)` | `step = 1` | ✗ |
 | `BigRatio:47` | `.snappy(0.35)` | `displayRatio` count-up | ✓ via `if reduceMotion` branch |
 | `MethodPicker:11` | `.snappy` (bare, ≈0.35 default) | `selection` change | ✗ |
@@ -157,7 +157,7 @@ Route these call sites through the tokens + application layer. Reduce-motion gap
 
 | File | Changes |
 |---|---|
-| `NewBrewSheet.swift` | `:127/:148/:167/:219` (`value: step`) → `.motion(Motion.transition, …)`. `:190/:518` (`withAnimation` step ±1) → `withMotion(Motion.transition, …)`. `:484` save spring → `withMotion(Motion.confirm, …)` (replaces the if/else branch). `:572` `showSaved` → `withMotion(Motion.fade, …)`. `:717/:737/:767/:787` steppers → `withMotion(Motion.control, …)`. `:859` press style → `.motion(Motion.control, value: configuration.isPressed)`. `:119` step transition → `.stepForward`. `:679` ternary → plain `.opacity`. (`:162/:204/:501` transitions left as-is; they degrade via the now-gated drivers.) |
+| `NewBrewSheet.swift` | `:127/:148/:167/:219` (`value: step`) → `.motion(Motion.transition, …)`. `:190/:518` (`withAnimation` step ±1) → `withMotion(Motion.transition, …)`. `:484` save spring → `withMotion(Motion.confirm, …)` (replaces the if/else branch). `:572` `showSaved` → `withMotion(Motion.fade, …)`. `:717/:737/:767/:787` steppers → `withMotion(Motion.control, …)`. `:859` press style → `.motion(Motion.control, value: configuration.isPressed)`. `:119` step transition → `.stepForward`. `:679` ternary → plain `.opacity` — `DeltaCaption` takes `reduceMotion` as an init arg (not an env read), so dropping the ternary likely orphans that param; remove it if it becomes unused. (`:162/:204/:501` transitions left as-is; they degrade via the now-gated drivers.) |
 | `OnboardingView.swift` | `:52` → `.motion(Motion.transition, …)`; `:128` → `withMotion(Motion.transition, …)`; `:47` → `.transition(.stepForward)` (drop the `reduceMotion ? .identity` ternary). |
 | `BigRatio.swift` | `:47` count-up → `withMotion(Motion.transition, reduceMotion:)` (collapse if/else); `:71` RatioBar → `.motion(Motion.fill, value: ratio)`. |
 | `BrewTimer.swift` | `:38` (eyebrow, `value: phase`) → `.motion(Motion.transition, …)`; `:111` (layout reflow, `value: phase`) → `.motion(Motion.transition, …)`; `:107` (`canReset`) → `.motion(Motion.control, …)`. **`:152` linear rail fill stays as-is (documented exemption).** Closing `:38/:107/:111` also makes the `:77` adjust-pill transition degrade correctly under reduce-motion. |
