@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// Editorial countdown timer — counts down from a target brew duration to zero.
-/// Tap "Start" to begin, "Pause"/"Resume" mid-run, "Reset" to clear. The number
+/// Tap “Start” to begin, “Pause”/“Resume” mid-run, “Reset” to clear. The number
 /// turns forest-accent while running and shifts to success-green on completion.
 struct BrewTimer: View {
-    /// Two-way binding to the brew's planned/elapsed time in seconds.
+    /// Two-way binding to the brew’s planned/elapsed time in seconds.
     /// While idle, this is the **target** the user is brewing toward (adjusted via the ±30s chips).
     /// When paused or finished, it reflects the actual elapsed time.
     @Binding var seconds: Int
@@ -56,7 +56,9 @@ struct BrewTimer: View {
                     }
                     .accessibilityHint(phase == .idle ? "Double tap to set timer duration" : "")
                     .onChange(of: remaining <= 0) { _, finished in
-                        if finished && phase == .running { finish() }
+                        if finished && phase == .running {
+                            DispatchQueue.main.async { finish() }
+                        }
                     }
             }
             .accessibilityLabel(accessibilityTimeLabel)
@@ -257,7 +259,7 @@ struct BrewTimer: View {
             startDate = Date()
             phase = .running
         case .finished:
-            // "Start over" — clear and restart from idle.
+            // “Start over” — clear and restart from idle.
             reset()
         }
     }

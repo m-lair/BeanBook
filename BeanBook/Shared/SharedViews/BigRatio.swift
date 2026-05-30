@@ -38,7 +38,7 @@ struct BigRatio: View {
         }
         .frame(maxWidth: .infinity, alignment: alignment.frameAlignment)
         .onAppear {
-            displayRatio = ratio
+            withMotion(Motion.transition, reduceMotion: reduceMotion) { displayRatio = ratio }
         }
         .onChange(of: ratio) { _, newValue in
             withMotion(Motion.transition, reduceMotion: reduceMotion) { displayRatio = newValue }
