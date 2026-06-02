@@ -17,7 +17,7 @@ struct NewBrewSheet: View {
 
     /// Optional bag to pre-link.
     var initialBag: Bag? = nil
-    /// Optional brew to pre-fill from (for "Brew this again" / Recipe launch).
+    /// Optional brew to pre-fill from (for “Brew this again” / Recipe launch).
     var prefill: Brew? = nil
     /// Optional saved recipe to pre-fill from (for Recipe tab launch).
     var prefillPreset: BrewPreset? = nil
@@ -35,7 +35,7 @@ struct NewBrewSheet: View {
 
     /// Snapshot of the values used to prefill the form. Used to render Δ-from-last hints.
     @State private var prefillSnapshot: PrefillSnapshot?
-    /// The bag whose values were used for prefill — surfaced as a "recent" swap chip if user has a different pinned bag.
+    /// The bag whose values were used for prefill — surfaced as a “recent” swap chip if user has a different pinned bag.
     @State private var recentBag: Bag?
 
     @State private var saveAsPreset = false
@@ -373,6 +373,7 @@ struct NewBrewSheet: View {
                     DeltaCaption(text: cap)
                 }
             }
+            .motion(Motion.control, value: timeCaption != nil)
             .padding(.top, 28)
 
             GrindRow(value: $grindSetting, caption: grindCaption)
@@ -587,7 +588,7 @@ struct NewBrewSheet: View {
         // Cold start. Honor autoPrefillFromLast: hydrate values (and bag) from most recent brew.
         if autoPrefillFromLast, let recent = brewStore.mostRecent() {
             applyPrefill(from: recent, jumpToShot: false)
-            // Pin override: if user has a pinned bag and it's different from recent's bag,
+            // Pin override: if user has a pinned bag and it’s different from recent’s bag,
             // surface pinned as the active selection but keep recent visible as a swap chip.
             if let pinned = bagStore.pinnedBag, pinned.id != recent.bag?.id {
                 recentBag = recent.bag
@@ -694,6 +695,7 @@ private struct StepperRow: View {
                         DeltaCaption(text: caption)
                     }
                 }
+                .motion(Motion.control, value: caption != nil)
                 Spacer()
                 stepper
             }
@@ -807,6 +809,7 @@ private struct GrindRow: View {
                         DeltaCaption(text: caption)
                     }
                 }
+                .motion(Motion.control, value: caption != nil)
                 Spacer()
                 TextField("e.g. 2.4", text: $value)
                     .focused($focused)
