@@ -69,7 +69,7 @@ struct StatsView: View {
                     StatsProFeatureRow(number: "01", title: "Overview", detail: "Total brews, active bags, favorite method, average rating.")
                     StatsProFeatureRow(number: "02", title: "What's working", detail: "Highest-rated brews, your best bag, best saved recipe.")
                     StatsProFeatureRow(number: "03", title: "By bag", detail: "Brew count, average rating, common ratio, last brewed.")
-                    StatsProFeatureRow(number: "04", title: "Dial-in", detail: "Espresso shot history with grind and rating changes.", showsRule: false)
+                    StatsProFeatureRow(number: "04", title: "Dial-in", detail: "Dose, yield, grind, and rating history for your current bag.", showsRule: false)
                 }
                 .padding(.top, 16)
 
