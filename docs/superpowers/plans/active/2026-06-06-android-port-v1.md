@@ -137,7 +137,7 @@ BeanBook-Android/
 
 These exact files were build-verified on 2026-06-06 (see "Verified toolchain"). Reproduce them verbatim.
 
-- [ ] **Step 1: Create the project directory and copy the Gradle wrapper**
+- [x] **Step 1: Create the project directory and copy the Gradle wrapper**
 
 ```bash
 mkdir -p /Users/marcus/Developer/BeanBook-Android/gradle
@@ -148,7 +148,7 @@ chmod +x gradlew
 sed -i '' 's|gradle-9.0-milestone-1-bin.zip|gradle-9.5.1-bin.zip|' gradle/wrapper/gradle-wrapper.properties
 ```
 
-- [ ] **Step 2: Write the root build files**
+- [x] **Step 2: Write the root build files**
 
 `settings.gradle.kts`:
 ```kotlin
@@ -248,7 +248,7 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
 (One addition over the verified skeleton: `material-icons-extended`, needed from M2 on. If it fails to resolve under the BOM, pin its last published version — it was deprecated upstream; fallback is inlining the ~10 needed `ImageVector`s.)
 
-- [ ] **Step 3: Write the app module**
+- [x] **Step 3: Write the app module**
 
 `app/build.gradle.kts`:
 ```kotlin
@@ -375,12 +375,12 @@ class MainActivity : ComponentActivity() {
 }
 ```
 
-- [ ] **Step 4: Build**
+- [x] **Step 4: Build**
 
 Run: `cd /Users/marcus/Developer/BeanBook-Android && ./gradlew :app:assembleDebug`
 Expected: `BUILD SUCCESSFUL` (first run downloads Gradle 9.5.1 + deps; platform 37 auto-installs if missing).
 
-- [ ] **Step 5: Launch on the emulator and observe**
+- [x] **Step 5: Launch on the emulator and observe**
 
 Boot the AVD (see "Verified toolchain"), then:
 ```bash
@@ -390,7 +390,7 @@ sleep 3 && ~/Library/Android/sdk/platform-tools/adb exec-out screencap -p > /tmp
 ```
 Expected: screenshot shows "BeanBook walking skeleton" centered. **Look at the screenshot.**
 
-- [ ] **Step 6: git init + first commit**
+- [x] **Step 6: git init + first commit**
 
 ```bash
 cd /Users/marcus/Developer/BeanBook-Android
@@ -409,7 +409,7 @@ git add -A && git commit -m "feat: walking skeleton — verified toolchain (AGP 
 
 Ports `BeanBook/Core/Models/BrewMethod.swift`, `RoastLevel.swift`, and the computed members of `Brew.swift`. **Raw values must match iOS exactly** (they are the stored strings — cross-platform data vocabulary).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `BrewMethodTest.kt` — assert the full defaults table:
 
@@ -428,9 +428,9 @@ Ports `BeanBook/Core/Models/BrewMethod.swift`, `RoastLevel.swift`, and the compu
 - `formattedTime(30) == "30s"`, `formattedTime(90) == "1:30"`, `formattedTime(210) == "3:30"`, `formattedTime(43200) == "12:00"` (≥1 h → H:MM, mirrors iOS `.hourMinute`)
 - `formatGrams(18.0) == "18"`, `formatGrams(18.5) == "18.5"` (trailing .0 trimmed, else 1 decimal)
 
-- [ ] **Step 2: Run, verify FAIL** — `./gradlew :app:testDebugUnitTest` → compilation error (types don't exist).
+- [x] **Step 2: Run, verify FAIL** — `./gradlew :app:testDebugUnitTest` → compilation error (types don't exist).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `BrewMethod.kt`:
 ```kotlin
@@ -530,8 +530,8 @@ object BrewMath {
     /** <60 s → "30s"; <1 h → "3:30"; ≥1 h → "12:00" (H:MM). */
     fun formattedTime(seconds: Int): String = when {
         seconds < 60 -> "${seconds}s"
-        seconds < 3600 -> "%d:%02d".format(seconds / 60, seconds % 60)
-        else -> "%d:%02d".format(seconds / 3600, (seconds % 3600) / 60)
+        seconds < 3600 -> String.format(Locale.US, "%d:%02d", seconds / 60, seconds % 60)
+        else -> String.format(Locale.US, "%d:%02d", seconds / 3600, (seconds % 3600) / 60)
     }
 
     /** "18" for whole grams, "18.5" otherwise (one decimal). */
@@ -541,8 +541,8 @@ object BrewMath {
 }
 ```
 
-- [ ] **Step 4: Run, verify PASS** — `./gradlew :app:testDebugUnitTest` → `BUILD SUCCESSFUL`.
-- [ ] **Step 5: Commit** — `git add -A && git commit -m "feat(domain): port BrewMethod/RoastLevel/ProcessMethod enums and brew formatters with tests"`
+- [x] **Step 4: Run, verify PASS** — `./gradlew :app:testDebugUnitTest` → `BUILD SUCCESSFUL`.
+- [x] **Step 5: Commit** — `git add -A && git commit -m "feat(domain): port BrewMethod/RoastLevel/ProcessMethod enums and brew formatters with tests"`
 
 ---
 
@@ -554,17 +554,18 @@ object BrewMath {
 
 Mirrors `Bag.swift`/`Brew.swift`/`BrewPreset.swift`. **Every column has a default** (iOS invariant, spec §4). Enum raws stored as iOS strings. `#Index<Brew>([\.createdAt])` → Room `Index`. `@Relationship(deleteRule: .nullify)` → FK `onDelete = SET_NULL`.
 
-- [ ] **Step 1: Write the failing instrumented tests** (`DaoTest.kt`, in-memory DB, pattern as in the verified skeleton: `Room.inMemoryDatabaseBuilder` + `runTest`):
+- [x] **Step 1: Write the failing instrumented tests** (`DaoTest.kt`, in-memory DB, pattern as in the verified skeleton: `Room.inMemoryDatabaseBuilder` + `runTest`):
   - `bagDefaults_matchIOSSchema` — `BagEntity(id="x")` round-trips with brand `""`, roastLevel `MEDIUM`, tastingNotes `[]`, isPinned `false`, process/roastedOn/purchasedAt/imageData/notes all null.
   - `brewOrderedByCreatedAtDesc` — insert 3 brews (createdAt 1,3,2) → `observeAll().first()` returns 3,2,1.
   - `mostRecent_returnsNewest` — returns createdAt=3 row; `mostRecent_onEmpty_returnsNull`.
   - `deletingBag_nullifiesBrewBagId` — insert bag + brew(bagId=bag.id); delete bag; brew's `bagId == null` and brew still exists (the iOS `.nullify` rule; iOS BagDetail copy promises "Brews on this bag will keep their settings but lose the bag link.").
   - `tastingNotes_roundTrip` — `listOf("cherry", "cocoa")` survives.
   - `presetRoundTrip` — BrewPreset stores no rating/notes/image (compile-time: the entity simply has no such columns).
+  - `upsertingExistingBag_doesNotOrphanBrews` — upsert bag, attach brew, upsert same bag with a new name → brew's `bagId` survives (regression guard for the REPLACE/SET_NULL interaction).
 
-- [ ] **Step 2: Run, verify FAIL** — emulator up, `./gradlew :app:connectedDebugAndroidTest` → compile failure.
+- [x] **Step 2: Run, verify FAIL** — emulator up, `./gradlew :app:connectedDebugAndroidTest` → compile failure.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `Converters.kt`:
 ```kotlin
@@ -694,7 +695,7 @@ data class BrewPresetEntity(
 )
 ```
 
-DAOs (Flow reads for UI, suspend writes; `OnConflictStrategy.REPLACE` upsert doubles as update):
+DAOs (Flow reads for UI, suspend writes; `@Upsert` doubles as update — NEVER `@Insert(onConflict = REPLACE)` on the FK parent: SQLite REPLACE = DELETE+INSERT, which fires `ON DELETE SET_NULL` and orphans a bag's brews on every edit):
 ```kotlin
 package com.beanbook.app.data.db.daos
 
@@ -710,7 +711,7 @@ interface BagDao {
     @Query("SELECT * FROM bags WHERE isPinned = 1 LIMIT 1") suspend fun pinned(): BagEntity?
     @Query("SELECT * FROM bags WHERE isPinned = 1 LIMIT 1") fun observePinned(): Flow<BagEntity?>
     @Query("SELECT COUNT(*) FROM bags") suspend fun count(): Int
-    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(bag: BagEntity)
+    @Upsert suspend fun upsert(bag: BagEntity)
     @Delete suspend fun delete(bag: BagEntity)
     @Query("UPDATE bags SET isPinned = 0") suspend fun clearPins()
     @Query("UPDATE bags SET isPinned = :pinned WHERE id = :id") suspend fun setPinned(id: String, pinned: Boolean)
@@ -732,7 +733,7 @@ interface BrewDao {
     @Query("SELECT * FROM brews WHERE id = :id") suspend fun byId(id: String): BrewEntity?
     @Query("SELECT * FROM brews ORDER BY createdAt DESC LIMIT 1") suspend fun mostRecent(): BrewEntity?
     @Query("SELECT COUNT(*) FROM brews") suspend fun count(): Int
-    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(brew: BrewEntity)
+    @Upsert suspend fun upsert(brew: BrewEntity)
     @Delete suspend fun delete(brew: BrewEntity)
 }
 
@@ -740,7 +741,7 @@ interface BrewDao {
 interface BrewPresetDao {
     @Query("SELECT * FROM brew_presets ORDER BY createdAt DESC") fun observeAll(): Flow<List<BrewPresetEntity>>
     @Query("SELECT COUNT(*) FROM brew_presets") suspend fun count(): Int
-    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun upsert(preset: BrewPresetEntity)
+    @Upsert suspend fun upsert(preset: BrewPresetEntity)
     @Delete suspend fun delete(preset: BrewPresetEntity)
 }
 ```
@@ -773,8 +774,8 @@ abstract class BeanBookDatabase : RoomDatabase() {
 }
 ```
 
-- [ ] **Step 4: Run, verify PASS** — `./gradlew :app:connectedDebugAndroidTest` → `BUILD SUCCESSFUL`. Confirm `app/schemas/com.beanbook.app.data.db.BeanBookDatabase/1.json` was generated.
-- [ ] **Step 5: Commit** — `git add -A && git commit -m "feat(data): Room schema mirroring iOS SwiftData models, with instrumented DAO tests"`
+- [x] **Step 4: Run, verify PASS** — `./gradlew :app:connectedDebugAndroidTest` → `BUILD SUCCESSFUL`. Confirm `app/schemas/com.beanbook.app.data.db.BeanBookDatabase/1.json` was generated.
+- [x] **Step 5: Commit** — `git add -A && git commit -m "feat(data): Room schema mirroring iOS SwiftData models, with instrumented DAO tests"`
 
 ---
 
@@ -786,15 +787,16 @@ abstract class BeanBookDatabase : RoomDatabase() {
 
 Analog of `BagStore.swift`/`BrewStore.swift`/`BrewPresetStore.swift`. Quota enforcement exists but is **dormant** (spec §4: "the seam exists so Phase 2 adds enforcement without re-plumbing").
 
-- [ ] **Step 1: Write the failing tests** (`RepositoryTest.kt`):
+- [x] **Step 1: Write the failing tests** (`RepositoryTest.kt`):
   - `pin_unpinsAllOthers` — create A, B; pin A; pin B → only B pinned.
   - `pin_samebagTwice_unpins` — pin A; pin A again → nothing pinned (iOS toggle semantics: "Pass the same bag again to unpin").
   - `create_persistsAndReturnsEntity` — for all three repos.
-  - `quota_denied_throwsQuotaExceeded` — construct `BagRepository` with a `QuotaPolicy { _, _ -> false }` → `create` throws `QuotaExceededException`; with the default `UnlimitedQuotaPolicy` it doesn't.
+  - `quota_denied_throwsQuotaExceeded` — construct `BagRepository` with a `QuotaPolicy { _, _ -> false }` → `create` throws `QuotaExceededException` AND the row is not persisted (assert byId returns null); with the default `UnlimitedQuotaPolicy` it doesn't throw.
+  - `pin_unpinsAllOthers` must leave A pinned when B is toggled (do NOT unpin A first — otherwise the clearPins-others path is never exercised).
 
-- [ ] **Step 2: Run, verify FAIL.**
+- [x] **Step 2: Run, verify FAIL.**
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `QuotaPolicy.kt`:
 ```kotlin
@@ -848,10 +850,10 @@ class BagRepository(
 }
 ```
 
-`BrewRepository.kt` / `BrewPresetRepository.kt` follow the same shape: `brews`/`presets` Flow, `observeForBag`, `create` (quota-checked, `QuotaFeature.BREW`/`RECIPE`), `delete`, and `suspend fun mostRecent(): BrewEntity?` on BrewRepository (port of `BrewStore.mostRecent()`, used for prefill hydration).
+`BrewRepository.kt` / `BrewPresetRepository.kt` follow the same shape: `brews`/`presets` Flow, `observeForBag`, `create` (quota-checked, `QuotaFeature.BREW`/`RECIPE`), an explicit `update(...) = dao.upsert(...)` (edit paths must NOT route through quota-checked `create`), `delete`, and `suspend fun mostRecent(): BrewEntity?` on BrewRepository (port of `BrewStore.mostRecent()`, used for prefill hydration). `BrewPresetDao` also needs a `byId(id)` query (used by quota non-persistence tests).
 
-- [ ] **Step 4: Run, verify PASS** — `./gradlew :app:connectedDebugAndroidTest`.
-- [ ] **Step 5: Commit** — `git commit -am "feat(data): repositories with single-pin invariant and dormant quota seam"`
+- [x] **Step 4: Run, verify PASS** — `./gradlew :app:connectedDebugAndroidTest`.
+- [x] **Step 5: Commit** — `git commit -am "feat(data): repositories with single-pin invariant and dormant quota seam"`
 
 ---
 
@@ -863,9 +865,9 @@ class BagRepository(
 
 Maps the iOS `@AppStorage` keys (spec §3). **Key strings match iOS names.**
 
-- [ ] **Step 1: Failing test** — defaults are `paletteId="forest"`, `autoPrefillFromLast=true`, `timerCountsDown=true`, `defaultBrewMethod="espresso"`, `preferredUnit="g"`, `hasOnboarded=false`; a write round-trips.
-- [ ] **Step 2: Run, verify FAIL.**
-- [ ] **Step 3: Implement**
+- [x] **Step 1: Failing test** — defaults are `paletteId="forest"`, `autoPrefillFromLast=true`, `timerCountsDown=true`, `defaultBrewMethod="espresso"`, `preferredUnit="g"`, `hasOnboarded=false`; a write round-trips.
+- [x] **Step 2: Run, verify FAIL.**
+- [x] **Step 3: Implement**
 
 ```kotlin
 package com.beanbook.app.data.settings
@@ -916,7 +918,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
 }
 ```
 
-- [ ] **Step 4: Run, verify PASS.**  - [ ] **Step 5: Commit** — `git commit -am "feat(data): DataStore settings repository mirroring iOS AppStorage keys"`
+- [x] **Step 4: Run, verify PASS.**  - [ ] **Step 5: Commit** — `git commit -am "feat(data): DataStore settings repository mirroring iOS AppStorage keys"`
 
 ---
 
@@ -963,7 +965,7 @@ class BeanBookApplication : Application() {
 }
 ```
 
-- [ ] **Step 1: Implement; build green; commit** — `git commit -am "feat(di): AppContainer composition root + Application class"`
+- [x] **Step 1: Implement; build green; commit** — `git commit -am "feat(di): AppContainer composition root + Application class"`
 
 ---
 
