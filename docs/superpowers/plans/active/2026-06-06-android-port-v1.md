@@ -1047,7 +1047,7 @@ Contract:
 - A `LocalNewBrewLauncher` composition local (`(NewBrewRequest) -> Unit`) so any screen can hot-start the flow without threading callbacks.
 - NavigationBar colors from `Theme.palette`: container = `card`, selected = `accent`, unselected = `ink2`. Placeholder screens for `today`/`beans`/`settings` showing their route name.
 
-- [ ] **Steps:** implement → `assembleDebug` → launch; screencap each tab + the "+"-opens-dialog behavior (screencap with dialog visible) → verify reselecting + does not change the highlighted tab → commit `feat(nav): root scaffold with bottom bar and center + presenting NewBrew`.
+- [x] **Steps:** implement → `assembleDebug` → launch; screencap each tab + the "+"-opens-dialog behavior (screencap with dialog visible) → verify reselecting + does not change the highlighted tab → commit `feat(nav): root scaffold with bottom bar and center + presenting NewBrew`.
 
 ---
 
