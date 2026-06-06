@@ -984,14 +984,14 @@ Key requirements:
 - Picker order (port of `Palette.all`): forest · latte, honey, cascara, mocha, espresso · ocean · graphite, midnight · sage, plum.
 - `isPro` carried as data (forest is the only `isPro=false`); v1 does not gate on it (Decision 6).
 - `LocalPalette = staticCompositionLocalOf { Palettes.forest }`; `object Theme { val palette: Palette @Composable get() = LocalPalette.current }` plus the non-color constants from `Theme.swift`: `screenPadding=24.dp, cardPadding=18.dp, cardSpacing=14.dp, itemSpacing=10.dp, cardRadius=14.dp, pillRadius=100.dp`.
-- `BeanBookTheme(palette) { ... }`: provides `LocalPalette` **and** a `MaterialTheme(colorScheme = lightColorScheme(primary=palette.accent, background=palette.background, surface=palette.card, onBackground=palette.ink, onSurface=palette.ink, error=palette.error))` substrate. **Never** call `isSystemInDarkTheme()`, **no** `dynamicColorScheme` — the Compose analog of iOS's `.preferredColorScheme(.light)` lock. `midnight` is the only dark palette and only via manual selection.
+- `BeanBookTheme(palette) { ... }`: provides `LocalPalette`, **`LocalContentColor provides palette.ink`** (without it, unlabeled Text/Icon render black — invisible on light palettes, black-on-black under midnight), **and** a `MaterialTheme` substrate with a FULL slot mapping so stock M3 components don't fall through to baseline purples: `lightColorScheme(primary=accent, onPrimary=White, primaryContainer=accentSoft, onPrimaryContainer=ink, background, onBackground=ink, surface=card, onSurface=ink, surfaceVariant=accentSoft, onSurfaceVariant=ink2, outline=rule, outlineVariant=ink4, error, onError=White)`. **Never** call `isSystemInDarkTheme()`, **no** `dynamicColorScheme` — the Compose analog of iOS's `.preferredColorScheme(.light)` lock. `midnight` is the only dark palette and only via manual selection.
 - RoastLevel swatches (port of `RoastLevel+Swatch.swift`): light `C9A675`, mediumLight `A77742`, medium `8A4F2A`, mediumDark `5C3320`, dark `2E1810` — as a `RoastLevel.swatch: Color` extension in `Palette.kt`.
 - Hex helper: `fun colorHex(hex: String) = Color(0xFF000000 or hex.toLong(16))`.
 
-- [ ] **Step 1: Failing JVM test** — `canonical("cocoa") == MOCHA`, `canonical("slate") == OCEAN`, `canonical("noir") == GRAPHITE`, `canonical("forest") == FOREST`, `canonical("garbage") == null`; `Palettes.all.size == 11`; `Palettes.all.first() == Palettes.forest`; only forest has `isPro == false`.
-- [ ] **Step 2: Run, FAIL.** **Step 3: Implement.** **Step 4: Run, PASS** (`testDebugUnitTest`).
-- [ ] **Step 5: Wire `MainActivity`** to read `settingsRepository.settings` (collectAsStateWithLifecycle), resolve `PaletteId.canonical(paletteId) ?: FOREST`, wrap content in `BeanBookTheme`. Placeholder content: a column of the 11 palette names, each `Text` in its palette's accent on `Theme.palette.background`.
-- [ ] **Step 6: Observation gate** — install/launch/screencap → background is forest `#FAFAF7`, 11 names visible. Commit: `git commit -am "feat(theme): 11-palette system, light-locked, with canonical id mapping"`
+- [x] **Step 1: Failing JVM test** — `canonical("cocoa") == MOCHA`, `canonical("slate") == OCEAN`, `canonical("noir") == GRAPHITE`, `canonical("forest") == FOREST`, `canonical("garbage") == null`; `Palettes.all.size == 11`; `Palettes.all.first() == Palettes.forest`; only forest has `isPro == false`.
+- [x] **Step 2: Run, FAIL.** **Step 3: Implement.** **Step 4: Run, PASS** (`testDebugUnitTest`).
+- [x] **Step 5: Wire `MainActivity`** to read `settingsRepository.settings` (collectAsStateWithLifecycle), resolve `PaletteId.canonical(paletteId) ?: FOREST`, wrap content in `BeanBookTheme`. Placeholder content: a column of the 11 palette names, each `Text` in its palette's accent on `Theme.palette.background`.
+- [x] **Step 6: Observation gate** — install/launch/screencap → background is forest `#FAFAF7`, 11 names visible. Commit: `git commit -am "feat(theme): 11-palette system, light-locked, with canonical id mapping"`
 
 ### Task 8: Motion tokens + editorial primitives
 
@@ -1009,7 +1009,7 @@ Contracts (build each as a small composable + `@Preview`):
   - `OutlinePill(text, onClick)` — hairline-outlined capsule (Back, timer Start/Pause).
 - **`DeltaCaption(text)`** — 11sp, `ink3`, used under diverged fields ("was 18 g").
 
-- [ ] **Steps:** implement → previews render → `assembleDebug` green → temporary gallery screen behind the Task-7 placeholder (pills + eyebrow + rules on background) → screencap, observe → commit `feat(ui): motion tokens and editorial primitives (eyebrow, hair rule, pills)`.
+- [x] **Steps:** implement → previews render → `assembleDebug` green → temporary gallery screen behind the Task-7 placeholder (pills + eyebrow + rules on background) → screencap, observe → commit `feat(ui): motion tokens and editorial primitives (eyebrow, hair rule, pills)`.
 
 ### Task 9: Value primitives — BigRatio, RatioBar, RatioText, RatingDots, StarRating, StepperRow, RuleRow
 
@@ -1025,7 +1025,7 @@ Ports `BigRatio.swift`, `StarRating.swift`, the `StepperRow`/`StepperButton` pri
 - **`StepperRow(label, value, unit, range, step=1.0, caption: String?, onValue)`** — HairRule top; label 14.5sp ink2 + optional `DeltaCaption` under it; − / + circular hairline buttons (34dp, press-scale 0.88) flanking a serif 24sp monospaced-digit value; clamps to `range`; haptic via `LocalHapticFeedback`.
 - **`RuleRow(label, value)`** — hairline row with label ink2 left, value ink right (BrewDetail params).
 
-- [ ] **Steps:** implement with previews → `assembleDebug` → gallery screencap shows all primitives → commit `feat(ui): value primitives (ratio displays, rating, stepper rows)`.
+- [x] **Steps:** implement with previews → `assembleDebug` → gallery screencap shows all primitives → commit `feat(ui): value primitives (ratio displays, rating, stepper rows)`.
 
 ---
 
@@ -1469,7 +1469,7 @@ Analog of the iOS XCUITest suite, scoped to the flow contracts (spec §7):
 
 **Files:** Create `docs/parity.md`, `README.md` (Android repo)
 
-- [ ] `parity.md` (spec §2 requires it): table — feature | iOS | Android v1 status | phase. Rows at minimum: every M4/M5 surface (✅), brew-list search + filter chips (Phase 4), Recipes browsing screen (Phase 4), bag/brew photo capture (Phase 4, columns already shipped), onboarding (Phase 4, key reserved), Pro/paywall + quota enforcement + palette gating (Phase 2 — **flag the grandfathering decision and the Family-Sharing/Play-family-library copy reconciliation from spec §8**), Stats (Phase 2), Shop/Discover + location (Phase 3), notifications/daily reminder (Phase 4), custom serif font + dirty-guard on bag edit (Phase 4 polish).
+- [ ] `parity.md` (spec §2 requires it): table — feature | iOS | Android v1 status | phase. Rows at minimum: every M4/M5 surface (✅), brew-list search + filter chips (Phase 4), Recipes browsing screen (Phase 4), bag/brew photo capture (Phase 4, columns already shipped), onboarding (Phase 4, key reserved), Pro/paywall + quota enforcement + palette gating (Phase 2 — **flag the grandfathering decision and the Family-Sharing/Play-family-library copy reconciliation from spec §8**), Stats (Phase 2), Shop/Discover + location (Phase 3), notifications/daily reminder (Phase 4), custom serif font + dirty-guard on bag edit (Phase 4 polish), first-frame forest flash on cold launch before DataStore emits a saved non-forest palette (Phase 4 polish — splash/theme-preload).
 - [ ] `README.md`: project summary, the verified build/test/emulator commands (from this plan's header), pointer to the iOS repo's `branding.md`/`design.md` as cross-platform law, and the parity doc.
 - [ ] Commit — `git commit -am "docs: parity checklist and README"`
 
