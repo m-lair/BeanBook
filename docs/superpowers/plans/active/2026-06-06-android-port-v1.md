@@ -1364,7 +1364,7 @@ class NewBrewViewModel(
 }
 ```
 
-- [ ] **Step 1: Write the failing tests first** (fakes for the three interfaces + a `settings` lambda; `runTest`):
+- [x] **Step 1: Write the failing tests first** (fakes for the three interfaces + a `settings` lambda; `runTest`):
   1. `coldStart_autoPrefillOn_hydratesFromMostRecent_andStaysOnContext` — values copied, snapshot set, `step == 0`.
   2. `coldStart_pinnedDiffersFromRecentBag_pinWins_andRecentChipSurfaces` — `bag == pinned`, `recentBag == recent's bag`.
   3. `coldStart_pinnedEqualsRecentBag_noChip` — `recentBag == null`.
@@ -1379,10 +1379,10 @@ class NewBrewViewModel(
   12. `save_calledTwice_createsExactlyOneBrew`.
   13. `save_presetQuotaDenied_brewStillSaved_showSavedTrue` — preset sink throws; brew created; `showSaved`.
   14. `hydrate_calledTwice_isIdempotent`.
-- [ ] **Step 2: Run, verify FAIL.** — `./gradlew :app:testDebugUnitTest`
-- [ ] **Step 3: Implement (code above).** **Step 4: Run, verify PASS.**
-- [ ] **Step 5: Make the real repositories satisfy the interfaces** (`BrewRepository : BrewSource` etc. — direct implementation, no adapters needed) and add a `ViewModelProvider.Factory` companion taking `AppContainer` + `NewBrewRequest`. Build green.
-- [ ] **Step 6: Commit** — `git commit -am "feat(newbrew): ViewModel with iOS-parity hydration ladder, delta captions, save semantics — 14 JVM tests"`
+- [x] **Step 2: Run, verify FAIL.** — `./gradlew :app:testDebugUnitTest`
+- [x] **Step 3: Implement (code above).** **Step 4: Run, verify PASS.**
+- [x] **Step 5: Make the real repositories satisfy the interfaces** (`BrewRepository : BrewSource` etc. — direct implementation, no adapters needed) and add a `ViewModelProvider.Factory` companion taking `AppContainer` + `NewBrewRequest`. Build green.
+- [x] **Step 6: Commit** — `git commit -am "feat(newbrew): ViewModel with iOS-parity hydration ladder, delta captions, save semantics — 14 JVM tests"`
 
 ### Task 19: NewBrewSheet scaffold + Context step
 
@@ -1396,7 +1396,7 @@ Port of `NewBrewSheet.swift` chrome + `contextStep` + `MethodPicker.swift`. Cont
 - `LaunchedEffect(Unit) { vm.hydrate() }`.
 - When `state.showSaved`: saved overlay (Task 22) + auto-dismiss after 1400 ms.
 
-- [ ] **Steps:** implement → build → observe: "+" cold start lands on Context, method change updates nothing visible yet but survives Next/Back; bag selection + Pinned label correct → screencap → commit `feat(newbrew): sheet scaffold, progress, context step`.
+- [x] **Steps:** implement → build → observe: "+" cold start lands on Context, method change updates nothing visible yet but survives Next/Back; bag selection + Pinned label correct → screencap → commit `feat(newbrew): sheet scaffold, progress, context step`.
 
 ### Task 20: BrewTimer
 
@@ -1412,7 +1412,7 @@ Port of `BrewTimer.swift` — the most stateful component; read the Swift file i
 - On finish (elapsed ≥ target while running): accumulated = target, binding = target, phase = Finished, haptic.
 - On dispose (`DisposableEffect`): if running, freeze elapsed into the binding; elapsed==0 → binding = target (port of `commitElapsed` — "advance mid-run freezes elapsed time").
 
-- [ ] **Steps:** implement → build → on-emulator observe: start, pause at ~5 s (readout freezes, binding visible in Shot step's time row after Task 21), resume, finish (success color + "Done"), reset; ±30s chips; edit-sheet path → commit `feat(newbrew): brew timer with idle/running/paused/finished phases`.
+- [x] **Steps:** implement → build → on-emulator observe: start, pause at ~5 s (readout freezes, binding visible in Shot step's time row after Task 21), resume, finish (success color + "Done"), reset; ±30s chips; edit-sheet path → commit `feat(newbrew): brew timer with idle/running/paused/finished phases`.
 
 ### Task 21: Shot step
 
@@ -1425,7 +1425,7 @@ Port of `shotStep` in `NewBrewSheet.swift`. Contract:
 - Grind row (port of `GrindRow`): hairline row, label "Grind" + optional caption; right-aligned serif 22sp `TextField` placeholder "e.g. 2.4", Done IME action.
 - **No water-temp control** (Decision 1).
 
-- [ ] **Steps:** implement → build → observe cold start: espresso defaults 18/36/30; switch method on Context → Shot shows new defaults; no Δ-captions on cold-cold start → commit `feat(newbrew): shot step with live ratio, steppers, timer, grind`.
+- [x] **Steps:** implement → build → observe cold start: espresso defaults 18/36/30; switch method on Context → Shot shows new defaults; no Δ-captions on cold-cold start → commit `feat(newbrew): shot step with live ratio, steppers, timer, grind`.
 
 ### Task 22: Outcome step + save + saved overlay
 
@@ -1437,7 +1437,7 @@ Port of `outcomeStep` + `savedOverlay`. Contract:
 - HairRule; "Save as recipe" toggle (accent); when on, "Recipe name" field appears.
 - "Save brew" → `vm.advance()` → save. On `showSaved`: full-screen overlay at 92% background opacity — accent circle 76dp + white check (scale-in `Motion.confirm`, instant under reduce-motion), serif 22sp **"Saved."**, "1:X.XX · time" 13sp ink2; auto-dismiss the whole sheet after **1400 ms** (`LaunchedEffect(showSaved) { delay(1400); onDismiss() }`).
 
-- [ ] **Steps:** implement → build → full cold-start run on emulator: Context→Shot→Outcome→rate 4→note→save-as-recipe named "Morning dial-in"→Save → overlay → auto-dismiss → brew appears on Today + BrewList; recipe appears in Settings; relaunch app (`force-stop` + start) → data persisted → screencaps → commit `feat(newbrew): outcome step, save semantics, saved overlay`.
+- [x] **Steps:** implement → build → full cold-start run on emulator: Context→Shot→Outcome→rate 4→note→save-as-recipe named "Morning dial-in"→Save → overlay → auto-dismiss → brew appears on Today + BrewList; recipe appears in Settings; relaunch app (`force-stop` + start) → data persisted → screencaps → commit `feat(newbrew): outcome step, save semantics, saved overlay`.
 
 ### Task 23: Hot-start wiring across all surfaces
 
@@ -1445,7 +1445,7 @@ Port of `outcomeStep` + `savedOverlay`. Contract:
 
 Contract (spec §5 hot-start surfaces): RecentShotsStrip tap, brew-row long-press "Brew again", BrewDetail "Brew this again" — all → `NewBrewRequest(prefillBrewId)` → flow opens **on Shot** with values prefilled and snapshot set.
 
-- [ ] **Steps:** wire → build → on-emulator observe each surface: opens on "Pull the shot."; change dose 18→19 → `DeltaCaption "was 18 g"` appears under Dose; change method on Context after Back → values NOT clobbered (the Task-18 invariant, now visible) → save → new brew logged → commit `feat(newbrew): hot-start from strip, list context menu, and detail`.
+- [x] **Steps:** wire → build → on-emulator observe each surface: opens on "Pull the shot."; change dose 18→19 → `DeltaCaption "was 18 g"` appears under Dose; change method on Context after Back → values NOT clobbered (the Task-18 invariant, now visible) → save → new brew logged → commit `feat(newbrew): hot-start from strip, list context menu, and detail`.
 
 ---
 
