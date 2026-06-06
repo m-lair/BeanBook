@@ -191,6 +191,8 @@ android.nonTransitiveRClass=true
 org.gradle.java.home=/Applications/Android Studio.app/Contents/jbr/Contents/Home
 ```
 
+(⚠️ Deliberate bootstrap wart: `org.gradle.java.home` hardcodes this machine's JBR path **and gets committed**. Correct and verified for local v1 development; migrate to a Gradle Java toolchain declaration before adding CI or other contributors.)
+
 `local.properties` (NOT committed):
 ```properties
 sdk.dir=/Users/marcus/Library/Android/sdk
@@ -327,7 +329,6 @@ dependencies {
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
-        android:name=".BeanBookApplication"
         android:label="BeanBook"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
@@ -344,7 +345,7 @@ dependencies {
 </manifest>
 ```
 
-(`BeanBookApplication` arrives in Task 6 — until then keep `android:name` **out** of the manifest; add it in Task 6.)
+(`BeanBookApplication` arrives in Task 6 — until then `android:name` stays **out** of the manifest, exactly as above; Task 6 adds it. Adding it early compiles fine but crashes at launch with `ClassNotFoundException`.)
 
 `app/src/main/java/com/beanbook/app/MainActivity.kt` (placeholder, replaced in M3):
 ```kotlin
