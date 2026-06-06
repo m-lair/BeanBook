@@ -50,8 +50,8 @@ Room schema mirrors the iOS schema `[Bag, Brew, BrewPreset]`. **Every column get
 ### Entities
 
 - **Bag** — `@Entity`. Fields: id (String UUID), name, roaster, `roastLevel` (enum), `processMethod` (enum), roastDate (epoch `Long?`), `isPinned` (Bool), notes, createdAt. `brews` exposed via Room `@Relation` (read side); write side uses `bagId` FK on Brew.
-- **Brew** — `@Entity` with `bagId` foreign key (nullable, matching `Brew.bag: Bag?`). Fields: id, bagId, `method` (enum), dose, yield, time, grind, waterTemp, rating, notes, createdAt.
-- **BrewPreset** — `@Entity`. **Included in v1** to back the Outcome step "save as recipe" toggle. The Recipes *browsing screen* is deferred; the entity ships now to avoid a later migration.
+- **Brew** — `@Entity` with `bagId` foreign key (nullable, matching `Brew.bag: Bag?`). Fields (from iOS `Brew`): `method` (enum), `doseGrams` (Double), `yieldGrams` (Double), `brewTimeSeconds` (Int), `grindSetting` (String?), `waterTempC` (Double?), `rating` (Int?), `notes` (String?), `imageData` (blob?, a brew photo), `createdAt`. Index on `createdAt` (iOS declares `#Index<Brew>([\.createdAt])`). The `ratio` (yield/dose, formatted "1:2") and time/ratio formatters are **computed**, not stored — implement as Kotlin functions/extensions, not columns.
+- **BrewPreset** — `@Entity`. **Included in v1** to back the Outcome step "save as recipe" toggle. The Recipes *browsing screen* is deferred; the entity ships now to avoid a later migration. Fields (from iOS `BrewPreset`): `name` (String), `method` (enum), `doseGrams`, `yieldGrams`, `brewTimeSeconds`, `grindSetting` (String?), `waterTempC` (Double?), `createdAt`. Note it does **not** carry rating, notes, or image — a preset is a target recipe, not a logged shot.
 
 ### Enums (Room `TypeConverter`s)
 
@@ -80,7 +80,7 @@ Bottom `NavigationBar`: **Today** · **Beans** · **+** (center) · **Settings**
 ### Screens
 
 - **Today (lean editorial home)** — recent shots + an entry point into the full chronological brew list. A simplified port of the iOS Today (not the full editorial surface); enough to feel like a home, not a bare list.
-- **NewBrew (3-step flow)** — Context (method + bag) → Shot (dose, yield, time, grind, all visible) → Outcome (rating, notes, save-as-recipe). Ports the full behavior contract:
+- **NewBrew (3-step flow)** — Context (method + bag) → Shot (dose, yield, time, grind, all visible) → Outcome (rating, notes, save-as-recipe). The Shot step surfaces dose/yield/time/grind; `waterTempC` is persisted in the model and may be entered via a secondary control or left to a later phase — **decide and note in the plan** (do not silently drop the column). The `imageData` brew photo is **deferred to a later phase** (camera/photo-picker + storage is its own work item); the column ships in v1 nullable so no migration is needed when it lands. Ports the full behavior contract:
   - **Cold start** lands on Context; **hot start** (`prefill`) lands on Shot with values prefilled.
   - **Hot-start surfaces:** RecentShotsStrip tap, brew-row long-press menu, BrewDetail "Brew this again." (RecipesView launch deferred with the Recipes screen.)
   - **`prefillSnapshot`** captured at hydration; per-field **Δ-caption** ("was 18 g") renders under any diverging field. Respects the system "reduce motion" setting.
