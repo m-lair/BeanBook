@@ -1067,7 +1067,7 @@ Port of `BagListView.swift`. Contract:
 - Empty state (verbatim): "The shelf is" / accent "empty." serif 36sp; body "Add a bag to track origin, roast date, and tasting notes. Linked to your brews automatically."; `AccentPill("Add a bag")`.
 - ViewModel: `bagRepository.bags` + brew counts (`brewDao.observeAll()` grouped by bagId, or a small `@Query` count map) exposed as `StateFlow`.
 
-- [ ] **Steps:** implement → build → seed 2 bags via the UI (Task 12 not yet done — temporarily insert via a debug button or do Tasks 11+12 together and verify after 12) → screencap list, pin via long-press, verify pinned floats to top with pin glyph → commit `feat(bags): editorial bag list with pin context menu`.
+- [x] **Steps:** implement → build → seed 2 bags via the UI (Task 12 not yet done — temporarily insert via a debug button or do Tasks 11+12 together and verify after 12) → screencap list, pin via long-press, verify pinned floats to top with pin glyph → commit `feat(bags): editorial bag list with pin context menu`.
 
 ### Task 12: Bag add/edit sheet
 
@@ -1079,7 +1079,7 @@ Port of `NewBagSheet.swift` minus photo capture (Decision 2). Contract:
 - Save: trim brand/name/origin; empty notes → null; `hasRoastedOn=false` → null date; create via `bagRepository.create` or update existing (hydrate fields when `editing != null`).
 - Back/Cancel discards (no dirty-guard in v1; iOS's `interactiveDismissDisabled(isDirty)` noted in parity.md).
 
-- [ ] **Steps:** implement → build → on emulator: add a bag with brand/name/roast/notes; edit it; screencap both → re-run Task 11 observation (pin, sort) → commit `feat(bags): add/edit bag sheet`.
+- [x] **Steps:** implement → build → on emulator: add a bag with brand/name/roast/notes; edit it; screencap both → re-run Task 11 observation (pin, sort) → commit `feat(bags): add/edit bag sheet`.
 
 ### Task 13: Bag detail
 
@@ -1092,7 +1092,7 @@ Port of `BagDetailView.swift`. Contract:
 - Brews list: eyebrow "N brew(s)"; rows method 14.5sp + relative time, trailing RatingDots + accent RatioText. Tap → `brew/{id}`.
 - Toolbar overflow `Menu`: Edit (→ Task-12 sheet), Delete → confirm dialog **"Delete this bag?"** with message **"Brews on this bag will keep their settings but lose the bag link."** → `bagRepository.delete` + pop back (FK SET_NULL does the rest — already proven in Task 3 tests).
 
-- [ ] **Steps:** implement → build → observe: detail renders, edit round-trips, delete keeps the brews (check via brew list once Task 14 lands; defer that single check if needed) → commit `feat(bags): bag detail with stats and delete-nullifies contract`.
+- [x] **Steps:** implement → build → observe: detail renders, edit round-trips, delete keeps the brews (check via brew list once Task 14 lands; defer that single check if needed) → commit `feat(bags): bag detail with stats and delete-nullifies contract`.
 
 ### Task 14: Brew list + RecentShotsStrip
 
@@ -1106,7 +1106,7 @@ Port of `BrewListView.swift` **scoped per spec §5 / Decision 4** (no search, no
 - Empty state (verbatim): "No" / accent "brews yet."; "Log your first brew to start dialing in your recipes."; `PrimaryPill("Log a brew")`.
 - Relative time: `DateUtils.getRelativeTimeSpanString` (analog of iOS `.relative(presentation: .numeric)`).
 
-- [ ] **Steps:** implement → build → observe with seeded brews (log via debug insert until M5; revisit observation after Task 23) → screencap → commit `feat(brews): chronological brew list with recent-shots strip and brew-again`.
+- [x] **Steps:** implement → build → observe with seeded brews (log via debug insert until M5; revisit observation after Task 23) → screencap → commit `feat(brews): chronological brew list with recent-shots strip and brew-again`.
 
 ### Task 15: Brew detail
 
@@ -1120,7 +1120,7 @@ Port of `BrewDetailView.swift`. Contract:
 - `PrimaryPill("Brew this again")` with `Refresh` icon → `LocalNewBrewLauncher(NewBrewRequest(prefillBrewId = id))`.
 - Toolbar overflow: Delete → confirm "Delete this brew?" → delete + pop.
 
-- [ ] **Steps:** implement → build → observe (incl. a pour-over brew showing the Water row, an espresso not showing it) → commit `feat(brews): brew detail with params and brew-this-again`.
+- [x] **Steps:** implement → build → observe (incl. a pour-over brew showing the Water row, an espresso not showing it) → commit `feat(brews): brew detail with params and brew-this-again`.
 
 ### Task 16: Today (lean editorial home)
 
@@ -1134,7 +1134,7 @@ Port of `TodayView.swift`, simplified per spec §5. Contract:
 - Beans preview when bags exist: eyebrow "Beans · N open" + "All" → switch to Beans tab; 3 rows (serif 19sp name, "brand · roast" meta, roast swatch bar 5×30dp).
 - Empty state (port `TodayEmptyView`, copy verbatim): eyebrow date; serif 44sp "Your\nfirst\n" + accent "brew."; body "BeanBook is a quiet place to log what you brew. No streaks, no scoring — just the recipe and how it tasted."; `AccentPill("Log a brew")`.
 
-- [ ] **Steps:** implement → build → observe empty state AND populated state screencaps → commit `feat(today): lean editorial home`.
+- [x] **Steps:** implement → build → observe empty state AND populated state screencaps → commit `feat(today): lean editorial home`.
 
 ### Task 17: Settings + palette picker
 
@@ -1149,7 +1149,7 @@ Port of `SettingsView.swift` minus Pro section and daily reminder (Phase 2/4), a
 - **PalettePickerScreen:** the 11 palettes in `Palettes.all` order, each row = name + 5 swatch dots (background/card/accent/accentSoft/ink) + selected ring; tap → `setPaletteId(id.raw)`; **theme changes app-wide immediately** (single `BeanBookTheme` at the root recomposes — this is the Task-7 wiring paying off).
 - ⚠️ Copy rule: no Pro mentions anywhere (no Pro tier on Android v1; branding.md forbids un-led Pro copy).
 
-- [ ] **Steps:** implement → build → observe: toggle auto-prefill persists across relaunch (`adb shell am force-stop com.beanbook.app` + relaunch); switch palette to midnight → whole app dark; screencap before/after → commit `feat(settings): settings + palette picker with live theme switching`.
+- [x] **Steps:** implement → build → observe: toggle auto-prefill persists across relaunch (`adb shell am force-stop com.beanbook.app` + relaunch); switch palette to midnight → whole app dark; screencap before/after → commit `feat(settings): settings + palette picker with live theme switching`.
 
 ---
 
