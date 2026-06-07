@@ -1457,28 +1457,28 @@ Contract (spec §5 hot-start surfaces): RecentShotsStrip tap, brew-row long-pres
 
 Analog of the iOS XCUITest suite, scoped to the flow contracts (spec §7):
 
-- [ ] **Step 1: Write tests** with `createAndroidComposeRule<MainActivity>()`; seed data via `(context.applicationContext as BeanBookApplication).container` repositories in `@Before` (runBlocking):
+- [x] **Step 1: Write tests** with `createAndroidComposeRule<MainActivity>()`; seed data via `(context.applicationContext as BeanBookApplication).container` repositories in `@Before` (runBlocking):
   1. `coldStart_walksThreeSteps_andSaves` — tap "+" (contentDescription "Log brew") → assert "What are you brewing?" → "Next" → "Pull the shot." → "Next" → "How was it?" → "Save brew" → "Saved." appears.
   2. `hotStart_fromRecentShot_landsOnShot` — seed bag + 2 brews → open Brews → tap a recent-shot card → assert "Pull the shot." visible immediately.
   3. `deltaCaption_rendersOnDivergence` — hot start → tap dose "+" once → assert text starting "was " exists.
   4. `pinnedBag_winsOverRecency_withSwapChip` — seed bagA (recent brew) + bagB (pinned) → cold start "+" → assert "Pinned" label and "Recent: " chip both present on Context.
-- [ ] **Step 2: Run** — `./gradlew :app:connectedDebugAndroidTest` → all green (fix app or tests as needed; tests must observe real behavior, no stubs).
-- [ ] **Step 3: Commit** — `git commit -am "test(ui): compose UI tests for 3-step flow, hot start, delta captions, pin override"`
+- [x] **Step 2: Run** — `./gradlew :app:connectedDebugAndroidTest` → all green (fix app or tests as needed; tests must observe real behavior, no stubs).
+- [x] **Step 3: Commit** — `git commit -am "test(ui): compose UI tests for 3-step flow, hot start, delta captions, pin override"`
 
 ### Task 25: Parity checklist + README
 
 **Files:** Create `docs/parity.md`, `README.md` (Android repo)
 
-- [ ] `parity.md` (spec §2 requires it): table — feature | iOS | Android v1 status | phase. Rows at minimum: every M4/M5 surface (✅), brew-list search + filter chips (Phase 4), Recipes browsing screen (Phase 4), bag/brew photo capture (Phase 4, columns already shipped), onboarding (Phase 4, key reserved), Pro/paywall + quota enforcement + palette gating (Phase 2 — **flag the grandfathering decision and the Family-Sharing/Play-family-library copy reconciliation from spec §8**), Stats (Phase 2), Shop/Discover + location (Phase 3), notifications/daily reminder (Phase 4), custom serif font + dirty-guard on bag edit (Phase 4 polish), first-frame forest flash on cold launch before DataStore emits a saved non-forest palette (Phase 4 polish — splash/theme-preload).
-- [ ] `README.md`: project summary, the verified build/test/emulator commands (from this plan's header), pointer to the iOS repo's `branding.md`/`design.md` as cross-platform law, and the parity doc.
-- [ ] Commit — `git commit -am "docs: parity checklist and README"`
+- [x] `parity.md` (spec §2 requires it): table — feature | iOS | Android v1 status | phase. Rows at minimum: every M4/M5 surface (✅), brew-list search + filter chips (Phase 4), Recipes browsing screen (Phase 4), bag/brew photo capture (Phase 4, columns already shipped), onboarding (Phase 4, key reserved), Pro/paywall + quota enforcement + palette gating (Phase 2 — **flag the grandfathering decision and the Family-Sharing/Play-family-library copy reconciliation from spec §8**), Stats (Phase 2), Shop/Discover + location (Phase 3), notifications/daily reminder (Phase 4), custom serif font + dirty-guard on bag edit (Phase 4 polish), first-frame forest flash on cold launch before DataStore emits a saved non-forest palette (Phase 4 polish — splash/theme-preload).
+- [x] `README.md`: project summary, the verified build/test/emulator commands (from this plan's header), pointer to the iOS repo's `branding.md`/`design.md` as cross-platform law, and the parity doc.
+- [x] Commit — `git commit -am "docs: parity checklist and README"`
 
 ### Task 26: Final acceptance — walk spec §10 on the emulator
 
-- [ ] **Step 1:** Fresh install (`adb uninstall com.beanbook.app`, `./gradlew :app:installDebug`), then walk the checklist, screencapping each: ① create a bag, edit it, pin it ② log a brew cold-start through all 3 steps ③ view brew list + detail ④ re-brew from prefill (hot start, Δ-caption seen) ⑤ save a recipe and see it in Settings ⑥ switch theme to midnight and back ⑦ `force-stop` + relaunch → everything persisted.
-- [ ] **Step 2:** Full test sweep: `./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest` → green.
-- [ ] **Step 3:** Cross-check every parity.md "✅" row against what you just observed; fix or re-status anything that doesn't hold.
-- [ ] **Step 4:** Commit any fixes; tag `v1.0-mvp` in the Android repo. In the **iOS repo**, move this plan to `docs/superpowers/plans/completed/` in its own commit.
+- [x] **Step 1:** Fresh install (`adb uninstall com.beanbook.app`, `./gradlew :app:installDebug`), then walk the checklist, screencapping each: ① create a bag, edit it, pin it ② log a brew cold-start through all 3 steps ③ view brew list + detail ④ re-brew from prefill (hot start, Δ-caption seen) ⑤ save a recipe and see it in Settings ⑥ switch theme to midnight and back ⑦ `force-stop` + relaunch → everything persisted.
+- [x] **Step 2:** Full test sweep: `./gradlew :app:testDebugUnitTest :app:connectedDebugAndroidTest` → green.
+- [x] **Step 3:** Cross-check every parity.md "✅" row against what you just observed; fix or re-status anything that doesn't hold.
+- [x] **Step 4:** Commit any fixes; tag `v1.0-mvp` in the Android repo. In the **iOS repo**, move this plan to `docs/superpowers/plans/completed/` in its own commit.
 
 ---
 
