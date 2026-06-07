@@ -268,9 +268,6 @@ struct BrewTimer: View {
     }
 
     private func finish() {
-        if let start = startDate {
-            accumulated += Date().timeIntervalSince(start)
-        }
         startDate = nil
         accumulated = target
         seconds = Int(target.rounded())
