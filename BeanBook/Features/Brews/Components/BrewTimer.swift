@@ -57,7 +57,10 @@ struct BrewTimer: View {
                     .accessibilityHint(phase == .idle ? "Double tap to set timer duration" : "")
                     .onChange(of: remaining <= 0) { _, finished in
                         if finished && phase == .running {
-                            DispatchQueue.main.async { finish() }
+                            DispatchQueue.main.async {
+                                guard phase == .running else { return }
+                                finish()
+                            }
                         }
                     }
             }
