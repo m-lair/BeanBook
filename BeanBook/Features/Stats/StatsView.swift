@@ -256,7 +256,7 @@ struct StatsView: View {
             return "Stats"
         }
         let start = summary.windowStart.formatted(.dateTime.month(.abbreviated).day())
-        let dayCount = Calendar.current.dateComponents([.day], from: summary.windowStart, to: summary.windowEnd).day ?? 29
+        let dayCount = summary.dailyCounts.count
         return "\(dayCount) days / since \(start)"
     }
 
