@@ -60,7 +60,12 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
         Task { @MainActor in
             switch status {
             case .authorizedAlways, .authorizedWhenInUse:
-                self.manager.requestLocation()
+                if self.coordinate == nil {
+                    self.status = .requesting
+                    self.manager.requestLocation()
+                } else {
+                    self.status = .ready
+                }
             case .denied, .restricted:
                 self.status = .denied
             case .notDetermined:

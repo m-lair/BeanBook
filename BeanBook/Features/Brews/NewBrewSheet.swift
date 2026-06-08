@@ -96,7 +96,7 @@ struct NewBrewSheet: View {
         .task(id: showSaved) {
             guard showSaved else { return }
             try? await Task.sleep(for: .milliseconds(1400))
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, !showingPaywall else { return }
             dismiss()
         }
     }
@@ -553,7 +553,6 @@ struct NewBrewSheet: View {
                     waterTempC: waterTempC
                 )
             } catch is QuotaExceededError {
-                withMotion(Motion.fade, reduceMotion: reduceMotion) { showSaved = true }
                 paywallHeadline = "You've reached the free limit of \(ProQuota.recipes) saved recipes. Unlock Pro for unlimited."
                 showingPaywall = true
                 return
