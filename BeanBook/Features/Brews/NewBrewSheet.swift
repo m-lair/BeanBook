@@ -87,7 +87,15 @@ struct NewBrewSheet: View {
                 .navigationBarTitleDisplayMode(.inline)
         }
         .interactiveDismissDisabled(true)
-        .sheet(isPresented: $showingPaywall) {
+        .sheet(isPresented: $showingPaywall, onDismiss: {
+            // Brew quota failure: brewCommitted is still false, nothing to do.
+            // Preset quota failure: brew was already saved but showSaved never fired.
+            // Drive the normal save-completion flow so the success overlay shows and
+            // the sheet dismisses rather than leaving the user stuck with a dead button.
+            if brewCommitted && !showSaved {
+                withMotion(Motion.fade, reduceMotion: reduceMotion) { showSaved = true }
+            }
+        }) {
             NavigationStack {
                 PaywallSheet(headline: paywallHeadline)
             }
