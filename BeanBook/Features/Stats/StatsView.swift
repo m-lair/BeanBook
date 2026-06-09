@@ -368,7 +368,7 @@ private struct BrewActivityStrip: View {
 
             HStack(alignment: .bottom, spacing: 4) {
                 ForEach(days) { day in
-                    let isToday = day.id == days.last?.id
+                    let isToday = Calendar.current.isDateInToday(day.date)
                     RoundedRectangle(cornerRadius: 1.5)
                         .fill(isToday ? Theme.accent : (day.count > 0 ? Theme.ink.opacity(0.82) : Theme.rule))
                         .frame(maxWidth: .infinity)
